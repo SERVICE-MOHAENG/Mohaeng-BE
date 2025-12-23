@@ -14,7 +14,7 @@ import { ApiBearerAuth, ApiUnauthorizedResponse } from '@nestjs/swagger';
  * }
  */
 export function UserApiBearerAuth(): MethodDecorator {
-  // TODO: JwtAuthGuard 구현 후 UseGuards(JwtAuthGuard) 추가
+  // 할 일: JwtAuthGuard 구현 후 UseGuards(JwtAuthGuard) 추가
   return applyDecorators(
     ApiBearerAuth('access-token'),
     ApiUnauthorizedResponse({ description: '인증 실패' }),

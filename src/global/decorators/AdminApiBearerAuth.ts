@@ -21,7 +21,7 @@ import { ApiBearerAuth, ApiUnauthorizedResponse } from '@nestjs/swagger';
 export function AdminApiBearerAuth(
   permissions?: string | string[],
 ): MethodDecorator {
-  // TODO: AdminGuard 구현 후 UseGuards(AdminGuard) 추가
+  // 할 일: AdminGuard 구현 후 UseGuards(AdminGuard) 추가
   return applyDecorators(
     ApiBearerAuth('access-token'),
     ApiUnauthorizedResponse({ description: '인증 실패' }),
