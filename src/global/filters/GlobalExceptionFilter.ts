@@ -4,15 +4,18 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
-  Logger,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiResponseDto } from '../dto/ApiResponseDto';
+import { LogInterceptorService } from '../logger/LogInterceptorService';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
-  private readonly logger = new Logger(GlobalExceptionFilter.name);
+  private readonly logger = new LogInterceptorService();
 
+  /**
+   * 전역 예외를 응답 + 로깅 정책으로 처리
+   */
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -23,6 +26,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
+      const isCritical = this.extractCriticalFlag(exceptionResponse);
+      const shouldLog =
+        status >= HttpStatus.INTERNAL_SERVER_ERROR ||
+        (status < HttpStatus.INTERNAL_SERVER_ERROR && isCritical);
+      const logMessage = this.buildLogMessage(
+        exceptionResponse,
+        exception.message,
+      );
 
       if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
         errorResponse = exceptionResponse as ApiResponseDto;
@@ -31,6 +42,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           'INTERNAL_SERVER_ERROR',
           exception.message,
         );
+      }
+
+      if (shouldLog) {
+        if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+          this.logger.error(logMessage, exception.stack);
+        } else {
+          this.logger.warn(logMessage);
+        }
       }
     } else if (exception instanceof Error) {
       this.logger.error(
@@ -42,7 +61,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         '서버 내부 오류가 발생했습니다.',
       );
     } else {
-      this.logger.error('Unknown error occurred', exception);
+      this.logger.error(
+        `Unknown error occurred: ${this.formatUnknownException(exception)}`,
+      );
       errorResponse = ApiResponseDto.error(
         'UNKNOWN_ERROR',
         '알 수 없는 오류가 발생했습니다.',
@@ -50,5 +71,104 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     }
 
     response.status(status).json(errorResponse);
+  }
+
+  /**
+   * 예외 응답에서 로그 메시지 구성
+   */
+  private buildLogMessage(response: unknown, fallback: string): string {
+    if (response && typeof response === 'object') {
+      const record = response as Record<string, unknown>;
+      const code = this.extractErrorCode(record);
+      const message = this.extractErrorMessage(record);
+      if (code && message) {
+        return `[${code}] ${message}`;
+      }
+      if (code) {
+        return `[${code}] ${fallback}`;
+      }
+      if (message) {
+        return message;
+      }
+    }
+
+    if (typeof response === 'string' && response.length > 0) {
+      return response;
+    }
+
+    return fallback;
+  }
+
+  /**
+   * 응답 객체에서 에러 코드 추출
+   */
+  private extractErrorCode(
+    response: Record<string, unknown>,
+  ): string | undefined {
+    if (typeof response.errorCode === 'string') {
+      return response.errorCode;
+    }
+    if (typeof response.code === 'string') {
+      return response.code;
+    }
+    if (response.error && typeof response.error === 'object') {
+      const errorObj = response.error as Record<string, unknown>;
+      if (typeof errorObj.errorCode === 'string') {
+        return errorObj.errorCode;
+      }
+      if (typeof errorObj.code === 'string') {
+        return errorObj.code;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * 응답 객체에서 에러 메시지 추출
+   */
+  private extractErrorMessage(
+    response: Record<string, unknown>,
+  ): string | undefined {
+    if (typeof response.message === 'string') {
+      return response.message;
+    }
+    if (response.error && typeof response.error === 'object') {
+      const errorObj = response.error as Record<string, unknown>;
+      if (typeof errorObj.message === 'string') {
+        return errorObj.message;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * 응답 객체에서 critical 플래그 추출
+   */
+  private extractCriticalFlag(response: unknown): boolean {
+    if (!response || typeof response !== 'object') {
+      return false;
+    }
+    const record = response as Record<string, unknown>;
+    if (typeof record.critical === 'boolean') {
+      return record.critical;
+    }
+    if (record.error && typeof record.error === 'object') {
+      const errorObj = record.error as Record<string, unknown>;
+      if (typeof errorObj.critical === 'boolean') {
+        return errorObj.critical;
+      }
+    }
+    return false;
+  }
+
+  private formatUnknownException(exception: unknown): string {
+    if (typeof exception === 'string') {
+      return exception;
+    }
+    try {
+      return JSON.stringify(exception);
+    } catch {
+      return String(exception);
+    }
   }
 }
