@@ -15,13 +15,13 @@ export class User extends BaseEntity {
   @Column({ name: 'email', nullable: false, unique: true })
   email: string;
 
-  @Column({ name: 'password', nullable: true })
+  @Column({ name: 'password', type: 'varchar', length: 255, nullable: true })
   password: string | null;
 
-  @Column({ name: 'provider', nullable: true })
+  @Column({ name: 'provider', type: 'varchar', length: 50, nullable: true })
   provider: string | null;
 
-  @Column({ name: 'provider_id', nullable: true })
+  @Column({ name: 'provider_id', type: 'varchar', length: 255, nullable: true })
   providerId: string | null;
 
   @Column({ name: 'is_activate', nullable: false, default: true })

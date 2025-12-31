@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import * as cookieParser from 'cookie-parser';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './global/filters/GlobalExceptionFilter';
@@ -7,6 +8,7 @@ import { ResponseInterceptor } from './global/interceptors/ResponseInterceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use(cookieParser());
 
   // API 글로벌 접두어 설정 (모든 엔드포인트)
   app.setGlobalPrefix('api');

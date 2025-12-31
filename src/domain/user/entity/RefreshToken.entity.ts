@@ -26,13 +26,13 @@ export class RefreshToken extends BaseEntity {
   })
   status: RefreshTokenStatus;
 
-  @Column({ name: 'expires_at', type: 'timestamp', nullable: false })
+  @Column({ name: 'expires_at', type: 'datetime', nullable: false })
   expiresAt: Date;
 
-  @Column({ name: 'rotated_at', type: 'timestamp', nullable: true })
+  @Column({ name: 'rotated_at', type: 'datetime', nullable: true })
   rotatedAt: Date | null;
 
-  @Column({ name: 'revoked_at', type: 'timestamp', nullable: true })
+  @Column({ name: 'revoked_at', type: 'datetime', nullable: true })
   revokedAt: Date | null;
 
   /**
