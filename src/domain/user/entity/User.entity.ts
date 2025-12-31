@@ -15,7 +15,6 @@ export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 255, name: 'email', nullable: false, unique: true })
   email: string;
 
-  // 일반 회원가입: 비밀번호 해시 저장 (OAuth는 null)
   @Column({ type: 'varchar', length: 255, name: 'password_hash', nullable: true })
   passwordHash: string | null;
 
