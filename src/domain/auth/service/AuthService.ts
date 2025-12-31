@@ -64,13 +64,13 @@ export class AuthService {
       where: { email: request.email },
     });
 
-    if (!user || !user.password) {
+    if (!user || !user.passwordHash) {
       throw this.createUnauthorizedException();
     }
 
     const isValid = await this.userService.verifyPassword(
       request.password,
-      user.password,
+      user.passwordHash,
     );
     if (!isValid) {
       throw this.createUnauthorizedException();

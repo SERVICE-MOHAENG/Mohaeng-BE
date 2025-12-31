@@ -9,36 +9,33 @@ import { BaseEntity } from '../../../global/BaseEntity';
  */
 @Entity('user_table')
 export class User extends BaseEntity {
-  @Column({ name: 'name', nullable: false })
+  @Column({ type: 'varchar', length: 100, name: 'name', nullable: false })
   name: string;
 
-  @Column({ name: 'email', nullable: false, unique: true })
+  @Column({ type: 'varchar', length: 255, name: 'email', nullable: false, unique: true })
   email: string;
 
-  @Column({ name: 'password', type: 'varchar', length: 255, nullable: true })
-  password: string | null;
+  // 일반 회원가입: 비밀번호 해시 저장 (OAuth는 null)
+  @Column({ type: 'varchar', length: 255, name: 'password_hash', nullable: true })
+  passwordHash: string | null;
 
-  @Column({ name: 'provider', type: 'varchar', length: 50, nullable: true })
+  @Column({ type: 'varchar', length: 50, name: 'provider', nullable: true })
   provider: string | null;
 
-  @Column({ name: 'provider_id', type: 'varchar', length: 255, nullable: true })
+  @Column({ type: 'varchar', length: 255, name: 'provider_id', nullable: true })
   providerId: string | null;
 
-  @Column({ name: 'is_activate', nullable: false, default: true })
+  @Column({ type: 'boolean', name: 'is_activate', nullable: false, default: true })
   isActivate: boolean;
 
   /**
    * 일반 회원가입용 팩토리 메서드
-   * @param name - 사용자 이름
-   * @param email - 이메일
-   * @param password - 비밀번호
-   * @returns User 인스턴스
    */
-  static create(name: string, email: string, password: string): User {
+  static create(name: string, email: string, passwordHash: string): User {
     const user = new User();
     user.name = name;
     user.email = email;
-    user.password = password;
+    user.passwordHash = passwordHash;
     user.provider = null;
     user.providerId = null;
     user.isActivate = true;
@@ -47,11 +44,6 @@ export class User extends BaseEntity {
 
   /**
    * OAuth 회원가입용 팩토리 메서드
-   * @param name - 사용자 이름
-   * @param email - 이메일
-   * @param provider - OAuth 제공자 (google, kakao, naver 등)
-   * @param providerId - OAuth 제공자의 사용자 ID
-   * @returns User 인스턴스
    */
   static createWithOAuth(
     name: string,
@@ -62,7 +54,7 @@ export class User extends BaseEntity {
     const user = new User();
     user.name = name;
     user.email = email;
-    user.password = null;
+    user.passwordHash = null;
     user.provider = provider;
     user.providerId = providerId;
     user.isActivate = true;
