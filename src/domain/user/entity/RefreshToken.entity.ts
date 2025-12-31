@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, JoinColumn, RelationId } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../../global/BaseEntity';
 import { User } from './User.entity';
 import { RefreshTokenStatus } from './RefreshTokenStatus.enum';
@@ -11,12 +11,9 @@ import { RefreshTokenStatus } from './RefreshTokenStatus.enum';
  */
 @Entity('refresh_token_table')
 export class RefreshToken extends BaseEntity {
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { nullable: false })
   @JoinColumn({ name: 'user_id' })
   user: User;
-
-  @RelationId((refreshToken: RefreshToken) => refreshToken.user)
-  userId: string;
 
   @Column({ name: 'token_hash', nullable: false })
   tokenHash: string;
@@ -40,18 +37,14 @@ export class RefreshToken extends BaseEntity {
 
   /**
    * RefreshToken 생성 팩토리 메서드
-   * @param userId - 사용자 ID
+   * @param user - 사용자 엔티티
    * @param tokenHash - 해시된 토큰
    * @param expiresAt - 만료 시각
    * @returns RefreshToken 인스턴스
    */
-  static create(
-    userId: string,
-    tokenHash: string,
-    expiresAt: Date,
-  ): RefreshToken {
+  static create(user: User, tokenHash: string, expiresAt: Date): RefreshToken {
     const refreshToken = new RefreshToken();
-    refreshToken.userId = userId;
+    refreshToken.user = user;
     refreshToken.tokenHash = tokenHash;
     refreshToken.status = RefreshTokenStatus.ACTIVE;
     refreshToken.expiresAt = expiresAt;
