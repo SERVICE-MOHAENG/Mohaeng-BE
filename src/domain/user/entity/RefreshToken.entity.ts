@@ -15,7 +15,7 @@ export class RefreshToken extends BaseEntity {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ name: 'token_hash', nullable: false })
+  @Column({ type: 'varchar', length: 500, name: 'token_hash', nullable: false })
   tokenHash: string;
 
   @Column({
