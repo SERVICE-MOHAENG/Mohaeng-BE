@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, RelationId } from 'typeorm';
 import { BaseEntity } from '../../../global/BaseEntity';
 import { User } from './User.entity';
 import { RefreshTokenStatus } from './RefreshTokenStatus.enum';
@@ -11,12 +11,12 @@ import { RefreshTokenStatus } from './RefreshTokenStatus.enum';
  */
 @Entity('refresh_token_table')
 export class RefreshToken extends BaseEntity {
-  @Column({ name: 'user_id', nullable: false })
-  userId: string;
-
   @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })
   user: User;
+
+  @RelationId((refreshToken: RefreshToken) => refreshToken.user)
+  userId: string;
 
   @Column({ name: 'token_hash', nullable: false })
   tokenHash: string;
