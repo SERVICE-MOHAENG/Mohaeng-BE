@@ -9,22 +9,22 @@ import { BaseEntity } from '../../../global/BaseEntity';
  */
 @Entity('user_table')
 export class User extends BaseEntity {
-  @Column({ name: 'name', nullable: false })
+  @Column({ type: 'varchar', length: 100, name: 'name', nullable: false })
   name: string;
 
-  @Column({ name: 'email', nullable: false, unique: true })
+  @Column({ type: 'varchar', length: 255, name: 'email', nullable: false, unique: true })
   email: string;
 
-  @Column({ name: 'password', nullable: true })
-  password: string | null;
+  @Column({ type: 'varchar', length: 255, name: 'password_hash', nullable: true })
+  passwordHash: string | null;
 
-  @Column({ name: 'provider', nullable: true })
+  @Column({ type: 'varchar', length: 50, name: 'provider', nullable: true })
   provider: string | null;
 
-  @Column({ name: 'provider_id', nullable: true })
+  @Column({ type: 'varchar', length: 255, name: 'provider_id', nullable: true })
   providerId: string | null;
 
-  @Column({ name: 'is_activate', nullable: false, default: true })
+  @Column({ type: 'boolean', name: 'is_activate', nullable: false, default: true })
   isActivate: boolean;
 
   /**
@@ -38,7 +38,7 @@ export class User extends BaseEntity {
     const user = new User();
     user.name = name;
     user.email = email;
-    user.password = password;
+    user.passwordHash = password;
     user.provider = null;
     user.providerId = null;
     user.isActivate = true;
@@ -62,7 +62,7 @@ export class User extends BaseEntity {
     const user = new User();
     user.name = name;
     user.email = email;
-    user.password = null;
+    user.passwordHash = null;
     user.provider = provider;
     user.providerId = providerId;
     user.isActivate = true;
