@@ -1,4 +1,4 @@
-﻿export enum UserErrorCode {
+export enum UserErrorCode {
   EMAIL_ALREADY_EXISTS = 'TRIP_CORE_HE_USR_V001',
   INVALID_SIGNUP_REQUEST = 'TRIP_CORE_HE_USR_V002',
   USER_NOT_FOUND = 'TRIP_CORE_HE_USR_G001',
