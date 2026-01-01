@@ -4,6 +4,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { LoggerModule } from './global/logger/Logger.module';
 import { GlobalModule } from './global/GlobalModule';
 import { AuthModule } from './domain/auth/AuthModule';
+import { UserModule } from './domain/user/UserModule';
+import { User } from './domain/user/entity/User.entity';
+import { RefreshToken } from './domain/auth/entity/RefreshToken.entity';
 
 @Module({
   imports: [
@@ -20,7 +23,7 @@ import { AuthModule } from './domain/auth/AuthModule';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        entities: [User, RefreshToken],
         synchronize:
           configService.get('SYNC_AUTO_DDL') === 'true' &&
           configService.get('NODE_ENV') !== 'production',
@@ -29,9 +32,10 @@ import { AuthModule } from './domain/auth/AuthModule';
         charset: 'utf8mb4',
       }),
     }),
-    LoggerModule,
-    GlobalModule,
-    AuthModule,
+      LoggerModule,
+      GlobalModule,
+      AuthModule,
+      UserModule,
   ],
   controllers: [],
   providers: [],
