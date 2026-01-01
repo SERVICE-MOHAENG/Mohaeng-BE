@@ -51,7 +51,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     const providerId = profile.id;
 
     // 필수 필드 검증: 이메일이 없으면 인증 실패
-    if (!email && !givenName) {
+    if (!email || !givenName) {
       throw new AuthGoogleProfileInvalidException();
     }
 
