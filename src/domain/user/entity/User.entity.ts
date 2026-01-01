@@ -29,16 +29,12 @@ export class User extends BaseEntity {
 
   /**
    * 일반 회원가입용 팩토리 메서드
-   * @param name - 사용자 이름
-   * @param email - 이메일
-   * @param password - 비밀번호
-   * @returns User 인스턴스
    */
-  static create(name: string, email: string, password: string): User {
+  static create(name: string, email: string, passwordHash: string): User {
     const user = new User();
     user.name = name;
     user.email = email;
-    user.passwordHash = password;
+    user.passwordHash = passwordHash;
     user.provider = null;
     user.providerId = null;
     user.isActivate = true;
@@ -47,11 +43,6 @@ export class User extends BaseEntity {
 
   /**
    * OAuth 회원가입용 팩토리 메서드
-   * @param name - 사용자 이름
-   * @param email - 이메일
-   * @param provider - OAuth 제공자 (google, kakao, naver 등)
-   * @param providerId - OAuth 제공자의 사용자 ID
-   * @returns User 인스턴스
    */
   static createWithOAuth(
     name: string,

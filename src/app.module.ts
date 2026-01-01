@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LoggerModule } from './global/logger/Logger.module';
 import { GlobalModule } from './global/GlobalModule';
+import { AuthModule } from './domain/auth/AuthModule';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { GlobalModule } from './global/GlobalModule';
     }),
     LoggerModule,
     GlobalModule,
+    AuthModule,
   ],
   controllers: [],
   providers: [],
