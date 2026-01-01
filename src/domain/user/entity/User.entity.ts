@@ -1,5 +1,6 @@
 import { Entity, Column } from 'typeorm';
 import { BaseEntity } from '../../../global/BaseEntity';
+import { Provider } from './Provider.enum';
 
 /**
  * User Entity
@@ -18,8 +19,14 @@ export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 255, name: 'password_hash', nullable: true })
   passwordHash: string | null;
 
-  @Column({ type: 'varchar', length: 50, name: 'provider', nullable: true })
-  provider: string | null;
+  @Column({
+    type: 'varchar',
+    length: 50,
+    name: 'provider',
+    nullable: false,
+    default: Provider.LOCAL,
+  })
+  provider: Provider;
 
   @Column({ type: 'varchar', length: 255, name: 'provider_id', nullable: true })
   providerId: string | null;
@@ -35,7 +42,7 @@ export class User extends BaseEntity {
     user.name = name;
     user.email = email;
     user.passwordHash = passwordHash;
-    user.provider = null;
+    user.provider = Provider.LOCAL;
     user.providerId = null;
     user.isActivate = true;
     return user;
@@ -47,7 +54,7 @@ export class User extends BaseEntity {
   static createWithOAuth(
     name: string,
     email: string,
-    provider: string,
+    provider: Provider,
     providerId: string,
   ): User {
     const user = new User();

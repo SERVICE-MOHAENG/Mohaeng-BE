@@ -1,23 +1,27 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { InjectRepository } from '@nestjs/typeorm';
-import { isEmail } from 'class-validator';
 import { createHash } from 'crypto';
 import ms = require('ms');
 import type { StringValue } from 'ms';
-import { Repository } from 'typeorm';
-import { ApiResponseDto } from '../../../global/dto/ApiResponseDto';
-import { GlobalErrorCode } from '../../../global/exception/code';
-import { RefreshToken } from '../../user/entity/RefreshToken.entity';
-import { RefreshTokenStatus } from '../../user/entity/RefreshTokenStatus.enum';
 import { User } from '../../user/entity/User.entity';
-import { LoginRequest } from '../../user/presentation/dto/request/LoginRequest';
-import { SignupRequest } from '../../user/presentation/dto/request/SignupRequest';
+import { Provider } from '../../user/entity/Provider.enum';
+import { UserNotActiveException } from '../../user/exception/UserNotActiveException';
+import { UserNotFoundException } from '../../user/exception/UserNotFoundException';
 import { UserService } from '../../user/service/UserService';
+import { UserRepository } from '../../user/persistence/UserRepository';
+import { RefreshToken } from '../entity/RefreshToken.entity';
+import { AuthInvalidCredentialsException } from '../exception/AuthInvalidCredentialsException';
+import { AuthInvalidRefreshTokenException } from '../exception/AuthInvalidRefreshTokenException';
+import { AuthEmailAlreadyRegisteredWithDifferentProviderException } from '../exception/AuthEmailAlreadyRegisteredWithDifferentProviderException';
+import { LoginRequest } from '../presentation/dto/request/LoginRequest';
+import { RefreshTokenRepository } from '../persistence/RefreshTokenRepository';
+import { GlobalJwtService } from '../../../global/jwt/GlobalJwtService';
 
 type JwtPayload = {
   sub: string;
   email: string;
+  userId: string;
 };
 
 type AuthTokens = {
@@ -28,176 +32,119 @@ type AuthTokens = {
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-    @InjectRepository(RefreshToken)
-    private readonly refreshTokenRepository: Repository<RefreshToken>,
+    private readonly refreshTokenRepository: RefreshTokenRepository,
     private readonly userService: UserService,
+    private readonly userRepository: UserRepository,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+    private readonly globalJwtService: GlobalJwtService,
   ) {}
 
-  async signup(request: SignupRequest): Promise<void> {
-    this.validateSignupRequest(request);
-
-    const sameUser = await this.userRepository.findOne({
-      where: { email: request.email },
-    });
-    if (sameUser) {
-      throw new HttpException(
-        ApiResponseDto.error(
-          GlobalErrorCode.INVALID_REQUEST,
-          '이미 사용 중인 이메일입니다.',
-        ),
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    const hashedPassword = await this.userService.hashPassword(
-      request.password,
-    );
-    const user = User.create(request.name, request.email, hashedPassword);
-    await this.userRepository.save(user);
-  }
-
   async login(request: LoginRequest): Promise<AuthTokens> {
-    const user = await this.userRepository.findOne({
-      where: { email: request.email },
-    });
-
-    if (!user || !user.passwordHash) {
-      throw this.createUnauthorizedException();
+    // 이메일로 사용자 조회
+    let user: User;
+    try {
+      user = await this.userService.findByEmail(request.email);
+    } catch (error) {
+      if (error instanceof UserNotFoundException) {
+        throw new AuthInvalidCredentialsException();
+      }
+      throw error;
     }
 
+    if (!user.passwordHash) {
+      throw new AuthInvalidCredentialsException();
+    }
+
+    // 비활성 계정 차단
+    if (!user.isActivate) {
+      throw new UserNotActiveException();
+    }
+
+    // 비밀번호 검증
     const isValid = await this.userService.verifyPassword(
       request.password,
       user.passwordHash,
     );
     if (!isValid) {
-      throw this.createUnauthorizedException();
+      throw new AuthInvalidCredentialsException();
     }
 
     return this.issueTokens(user);
   }
 
   async refreshTokens(refreshToken: string): Promise<AuthTokens> {
+    // 리프레시 토큰 해시 조회
     const tokenHash = this.hashToken(refreshToken);
-    const storedToken = await this.refreshTokenRepository.findOne({
-      where: { tokenHash },
-      relations: ['user'],
-    });
+    const storedToken =
+      await this.refreshTokenRepository.findByTokenHash(tokenHash);
 
     if (!storedToken) {
-      throw this.createInvalidTokenException();
+      throw new AuthInvalidRefreshTokenException();
     }
 
+    // 비활성 토큰 재사용 감지 시 전체 토큰 폐기
     if (!storedToken.isActive()) {
       await this.revokeAllUserTokens(storedToken.user.id);
-      throw this.createInvalidTokenException(
-        '이미 사용된 Refresh Token입니다. 다시 로그인 해주세요.',
-      );
+      throw new AuthInvalidRefreshTokenException();
     }
 
-    const refreshSecret = process.env.JWT_REFRESH_TOKEN_SECRET;
+    const refreshSecret = this.configService.get<string>(
+      'JWT_REFRESH_TOKEN_SECRET',
+    );
     if (!refreshSecret) {
       throw new Error('JWT_REFRESH_TOKEN_SECRET is not set.');
     }
 
+    // 리프레시 토큰 JWT 검증
     try {
       await this.jwtService.verifyAsync<JwtPayload>(refreshToken, {
         secret: refreshSecret,
       });
     } catch {
+      // 유효하지 않은 토큰은 즉시 폐기
       storedToken.revoke();
       await this.refreshTokenRepository.save(storedToken);
-      throw this.createInvalidTokenException(
-        '유효하지 않은 Refresh Token입니다.',
-      );
+      throw new AuthInvalidRefreshTokenException();
     }
 
+    // 리프레시 토큰 회전 처리
     storedToken.rotate();
     await this.refreshTokenRepository.save(storedToken);
 
     return this.issueTokens(storedToken.user);
   }
 
-  private validateSignupRequest(request: SignupRequest): void {
-    if (!request.name || request.name.length < 1 || request.name.length > 20) {
-      throw new HttpException(
-        ApiResponseDto.error(
-          GlobalErrorCode.INVALID_REQUEST,
-          '이름은 1자 이상 20자 이하여야 합니다.',
-        ),
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+  async issueTokens(user: User): Promise<AuthTokens> {
+    // Access/Refresh 토큰 공용 페이로드 구성
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      userId: user.id,
+    };
+    // Access 토큰 발급
+    const accessToken = this.globalJwtService.signUserToken({
+      userId: user.id,
+      email: user.email,
+      sub: user.id,
+    });
 
-    if (!request.email || !isEmail(request.email)) {
-      throw new HttpException(
-        ApiResponseDto.error(
-          GlobalErrorCode.INVALID_REQUEST,
-          '올바른 이메일 형식이 아닙니다.',
-        ),
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (!request.password || request.password.length < 8) {
-      throw new HttpException(
-        ApiResponseDto.error(
-          GlobalErrorCode.INVALID_REQUEST,
-          '비밀번호는 최소 8자 이상이어야 합니다.',
-        ),
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (request.password !== request.passwordConfirm) {
-      throw new HttpException(
-        ApiResponseDto.error(
-          GlobalErrorCode.INVALID_REQUEST,
-          '비밀번호가 일치하지 않습니다.',
-        ),
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-  }
-
-  private createUnauthorizedException(): HttpException {
-    return new HttpException(
-      ApiResponseDto.error(
-        GlobalErrorCode.UNAUTHORIZED,
-        '이메일 또는 비밀번호가 올바르지 않습니다.',
-      ),
-      HttpStatus.UNAUTHORIZED,
+    const refreshSecret = this.configService.get<string>(
+      'JWT_REFRESH_TOKEN_SECRET',
     );
-  }
-
-  private createInvalidTokenException(message?: string): HttpException {
-    return new HttpException(
-      ApiResponseDto.error(
-        GlobalErrorCode.INVALID_TOKEN,
-        message || '유효하지 않은 토큰입니다.',
-      ),
-      HttpStatus.UNAUTHORIZED,
-    );
-  }
-
-  private async issueTokens(user: User): Promise<AuthTokens> {
-    const payload: JwtPayload = { sub: user.id, email: user.email };
-    const accessToken = this.jwtService.sign(payload);
-
-    const refreshSecret = process.env.JWT_REFRESH_TOKEN_SECRET;
     if (!refreshSecret) {
       throw new Error('JWT_REFRESH_TOKEN_SECRET is not set.');
     }
 
     const refreshExpiresIn = this.getRefreshExpiresIn();
+    // Refresh 토큰 발급
     const refreshToken = await this.jwtService.signAsync(payload, {
       secret: refreshSecret,
       expiresIn: refreshExpiresIn,
     });
 
     const expiresAt = this.getRefreshExpiresAt(refreshExpiresIn);
+    // Refresh 토큰 해시 저장
     const refreshTokenEntity = RefreshToken.create(
       user,
       this.hashToken(refreshToken),
@@ -209,7 +156,8 @@ export class AuthService {
   }
 
   private getRefreshExpiresIn(): StringValue {
-    return (process.env.JWT_REFRESH_TOKEN_EXPIRES_IN || '7d') as StringValue;
+    return (this.configService.get<string>('JWT_REFRESH_TOKEN_EXPIRES_IN') ||
+      '7d') as StringValue;
   }
 
   private getRefreshExpiresAt(expiresIn: StringValue): Date {
@@ -225,9 +173,48 @@ export class AuthService {
   }
 
   private async revokeAllUserTokens(userId: string): Promise<void> {
-    await this.refreshTokenRepository.update(
-      { user: { id: userId }, status: RefreshTokenStatus.ACTIVE },
-      { status: RefreshTokenStatus.REVOKED, revokedAt: new Date() },
+    await this.refreshTokenRepository.revokeAllActiveByUserId(userId);
+  }
+
+  /**
+   * Google OAuth 사용자 검증 및 생성/조회
+   * @param googleUser - Google 사용자 정보
+   * @returns User 엔티티
+   */
+  async validateGoogleUser(googleUser: {
+    providerId: string;
+    email: string;
+    name: string;
+    picture?: string;
+  }): Promise<User> {
+    // 이메일로 기존 사용자 조회
+    let user = await this.userRepository.findByEmail(googleUser.email);
+
+    //기존 사용자 존재시
+    if (user) {
+      // 기존 사용자가 있지만 provider가 다른 경우
+      if (user.provider !== Provider.GOOGLE) {
+        throw new AuthEmailAlreadyRegisteredWithDifferentProviderException(
+          user.provider,
+        );
+      }
+
+      // 비활성 사용자 체크
+      if (!user.isActivate) {
+        throw new UserNotActiveException();
+      }
+
+      return user;
+    }
+
+    // 신규 사용자 생성
+    user = User.createWithOAuth(
+      googleUser.name,
+      googleUser.email,
+      Provider.GOOGLE,
+      googleUser.providerId,
     );
+
+    return await this.userRepository.save(user);
   }
 }
