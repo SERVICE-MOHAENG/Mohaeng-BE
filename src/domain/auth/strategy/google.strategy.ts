@@ -3,6 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from '../service/AuthService';
+import { AuthGoogleProfileInvalidException } from '../exception/AuthGoogleProfileInvalidException';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
@@ -10,10 +11,28 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     private readonly configService: ConfigService,
     private readonly authService: AuthService,
   ) {
+    // 필수 환경 변수 검증 (Fail-fast)
+    const requiredEnvVars = [
+      'GOOGLE_CLIENT_ID',
+      'GOOGLE_CLIENT_SECRET',
+      'GOOGLE_CALLBACK_URL',
+    ] as const;
+
+    const missingVars = requiredEnvVars.filter(
+      (key) => !configService.get<string>(key),
+    );
+
+    if (missingVars.length > 0) {
+      throw new Error(
+        `필수 Google OAuth 환경 변수가 설정되지 않았습니다: ${missingVars.join(', ')}. ` +
+          `.env 파일에 해당 값을 설정해주세요.`,
+      );
+    }
+
     super({
-      clientID: configService.get<string>('GOOGLE_CLIENT_ID') || '',
-      clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET') || '',
-      callbackURL: configService.get<string>('GOOGLE_CALLBACK_URL') || '',
+      clientID: configService.get<string>('GOOGLE_CLIENT_ID')!,
+      clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET')!,
+      callbackURL: configService.get<string>('GOOGLE_CALLBACK_URL')!,
       scope: ['email', 'profile'],
     });
   }
@@ -24,13 +43,23 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     profile: any,
     done: VerifyCallback,
   ): Promise<any> {
-    const { id, name, emails, photos } = profile;
+    // 안전한 데이터 추출 (Optional chaining + 기본값)
+    const email = profile.emails?.[0]?.value ?? null;
+    const givenName = profile.name?.givenName ?? '';
+    const familyName = profile.name?.familyName ?? '';
+    const picture = profile.photos?.[0]?.value ?? null;
+    const providerId = profile.id;
+
+    // 필수 필드 검증: 이메일이 없으면 인증 실패
+    if (!email && !givenName) {
+      throw new AuthGoogleProfileInvalidException();
+    }
 
     const user = await this.authService.validateGoogleUser({
-      providerId: id,
-      email: emails[0].value,
-      name: name.givenName + (name.familyName ? ' ' + name.familyName : ''),
-      picture: photos[0]?.value,
+      providerId,
+      email,
+      name: givenName + (familyName ? ' ' + familyName : ''),
+      picture,
     });
 
     done(null, user);

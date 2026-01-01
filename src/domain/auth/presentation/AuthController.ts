@@ -1,4 +1,4 @@
-﻿import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { CurrentUser } from '../../../global/decorators/CurrentUser';
@@ -76,8 +76,19 @@ export class AuthController {
     // Google OAuth 성공 후 토큰 발급
     const tokens = await this.authService.issueTokens(req.user);
 
-    // 프론트엔드로 리다이렉트 (토큰을 쿼리 파라미터로 전달)
-    // 실제 환경에서는 보안을 위해 다른 방식을 고려해야 함
+    // TODO: [보안] 현재 URL 파라미터로 토큰 전달 - 프로덕션 배포 전 개선 필요
+    // 보안 위험:
+    // - 브라우저 히스토리에 토큰 노출
+    // - 서버 로그에 토큰 기록 가능
+    // - Referrer 헤더를 통한 토큰 유출 가능
+    //
+    // 권장 개선 방안 (일회용 코드 교환 방식):
+    // 1. 임시 코드 생성 및 Redis/메모리 캐시에 저장 (유효기간: 5분)
+    // 2. 프론트엔드로 코드만 전달: `${frontendUrl}/auth/google/callback?code=${tempCode}`
+    // 3. 프론트엔드에서 POST /v1/auth/google/exchange API로 코드를 토큰으로 교환 => url에 코드가 노출되지만 일회성이고 토큰이 아니여서 비교적 안전
+    // 4. 코드는 1회용으로 사용 후 즉시 삭제
+    //
+    // 참고: OAuth 콜백은 브라우저 리다이렉트(GET)이므로 JSON 응답 불가
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     res.redirect(
       `${frontendUrl}/auth/google/callback?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`,
