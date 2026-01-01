@@ -1,6 +1,6 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../../global/BaseEntity';
-import { User } from './User.entity';
+import { User } from '../../user/entity/User.entity';
 import { RefreshTokenStatus } from './RefreshTokenStatus.enum';
 
 /**
