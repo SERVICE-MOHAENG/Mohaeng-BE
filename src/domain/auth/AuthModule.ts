@@ -9,6 +9,7 @@ import { UserModule } from '../user/UserModule';
 import { AuthController } from './presentation/AuthController';
 import { AuthService } from './service/AuthService';
 import { GoogleStrategy } from './strategy/google.strategy';
+import { NaverStrategy } from './strategy/naver.strategy';
 
 /**
  * AuthModule
@@ -29,6 +30,7 @@ import { GoogleStrategy } from './strategy/google.strategy';
     RefreshTokenRepository,
     OAuthCodeRepository,
     GoogleStrategy,
+    NaverStrategy,
   ],
   exports: [AuthService],
 })

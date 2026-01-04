@@ -262,4 +262,46 @@ export class AuthService {
     // 토큰 발급
     return this.issueTokens(user);
   }
+
+  /**
+   * Naver OAuth 사용자 검증 및 생성/조회
+   * @param naverUser - Naver 사용자 정보
+   * @returns User 엔티티
+   */
+  async validateNaverUser(naverUser: {
+    providerId: string;
+    email: string;
+    name: string;
+    picture?: string;
+  }): Promise<User> {
+    // 이메일로 기존 사용자 조회
+    let user = await this.userRepository.findByEmail(naverUser.email);
+
+    //기존 사용자 존재시
+    if (user) {
+      // 기존 사용자가 있지만 provider가 다른 경우
+      if (user.provider !== Provider.NAVER) {
+        throw new AuthEmailAlreadyRegisteredWithDifferentProviderException(
+          user.provider,
+        );
+      }
+
+      // 비활성 사용자 체크
+      if (!user.isActivate) {
+        throw new UserNotActiveException();
+      }
+
+      return user;
+    }
+
+    // 신규 사용자 생성
+    user = User.createWithOAuth(
+      naverUser.name,
+      naverUser.email,
+      Provider.NAVER,
+      naverUser.providerId,
+    );
+
+    return await this.userRepository.save(user);
+  }
 }

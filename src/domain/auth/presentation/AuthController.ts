@@ -21,6 +21,7 @@ import { ExchangeAuthCodeRequest } from './dto/request/ExchangeAuthCodeRequest';
 import { AuthTokensResponse } from './dto/response/AuthTokensResponse';
 import { CurrentUserResponse } from './dto/response/CurrentUserResponse';
 import { GoogleAuthGuard } from '../guard/google-auth.guard';
+import { NaverAuthGuard } from '../guard/naver-auth.guard';
 import { User } from '../../user/entity/User.entity';
 
 @ApiTags('auth')
@@ -137,5 +138,37 @@ export class AuthController {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
     };
+  }
+
+  @Get('naver/login')
+  @UseGuards(NaverAuthGuard)
+  @ApiOperation({ summary: 'Naver 로그인 시작' })
+  @ApiResponse({
+    status: 302,
+    description: 'Naver 로그인 페이지로 리다이렉트',
+  })
+  async naverAuth(@Req() _req: Request) {
+    void _req;
+    // Guard가 자동으로 Naver OAuth 페이지로 리다이렉트
+  }
+
+  @Get('naver/callback')
+  @UseGuards(NaverAuthGuard)
+  @ApiOperation({ summary: 'Naver 로그인 콜백' })
+  @ApiResponse({
+    status: 302,
+    description: '인증 코드와 함께 프론트엔드로 리다이렉트',
+  })
+  @ApiResponse({ status: 401, description: '인증 실패' })
+  async naverAuthRedirect(
+    @Req() req: Request & { user: User },
+    @Res() res: Response,
+  ): Promise<void> {
+    // Naver OAuth 성공 후 일회용 인증 코드 발급
+    const code = await this.authService.generateOAuthCode(req.user);
+
+    // 프론트엔드로 인증 코드 전달 (URL에 노출되지만 일회용이고 5분 후 만료)
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    res.redirect(`${frontendUrl}/auth/oauth/callback?code=${code}`);
   }
 }
