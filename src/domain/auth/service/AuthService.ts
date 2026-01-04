@@ -179,20 +179,24 @@ export class AuthService {
   }
 
   /**
-   * Google OAuth 사용자 검증 및 생성/조회
-   * @param googleUser - Google 사용자 정보
+   * OAuth 사용자 검증 및 생성/조회 공통 로직
+   * @param provider - OAuth 제공자 (GOOGLE, NAVER 등)
+   * @param oauthUser - OAuth 사용자 정보
    * @returns User 엔티티
    */
-  async validateGoogleUser(googleUser: {
-    providerId: string;
-    email: string;
-    name: string;
-    picture?: string;
-  }): Promise<User> {
+  private async validateOAuthUser(
+    provider: Provider,
+    oauthUser: {
+      providerId: string;
+      email: string;
+      name: string;
+      picture?: string;
+    },
+  ): Promise<User> {
     // 1순위: providerId로 기존 사용자 조회 (가장 정확한 방법)
     let user = await this.userRepository.findByProviderAndProviderId(
-      Provider.GOOGLE,
-      googleUser.providerId,
+      provider,
+      oauthUser.providerId,
     );
 
     if (user) {
@@ -205,11 +209,11 @@ export class AuthService {
     }
 
     // 2순위: 이메일로 기존 사용자 조회 (폴백)
-    user = await this.userRepository.findByEmail(googleUser.email);
+    user = await this.userRepository.findByEmail(oauthUser.email);
 
     if (user) {
       // 기존 사용자가 있지만 provider가 다른 경우
-      if (user.provider !== Provider.GOOGLE) {
+      if (user.provider !== provider) {
         throw new AuthEmailAlreadyRegisteredWithDifferentProviderException(
           user.provider,
         );
@@ -225,13 +229,27 @@ export class AuthService {
 
     // 신규 사용자 생성
     user = User.createWithOAuth(
-      googleUser.name,
-      googleUser.email,
-      Provider.GOOGLE,
-      googleUser.providerId,
+      oauthUser.name,
+      oauthUser.email,
+      provider,
+      oauthUser.providerId,
     );
 
     return await this.userRepository.save(user);
+  }
+
+  /**
+   * Google OAuth 사용자 검증 및 생성/조회
+   * @param googleUser - Google 사용자 정보
+   * @returns User 엔티티
+   */
+  async validateGoogleUser(googleUser: {
+    providerId: string;
+    email: string;
+    name: string;
+    picture?: string;
+  }): Promise<User> {
+    return this.validateOAuthUser(Provider.GOOGLE, googleUser);
   }
 
   /**
@@ -288,48 +306,6 @@ export class AuthService {
     name: string;
     picture?: string;
   }): Promise<User> {
-    // 1순위: providerId로 기존 사용자 조회 (가장 정확한 방법)
-    let user = await this.userRepository.findByProviderAndProviderId(
-      Provider.NAVER,
-      naverUser.providerId,
-    );
-
-    if (user) {
-      // 비활성 사용자 체크
-      if (!user.isActivate) {
-        throw new UserNotActiveException();
-      }
-
-      return user;
-    }
-
-    // 2순위: 이메일로 기존 사용자 조회 (폴백)
-    user = await this.userRepository.findByEmail(naverUser.email);
-
-    if (user) {
-      // 기존 사용자가 있지만 provider가 다른 경우
-      if (user.provider !== Provider.NAVER) {
-        throw new AuthEmailAlreadyRegisteredWithDifferentProviderException(
-          user.provider,
-        );
-      }
-
-      // 비활성 사용자 체크
-      if (!user.isActivate) {
-        throw new UserNotActiveException();
-      }
-
-      return user;
-    }
-
-    // 신규 사용자 생성
-    user = User.createWithOAuth(
-      naverUser.name,
-      naverUser.email,
-      Provider.NAVER,
-      naverUser.providerId,
-    );
-
-    return await this.userRepository.save(user);
+    return this.validateOAuthUser(Provider.NAVER, naverUser);
   }
 }
