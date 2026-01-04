@@ -2,6 +2,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import * as request from 'supertest';
+import type { App } from 'supertest';
 import { TestDatabaseModule } from '../../config/test-database.module';
 import { AuthModule } from '../../../src/domain/auth/AuthModule';
 import { UserModule } from '../../../src/domain/user/UserModule';
@@ -13,6 +14,13 @@ import { UserRepository } from '../../../src/domain/user/persistence/UserReposit
 import { RefreshTokenRepository } from '../../../src/domain/auth/persistence/RefreshTokenRepository';
 
 describe('GET /v1/auth/me', () => {
+  const getServer = (app: INestApplication): App =>
+    app.getHttpServer() as App;
+
+  type ErrorResponse = {
+    success: boolean;
+  };
+
   let app: INestApplication;
   let userRepository: UserRepository;
   let refreshTokenRepository: RefreshTokenRepository;
@@ -56,7 +64,9 @@ describe('GET /v1/auth/me', () => {
     await app.init();
 
     userRepository = moduleFixture.get<UserRepository>(UserRepository);
-    refreshTokenRepository = moduleFixture.get<RefreshTokenRepository>(RefreshTokenRepository);
+    refreshTokenRepository = moduleFixture.get<RefreshTokenRepository>(
+      RefreshTokenRepository,
+    );
   });
 
   afterAll(async () => {
@@ -72,12 +82,13 @@ describe('GET /v1/auth/me', () => {
     it('should return user info with valid access token', async () => {
       const { tokens, userId, userData } = await AuthHelper.signupAndLogin(app);
 
-      const response = await request(app.getHttpServer())
+      const response = await request(getServer(app))
         .get('/api/v1/auth/me')
         .set('Authorization', AuthHelper.createAuthHeader(tokens.accessToken))
         .expect(200);
 
-      expect(response.body).toMatchObject({
+      const body = response.body as { id: string; email: string };
+      expect(body).toMatchObject({
         id: userId,
         email: userData.email,
       });
@@ -98,42 +109,46 @@ describe('GET /v1/auth/me', () => {
 
   describe('Failure Cases', () => {
     it('should reject missing Authorization header', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(getServer(app))
         .get('/api/v1/auth/me')
         .expect(401);
 
-      expect(response.body.success).toBe(false);
+      const body = response.body as ErrorResponse;
+      expect(body.success).toBe(false);
     });
 
     it('should reject invalid token format', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(getServer(app))
         .get('/api/v1/auth/me')
         .set('Authorization', 'Bearer invalid-token')
         .expect(401);
 
-      expect(response.body.success).toBe(false);
+      const body = response.body as ErrorResponse;
+      expect(body.success).toBe(false);
     });
 
     it('should reject missing Bearer scheme', async () => {
       const { tokens } = await AuthHelper.signupAndLogin(app);
 
-      const response = await request(app.getHttpServer())
+      const response = await request(getServer(app))
         .get('/api/v1/auth/me')
         .set('Authorization', tokens.accessToken)
         .expect(401);
 
-      expect(response.body.success).toBe(false);
+      const body = response.body as ErrorResponse;
+      expect(body.success).toBe(false);
     });
 
     it('should reject refresh token instead of access token', async () => {
       const { tokens } = await AuthHelper.signupAndLogin(app);
 
-      const response = await request(app.getHttpServer())
+      const response = await request(getServer(app))
         .get('/api/v1/auth/me')
         .set('Authorization', AuthHelper.createAuthHeader(tokens.refreshToken))
         .expect(401);
 
-      expect(response.body.success).toBe(false);
+      const body = response.body as ErrorResponse;
+      expect(body.success).toBe(false);
     });
   });
 });

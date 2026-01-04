@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class ApiResponseDto<T = any> {
+export class ApiResponseDto<T = unknown> {
   @ApiProperty({ description: '성공 여부' })
   success: boolean;
 
@@ -29,7 +29,7 @@ export class ApiResponseDto<T = any> {
     return new ApiResponseDto<T>(true, undefined, message, data);
   }
 
-  static error(errorCode: string, message: string): ApiResponseDto {
+  static error(errorCode: string, message: string): ApiResponseDto<never> {
     return new ApiResponseDto(false, errorCode, message);
   }
 }

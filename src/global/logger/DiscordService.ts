@@ -20,7 +20,7 @@ export class DiscordService {
 
   constructor(private readonly configService: ConfigService) {
     // 할 일: 환경 변수에 웹훅 URL 추가하기
-      this.webhookUrl = this.configService.get<string>('DISCORD_WEBHOOK_URL');
+    this.webhookUrl = this.configService.get<string>('DISCORD_WEBHOOK_URL');
   }
 
   /**
@@ -57,11 +57,7 @@ export class DiscordService {
     try {
       const embed = this.createEmbed(level, message, context, stack);
 
-      await axios.post(
-        this.webhookUrl,
-        { embeds: [embed] },
-        { timeout: 5000 },
-      );
+      await axios.post(this.webhookUrl, { embeds: [embed] }, { timeout: 5000 });
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);

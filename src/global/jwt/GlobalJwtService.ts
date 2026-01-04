@@ -160,7 +160,11 @@ export class GlobalJwtService {
 
   decodeToken<T = unknown>(token: string): T | undefined {
     try {
-      return this.jwtService.decode(token) as T;
+      const decoded = this.jwtService.decode<T>(token);
+      if (!decoded || typeof decoded === 'string') {
+        return undefined;
+      }
+      return decoded;
     } catch {
       return undefined;
     }

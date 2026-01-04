@@ -10,7 +10,7 @@ import { GlobalJwtService } from './GlobalJwtService';
     NestJwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        // access secret π◊ ∏∏∑· º≥¡§
+        // access secret ÌôòÍ≤Ω Î≥ÄÏàò Í≤ÄÏ¶ù
         const secret = configService.get<string>('JWT_ACCESS_SECRET');
         if (!secret) {
           throw new Error('JWT access secret is not set.');
@@ -19,7 +19,7 @@ import { GlobalJwtService } from './GlobalJwtService';
         return {
           secret,
           signOptions: {
-            // access token ±‚∫ª ∏∏∑· Ω√∞£
+            // access token Í∏∞Î≥∏ ÎßåÎ£å ÏãúÍ∞Ñ
             expiresIn: (configService.get<string>('JWT_ACCESS_EXPIRY') ||
               '1h') as StringValue,
           },

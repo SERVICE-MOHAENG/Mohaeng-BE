@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { createHash } from 'crypto';
-import ms = require('ms');
-import type { StringValue } from 'ms';
+import ms, { type StringValue } from 'ms';
 import { User } from '../../user/entity/User.entity';
 import { Provider } from '../../user/entity/Provider.enum';
 import { UserNotActiveException } from '../../user/exception/UserNotActiveException';
@@ -13,9 +12,11 @@ import { UserRepository } from '../../user/persistence/UserRepository';
 import { RefreshToken } from '../entity/RefreshToken.entity';
 import { AuthInvalidCredentialsException } from '../exception/AuthInvalidCredentialsException';
 import { AuthInvalidRefreshTokenException } from '../exception/AuthInvalidRefreshTokenException';
+import { AuthInvalidOAuthCodeException } from '../exception/AuthInvalidOAuthCodeException';
 import { AuthEmailAlreadyRegisteredWithDifferentProviderException } from '../exception/AuthEmailAlreadyRegisteredWithDifferentProviderException';
 import { LoginRequest } from '../presentation/dto/request/LoginRequest';
 import { RefreshTokenRepository } from '../persistence/RefreshTokenRepository';
+import { OAuthCodeRepository } from '../persistence/OAuthCodeRepository';
 import { GlobalJwtService } from '../../../global/jwt/GlobalJwtService';
 
 type JwtPayload = {
@@ -33,6 +34,7 @@ type AuthTokens = {
 export class AuthService {
   constructor(
     private readonly refreshTokenRepository: RefreshTokenRepository,
+    private readonly oauthCodeRepository: OAuthCodeRepository,
     private readonly userService: UserService,
     private readonly userRepository: UserRepository,
     private readonly jwtService: JwtService,
@@ -177,23 +179,41 @@ export class AuthService {
   }
 
   /**
-   * Google OAuth 사용자 검증 및 생성/조회
-   * @param googleUser - Google 사용자 정보
+   * OAuth 사용자 검증 및 생성/조회 공통 로직
+   * @param provider - OAuth 제공자 (GOOGLE, NAVER 등)
+   * @param oauthUser - OAuth 사용자 정보
    * @returns User 엔티티
    */
-  async validateGoogleUser(googleUser: {
-    providerId: string;
-    email: string;
-    name: string;
-    picture?: string;
-  }): Promise<User> {
-    // 이메일로 기존 사용자 조회
-    let user = await this.userRepository.findByEmail(googleUser.email);
+  private async validateOAuthUser(
+    provider: Provider,
+    oauthUser: {
+      providerId: string;
+      email: string;
+      name: string;
+      picture?: string;
+    },
+  ): Promise<User> {
+    // 1순위: providerId로 기존 사용자 조회 (가장 정확한 방법)
+    let user = await this.userRepository.findByProviderAndProviderId(
+      provider,
+      oauthUser.providerId,
+    );
 
-    //기존 사용자 존재시
+    if (user) {
+      // 비활성 사용자 체크
+      if (!user.isActivate) {
+        throw new UserNotActiveException();
+      }
+
+      return user;
+    }
+
+    // 2순위: 이메일로 기존 사용자 조회 (폴백)
+    user = await this.userRepository.findByEmail(oauthUser.email);
+
     if (user) {
       // 기존 사용자가 있지만 provider가 다른 경우
-      if (user.provider !== Provider.GOOGLE) {
+      if (user.provider !== provider) {
         throw new AuthEmailAlreadyRegisteredWithDifferentProviderException(
           user.provider,
         );
@@ -209,12 +229,83 @@ export class AuthService {
 
     // 신규 사용자 생성
     user = User.createWithOAuth(
-      googleUser.name,
-      googleUser.email,
-      Provider.GOOGLE,
-      googleUser.providerId,
+      oauthUser.name,
+      oauthUser.email,
+      provider,
+      oauthUser.providerId,
     );
 
     return await this.userRepository.save(user);
+  }
+
+  /**
+   * Google OAuth 사용자 검증 및 생성/조회
+   * @param googleUser - Google 사용자 정보
+   * @returns User 엔티티
+   */
+  async validateGoogleUser(googleUser: {
+    providerId: string;
+    email: string;
+    name: string;
+    picture?: string;
+  }): Promise<User> {
+    return this.validateOAuthUser(Provider.GOOGLE, googleUser);
+  }
+
+  /**
+   * OAuth 인증 코드를 생성하고 저장합니다
+   * @param user 사용자 엔티티
+   * @returns 생성된 인증 코드
+   */
+  async generateOAuthCode(user: User): Promise<string> {
+    const code = this.oauthCodeRepository.generateCode();
+    await this.oauthCodeRepository.save(code, {
+      userId: user.id,
+      email: user.email,
+    });
+    return code;
+  }
+
+  /**
+   * OAuth 인증 코드를 토큰으로 교환합니다
+   * @param code 인증 코드
+   * @returns 액세스 토큰과 리프레시 토큰
+   */
+  async exchangeOAuthCode(code: string): Promise<AuthTokens> {
+    // 인증 코드 조회 및 삭제 (일회용)
+    const codeData = await this.oauthCodeRepository.findAndDelete(code);
+
+    if (!codeData) {
+      throw new AuthInvalidOAuthCodeException();
+    }
+
+    // 사용자 조회
+    const user = await this.userRepository.findById(codeData.userId);
+
+    if (!user) {
+      throw new UserNotFoundException();
+    }
+
+    // 비활성 사용자 체크
+    if (!user.isActivate) {
+      throw new UserNotActiveException();
+    }
+
+    // 토큰 발급
+    return this.issueTokens(user);
+  }
+
+  /**
+   * Naver OAuth 사용자 검증 및 생성/조회
+   * @param naverUser - Naver 사용자 정보
+   * @returns User 엔티티
+   */
+  async validateNaverUser(naverUser: {
+    providerId: string;
+    email: string;
+    name: string;
+    picture?: string;
+  }): Promise<User> {
+    return this.validateOAuthUser(Provider.NAVER, naverUser);
   }
 }

@@ -44,14 +44,15 @@ export class AdminAuthGuard implements CanActivate {
       const admin = this.toAuthenticatedAdmin(payload);
       request.admin = admin;
 
-      const requiredPermissions =
-        this.reflector.getAllAndOverride<AdminPermission[] | undefined>(
-          ADMIN_PERMISSIONS_KEY,
-          [context.getHandler(), context.getClass()],
-        );
+      const requiredPermissions = this.reflector.getAllAndOverride<
+        AdminPermission[] | undefined
+      >(ADMIN_PERMISSIONS_KEY, [context.getHandler(), context.getClass()]);
 
       // 필요한 권한이 있으면 모두 포함되는지 검사
-      if (requiredPermissions && !this.hasAllPermissions(admin, requiredPermissions)) {
+      if (
+        requiredPermissions &&
+        !this.hasAllPermissions(admin, requiredPermissions)
+      ) {
         throw new GlobalForbiddenException();
       }
 
@@ -90,8 +91,9 @@ export class AdminAuthGuard implements CanActivate {
       return true;
     }
 
-    return requiredPermissions.every(
-      (permission) => (admin.permissions & permission) === permission,
-    );
+    return requiredPermissions.every((permission) => {
+      const permissionValue = permission as number;
+      return (admin.permissions & permissionValue) === permissionValue;
+    });
   }
 }

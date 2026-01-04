@@ -13,10 +13,21 @@ export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 100, name: 'name', nullable: false })
   name: string;
 
-  @Column({ type: 'varchar', length: 255, name: 'email', nullable: false, unique: true })
+  @Column({
+    type: 'varchar',
+    length: 255,
+    name: 'email',
+    nullable: false,
+    unique: true,
+  })
   email: string;
 
-  @Column({ type: 'varchar', length: 255, name: 'password_hash', nullable: true })
+  @Column({
+    type: 'varchar',
+    length: 255,
+    name: 'password_hash',
+    nullable: true,
+  })
   passwordHash: string | null;
 
   @Column({
@@ -31,7 +42,12 @@ export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 255, name: 'provider_id', nullable: true })
   providerId: string | null;
 
-  @Column({ type: 'boolean', name: 'is_activate', nullable: false, default: true })
+  @Column({
+    type: 'boolean',
+    name: 'is_activate',
+    nullable: false,
+    default: true,
+  })
   isActivate: boolean;
 
   /**

@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as request from 'supertest';
+import type { App } from 'supertest';
 import { createHash } from 'crypto';
 import { TestDatabaseModule } from '../../config/test-database.module';
 import { AuthModule } from '../../../src/domain/auth/AuthModule';
@@ -19,6 +20,22 @@ import { UserErrorCode } from '../../../src/domain/user/exception/code';
 import { RefreshTokenStatus } from '../../../src/domain/auth/entity/RefreshTokenStatus.enum';
 
 describe('POST /v1/auth/login', () => {
+  const getServer = (app: INestApplication): App =>
+    app.getHttpServer() as App;
+
+  type JwtPayload = {
+    userId: string;
+    email: string;
+    sub: string;
+    iat: number;
+    exp: number;
+  };
+
+  type ErrorResponse = {
+    success: boolean;
+    errorCode?: string;
+  };
+
   let app: INestApplication;
   let userRepository: UserRepository;
   let refreshTokenRepository: RefreshTokenRepository;
@@ -63,7 +80,9 @@ describe('POST /v1/auth/login', () => {
     await app.init();
 
     userRepository = moduleFixture.get<UserRepository>(UserRepository);
-    refreshTokenRepository = moduleFixture.get<RefreshTokenRepository>(RefreshTokenRepository);
+    refreshTokenRepository = moduleFixture.get<RefreshTokenRepository>(
+      RefreshTokenRepository,
+    );
     jwtService = moduleFixture.get<JwtService>(JwtService);
   });
 
@@ -81,7 +100,7 @@ describe('POST /v1/auth/login', () => {
       const userData = TestDataBuilder.createUserData();
       await AuthHelper.signupUser(app, userData);
 
-      const response = await request(app.getHttpServer())
+      const response = await request(getServer(app))
         .post('/api/v1/auth/login')
         .send({
           email: userData.email,
@@ -89,16 +108,20 @@ describe('POST /v1/auth/login', () => {
         })
         .expect(200);
 
-      expect(response.body).toHaveProperty('accessToken');
-      expect(response.body).toHaveProperty('refreshToken');
-      expect(typeof response.body.accessToken).toBe('string');
-      expect(typeof response.body.refreshToken).toBe('string');
+      const body = response.body as { accessToken: string; refreshToken: string };
+      expect(body).toHaveProperty('accessToken');
+      expect(body).toHaveProperty('refreshToken');
+      expect(typeof body.accessToken).toBe('string');
+      expect(typeof body.refreshToken).toBe('string');
     });
 
     it('should include correct JWT payload in access token', async () => {
       const { tokens, userId } = await AuthHelper.signupAndLogin(app);
 
-      const decoded = jwtService.decode(tokens.accessToken) as any;
+      const decoded = jwtService.decode<JwtPayload>(tokens.accessToken);
+      if (!decoded || typeof decoded === 'string') {
+        throw new Error('Invalid token payload');
+      }
 
       expect(decoded).toHaveProperty('userId', userId);
       expect(decoded).toHaveProperty('email');
@@ -115,7 +138,8 @@ describe('POST /v1/auth/login', () => {
         .update(tokens.refreshToken)
         .digest('hex');
 
-      const storedToken = await refreshTokenRepository.findByTokenHash(tokenHash);
+      const storedToken =
+        await refreshTokenRepository.findByTokenHash(tokenHash);
 
       expect(storedToken).toBeDefined();
       expect(storedToken!.status).toBe(RefreshTokenStatus.ACTIVE);
@@ -127,10 +151,18 @@ describe('POST /v1/auth/login', () => {
       await AuthHelper.signupUser(app, userData);
 
       // First login
-      const tokens1 = await AuthHelper.loginUser(app, userData.email, userData.password);
+      const tokens1 = await AuthHelper.loginUser(
+        app,
+        userData.email,
+        userData.password,
+      );
 
       // Second login
-      const tokens2 = await AuthHelper.loginUser(app, userData.email, userData.password);
+      const tokens2 = await AuthHelper.loginUser(
+        app,
+        userData.email,
+        userData.password,
+      );
 
       // Both tokens should be different
       expect(tokens1.accessToken).not.toBe(tokens2.accessToken);
@@ -147,7 +179,7 @@ describe('POST /v1/auth/login', () => {
       const userData = TestDataBuilder.createUserData();
       await AuthHelper.signupUser(app, userData);
 
-      const response = await request(app.getHttpServer())
+      const response = await request(getServer(app))
         .post('/api/v1/auth/login')
         .send({
           email: userData.email,
@@ -155,12 +187,13 @@ describe('POST /v1/auth/login', () => {
         })
         .expect(401);
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.errorCode).toBe(AuthErrorCode.INVALID_CREDENTIALS);
+      const body = response.body as ErrorResponse;
+      expect(body.success).toBe(false);
+      expect(body.errorCode).toBe(AuthErrorCode.INVALID_CREDENTIALS);
     });
 
     it('should reject non-existent user', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(getServer(app))
         .post('/api/v1/auth/login')
         .send({
           email: 'nonexistent@example.com',
@@ -168,8 +201,9 @@ describe('POST /v1/auth/login', () => {
         })
         .expect(401);
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.errorCode).toBe(AuthErrorCode.INVALID_CREDENTIALS);
+      const body = response.body as ErrorResponse;
+      expect(body.success).toBe(false);
+      expect(body.errorCode).toBe(AuthErrorCode.INVALID_CREDENTIALS);
     });
 
     it('should reject inactive user', async () => {
@@ -178,7 +212,7 @@ describe('POST /v1/auth/login', () => {
       // Deactivate user
       await userRepository.softDelete(userId);
 
-      const response = await request(app.getHttpServer())
+      const response = await request(getServer(app))
         .post('/api/v1/auth/login')
         .send({
           email: userData.email,
@@ -186,12 +220,13 @@ describe('POST /v1/auth/login', () => {
         })
         .expect(403);
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.errorCode).toBe(UserErrorCode.USER_NOT_ACTIVE);
+      const body = response.body as ErrorResponse;
+      expect(body.success).toBe(false);
+      expect(body.errorCode).toBe(UserErrorCode.USER_NOT_ACTIVE);
     });
 
     it('should reject invalid email format', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(getServer(app))
         .post('/api/v1/auth/login')
         .send({
           email: 'not-an-email',
@@ -199,16 +234,18 @@ describe('POST /v1/auth/login', () => {
         })
         .expect(400);
 
-      expect(response.body.success).toBe(false);
+      const body = response.body as ErrorResponse;
+      expect(body.success).toBe(false);
     });
 
     it('should reject missing credentials', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(getServer(app))
         .post('/api/v1/auth/login')
         .send({})
         .expect(400);
 
-      expect(response.body.success).toBe(false);
+      const body = response.body as ErrorResponse;
+      expect(body.success).toBe(false);
     });
   });
 });
