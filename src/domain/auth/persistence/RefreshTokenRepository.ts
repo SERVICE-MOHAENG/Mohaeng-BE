@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindManyOptions, Repository } from 'typeorm';
 import { RefreshToken } from '../entity/RefreshToken.entity';
 import { RefreshTokenStatus } from '../entity/RefreshTokenStatus.enum';
 
@@ -38,11 +38,13 @@ export class RefreshTokenRepository {
     await this.repository.clear();
   }
 
-  async findAll(options?: any): Promise<RefreshToken[]> {
+  async findAll(
+    options?: FindManyOptions<RefreshToken>,
+  ): Promise<RefreshToken[]> {
     return this.repository.find(options);
   }
 
-  async count(options?: any): Promise<number> {
+  async count(options?: FindManyOptions<RefreshToken>): Promise<number> {
     return this.repository.count(options);
   }
 }

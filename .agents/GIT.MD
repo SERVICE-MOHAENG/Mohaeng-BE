@@ -33,8 +33,13 @@ fix/15-login-validation-error
 chore/10-ci-pipeline-setup
 ai/20251229-18b2b6
 ```
+## 커밋 기준
+
+
 
 ## 커밋 메시지 형식
+- 커밋  issue-number는 현재있는 브랜치 번호 기준
+- 커밋 descirption은 무조건 한국어로 작성
 
 ```
 {type} (#{issue-number}) : {description}

@@ -57,7 +57,9 @@ describe('DELETE /v1/users/me (Deactivate)', () => {
     await app.init();
 
     userRepository = moduleFixture.get<UserRepository>(UserRepository);
-    refreshTokenRepository = moduleFixture.get<RefreshTokenRepository>(RefreshTokenRepository);
+    refreshTokenRepository = moduleFixture.get<RefreshTokenRepository>(
+      RefreshTokenRepository,
+    );
   });
 
   afterAll(async () => {
@@ -116,9 +118,7 @@ describe('DELETE /v1/users/me (Deactivate)', () => {
 
   describe('Failure Cases', () => {
     it('should reject missing authorization token', async () => {
-      await request(app.getHttpServer())
-        .delete('/api/v1/users/me')
-        .expect(401);
+      await request(app.getHttpServer()).delete('/api/v1/users/me').expect(401);
     });
 
     it('should reject invalid token', async () => {

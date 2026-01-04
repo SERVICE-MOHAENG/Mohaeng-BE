@@ -100,7 +100,9 @@ describe('POST /v1/users (Signup)', () => {
     });
 
     it('should hash password before storing in database', async () => {
-      const userData = TestDataBuilder.createUserData({ password: 'PlainTextPassword123!' });
+      const userData = TestDataBuilder.createUserData({
+        password: 'PlainTextPassword123!',
+      });
 
       const { userId } = await AuthHelper.signupUser(app, userData);
 

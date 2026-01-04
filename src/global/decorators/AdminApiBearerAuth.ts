@@ -1,4 +1,4 @@
-import { applyDecorators, UseGuards } from '@nestjs/common';
+import { applyDecorators } from '@nestjs/common';
 import { ApiBearerAuth, ApiUnauthorizedResponse } from '@nestjs/swagger';
 
 /**
@@ -19,7 +19,7 @@ import { ApiBearerAuth, ApiUnauthorizedResponse } from '@nestjs/swagger';
  * @AdminApiBearerAuth()
  */
 export function AdminApiBearerAuth(
-  permissions?: string | string[],
+  _permissions?: string | string[],
 ): MethodDecorator {
   // 할 일: AdminGuard 구현 후 UseGuards(AdminGuard) 추가
   return applyDecorators(

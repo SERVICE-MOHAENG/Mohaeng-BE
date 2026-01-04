@@ -1,4 +1,14 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { CurrentUser } from '../../../global/decorators/CurrentUser';
@@ -21,7 +31,11 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '로그인' })
-  @ApiResponse({ status: 200, description: '로그인 성공', type: AuthTokensResponse })
+  @ApiResponse({
+    status: 200,
+    description: '로그인 성공',
+    type: AuthTokensResponse,
+  })
   @ApiResponse({ status: 401, description: '인증 실패' })
   async login(@Body() request: LoginRequest): Promise<AuthTokensResponse> {
     const tokens = await this.authService.login(request);
@@ -34,9 +48,15 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '토큰 갱신' })
-  @ApiResponse({ status: 200, description: '토큰 갱신 성공', type: AuthTokensResponse })
+  @ApiResponse({
+    status: 200,
+    description: '토큰 갱신 성공',
+    type: AuthTokensResponse,
+  })
   @ApiResponse({ status: 401, description: '유효하지 않은 리프레시 토큰' })
-  async refresh(@Body() request: RefreshTokenRequest): Promise<AuthTokensResponse> {
+  async refresh(
+    @Body() request: RefreshTokenRequest,
+  ): Promise<AuthTokensResponse> {
     if (!request.refreshToken || request.refreshToken.trim().length === 0) {
       throw new AuthMissingRefreshTokenException();
     }
@@ -51,24 +71,38 @@ export class AuthController {
   @Get('me')
   @UserApiBearerAuth()
   @ApiOperation({ summary: '내 정보 조회' })
-  @ApiResponse({ status: 200, description: '조회 성공', type: CurrentUserResponse })
+  @ApiResponse({
+    status: 200,
+    description: '조회 성공',
+    type: CurrentUserResponse,
+  })
   @ApiResponse({ status: 401, description: '인증 필요' })
-  async me(@CurrentUser() user: { id: string; email: string }): Promise<CurrentUserResponse> {
+  me(
+    @CurrentUser() user: { id: string; email: string },
+  ): CurrentUserResponse {
     return user;
   }
 
   @Get('google/login')
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Google 로그인 시작' })
-  @ApiResponse({ status: 302, description: 'Google 로그인 페이지로 리다이렉트' })
-  async googleAuth(@Req() req: Request) {
+  @ApiResponse({
+    status: 302,
+    description: 'Google 로그인 페이지로 리다이렉트',
+  })
+  async googleAuth(@Req() _req: Request) {
+    void _req;
     // Guard가 자동으로 Google OAuth 페이지로 리다이렉트
   }
+
 
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Google 로그인 콜백' })
-  @ApiResponse({ status: 302, description: '인증 코드와 함께 프론트엔드로 리다이렉트' })
+  @ApiResponse({
+    status: 302,
+    description: '인증 코드와 함께 프론트엔드로 리다이렉트',
+  })
   @ApiResponse({ status: 401, description: '인증 실패' })
   async googleAuthRedirect(
     @Req() req: Request & { user: User },
@@ -86,9 +120,14 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'OAuth 인증 코드를 토큰으로 교환',
-    description: '일회용 인증 코드를 액세스 토큰과 리프레시 토큰으로 교환합니다. 코드는 5분간 유효하며 1회만 사용 가능합니다.',
+    description:
+      '일회용 인증 코드를 액세스 토큰과 리프레시 토큰으로 교환합니다. 코드는 5분간 유효하며 1회만 사용 가능합니다.',
   })
-  @ApiResponse({ status: 200, description: '토큰 교환 성공', type: AuthTokensResponse })
+  @ApiResponse({
+    status: 200,
+    description: '토큰 교환 성공',
+    type: AuthTokensResponse,
+  })
   @ApiResponse({ status: 401, description: '유효하지 않거나 만료된 코드' })
   async exchangeOAuthCode(
     @Body() request: ExchangeAuthCodeRequest,

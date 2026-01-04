@@ -113,7 +113,10 @@ export class LogInterceptorService implements LoggerService {
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
-        console.error('[LogInterceptor] external logging failed:', errorMessage);
+        console.error(
+          '[LogInterceptor] external logging failed:',
+          errorMessage,
+        );
       }
     };
 
@@ -202,7 +205,10 @@ export class LogInterceptorService implements LoggerService {
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
-        console.error('[LogInterceptor] external logging failed:', errorMessage);
+        console.error(
+          '[LogInterceptor] external logging failed:',
+          errorMessage,
+        );
       }
     };
 

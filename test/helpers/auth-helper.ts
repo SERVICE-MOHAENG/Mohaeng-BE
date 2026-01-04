@@ -1,5 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
+import type { App } from 'supertest';
 import { SignupRequest } from '../../src/domain/user/presentation/dto/request/SignupRequest';
 import { TestDataBuilder } from './test-data-builder';
 
@@ -18,6 +19,9 @@ export type UserData = {
  * @description 인증 관련 테스트 헬퍼 함수
  */
 export class AuthHelper {
+  private static getServer(app: INestApplication): App {
+    return app.getHttpServer() as App;
+  }
   /**
    * 회원가입 요청
    */
@@ -25,14 +29,15 @@ export class AuthHelper {
     app: INestApplication,
     userData: SignupRequest,
   ): Promise<{ userId: string; email: string }> {
-    const response = await request(app.getHttpServer())
+    const response = await request(this.getServer(app))
       .post('/api/v1/users')
       .send(userData)
       .expect(201);
 
+    const body = response.body as { id: string; email: string };
     return {
-      userId: response.body.id,
-      email: response.body.email,
+      userId: body.id,
+      email: body.email,
     };
   }
 
@@ -44,14 +49,15 @@ export class AuthHelper {
     email: string,
     password: string,
   ): Promise<AuthTokens> {
-    const response = await request(app.getHttpServer())
+    const response = await request(this.getServer(app))
       .post('/api/v1/auth/login')
       .send({ email, password })
       .expect(200);
 
+    const body = response.body as AuthTokens;
     return {
-      accessToken: response.body.accessToken,
-      refreshToken: response.body.refreshToken,
+      accessToken: body.accessToken,
+      refreshToken: body.refreshToken,
     };
   }
 
@@ -84,14 +90,15 @@ export class AuthHelper {
     app: INestApplication,
     refreshToken: string,
   ): Promise<AuthTokens> {
-    const response = await request(app.getHttpServer())
+    const response = await request(this.getServer(app))
       .post('/api/v1/auth/refresh')
       .send({ refreshToken })
       .expect(200);
 
+    const body = response.body as AuthTokens;
     return {
-      accessToken: response.body.accessToken,
-      refreshToken: response.body.refreshToken,
+      accessToken: body.accessToken,
+      refreshToken: body.refreshToken,
     };
   }
 
@@ -102,11 +109,11 @@ export class AuthHelper {
     app: INestApplication,
     accessToken: string,
   ): Promise<{ id: string; email: string }> {
-    const response = await request(app.getHttpServer())
+    const response = await request(this.getServer(app))
       .get('/api/v1/auth/me')
       .set('Authorization', this.createAuthHeader(accessToken))
       .expect(200);
 
-    return response.body;
+    return response.body as { id: string; email: string };
   }
 }

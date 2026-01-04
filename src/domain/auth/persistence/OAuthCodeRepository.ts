@@ -36,11 +36,7 @@ export class OAuthCodeRepository {
   async save(code: string, data: OAuthCodeData): Promise<void> {
     const key = this.CODE_PREFIX + code;
     const value = JSON.stringify(data);
-    await this.redisService.setWithExpiry(
-      key,
-      value,
-      this.CODE_EXPIRY_SECONDS,
-    );
+    await this.redisService.setWithExpiry(key, value, this.CODE_EXPIRY_SECONDS);
   }
 
   /**

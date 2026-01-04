@@ -16,7 +16,8 @@ export class TestDataBuilder {
       name: override?.name ?? 'Test User',
       email: override?.email ?? `test${timestamp}${random}@example.com`,
       password: override?.password ?? 'Password123!',
-      passwordConfirm: override?.passwordConfirm ?? (override?.password ?? 'Password123!'),
+      passwordConfirm:
+        override?.passwordConfirm ?? override?.password ?? 'Password123!',
     };
   }
 

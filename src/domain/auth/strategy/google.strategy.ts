@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy, VerifyCallback } from 'passport-google-oauth20';
+import { Profile, Strategy, VerifyCallback } from 'passport-google-oauth20';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from '../service/AuthService';
 import { AuthGoogleProfileInvalidException } from '../exception/AuthGoogleProfileInvalidException';
@@ -40,14 +40,16 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   async validate(
     accessToken: string,
     refreshToken: string,
-    profile: any,
+    profile: Profile,
     done: VerifyCallback,
-  ): Promise<any> {
+  ): Promise<void> {
+    void accessToken;
+    void refreshToken;
     // 안전한 데이터 추출 (Optional chaining + 기본값)
     const email = profile.emails?.[0]?.value ?? null;
     const givenName = profile.name?.givenName ?? '';
     const familyName = profile.name?.familyName ?? '';
-    const picture = profile.photos?.[0]?.value ?? null;
+    const picture = profile.photos?.[0]?.value;
     const providerId = profile.id;
 
     // 필수 필드 검증: 이메일이 없으면 인증 실패

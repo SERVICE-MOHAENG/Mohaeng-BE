@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import type { Database } from 'better-sqlite3';
 import { User } from '../../src/domain/user/entity/User.entity';
 import { RefreshToken } from '../../src/domain/auth/entity/RefreshToken.entity';
 
@@ -19,7 +20,7 @@ import { RefreshToken } from '../../src/domain/auth/entity/RefreshToken.entity';
       dropSchema: true,
       logging: false,
       // SQLite에서 외래 키 제약 조건 활성화
-      prepareDatabase: (db: any) => {
+      prepareDatabase: (db: Database) => {
         db.prepare('PRAGMA foreign_keys = ON;').run();
       },
     }),
