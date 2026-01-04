@@ -13,9 +13,11 @@ import { UserRepository } from '../../user/persistence/UserRepository';
 import { RefreshToken } from '../entity/RefreshToken.entity';
 import { AuthInvalidCredentialsException } from '../exception/AuthInvalidCredentialsException';
 import { AuthInvalidRefreshTokenException } from '../exception/AuthInvalidRefreshTokenException';
+import { AuthInvalidOAuthCodeException } from '../exception/AuthInvalidOAuthCodeException';
 import { AuthEmailAlreadyRegisteredWithDifferentProviderException } from '../exception/AuthEmailAlreadyRegisteredWithDifferentProviderException';
 import { LoginRequest } from '../presentation/dto/request/LoginRequest';
 import { RefreshTokenRepository } from '../persistence/RefreshTokenRepository';
+import { OAuthCodeRepository } from '../persistence/OAuthCodeRepository';
 import { GlobalJwtService } from '../../../global/jwt/GlobalJwtService';
 
 type JwtPayload = {
@@ -33,6 +35,7 @@ type AuthTokens = {
 export class AuthService {
   constructor(
     private readonly refreshTokenRepository: RefreshTokenRepository,
+    private readonly oauthCodeRepository: OAuthCodeRepository,
     private readonly userService: UserService,
     private readonly userRepository: UserRepository,
     private readonly jwtService: JwtService,
@@ -216,5 +219,48 @@ export class AuthService {
     );
 
     return await this.userRepository.save(user);
+  }
+
+  /**
+   * OAuth 인증 코드를 생성하고 저장합니다
+   * @param user 사용자 엔티티
+   * @returns 생성된 인증 코드
+   */
+  async generateOAuthCode(user: User): Promise<string> {
+    const code = this.oauthCodeRepository.generateCode();
+    await this.oauthCodeRepository.save(code, {
+      userId: user.id,
+      email: user.email,
+    });
+    return code;
+  }
+
+  /**
+   * OAuth 인증 코드를 토큰으로 교환합니다
+   * @param code 인증 코드
+   * @returns 액세스 토큰과 리프레시 토큰
+   */
+  async exchangeOAuthCode(code: string): Promise<AuthTokens> {
+    // 인증 코드 조회 및 삭제 (일회용)
+    const codeData = await this.oauthCodeRepository.findAndDelete(code);
+
+    if (!codeData) {
+      throw new AuthInvalidOAuthCodeException();
+    }
+
+    // 사용자 조회
+    const user = await this.userRepository.findById(codeData.userId);
+
+    if (!user) {
+      throw new UserNotFoundException();
+    }
+
+    // 비활성 사용자 체크
+    if (!user.isActivate) {
+      throw new UserNotActiveException();
+    }
+
+    // 토큰 발급
+    return this.issueTokens(user);
   }
 }
