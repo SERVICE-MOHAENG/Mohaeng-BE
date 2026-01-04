@@ -50,8 +50,8 @@ export class NaverStrategy extends PassportStrategy(Strategy, 'naver') {
     const profileImage = profile.profile_image;
     const providerId = profile.id;
 
-    // 필수 필드 검증: 이메일이 없으면 인증 실패
-    if (!email || !name) {
+    // 필수 필드 검증: 이메일, 이름, providerId가 없으면 인증 실패
+    if (!email || !name || !providerId) {
       throw new AuthNaverProfileInvalidException();
     }
 

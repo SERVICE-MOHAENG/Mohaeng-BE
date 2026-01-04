@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../entity/User.entity';
+import { Provider } from '../entity/Provider.enum';
 
 /**
  * UserRepository
@@ -23,6 +24,24 @@ export class UserRepository {
    */
   async findByEmail(email: string): Promise<User | null> {
     return this.repository.findOne({ where: { email } });
+  }
+
+  /**
+   * Provider와 ProviderId로 OAuth 사용자 조회
+   * @param provider - OAuth 제공자 (GOOGLE, NAVER 등)
+   * @param providerId - OAuth 제공자의 사용자 고유 ID
+   * @returns Promise<User | null>
+   */
+  async findByProviderAndProviderId(
+    provider: Provider,
+    providerId: string,
+  ): Promise<User | null> {
+    return this.repository.findOne({
+      where: {
+        provider,
+        providerId,
+      },
+    });
   }
 
   /**

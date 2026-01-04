@@ -189,10 +189,24 @@ export class AuthService {
     name: string;
     picture?: string;
   }): Promise<User> {
-    // 이메일로 기존 사용자 조회
-    let user = await this.userRepository.findByEmail(googleUser.email);
+    // 1순위: providerId로 기존 사용자 조회 (가장 정확한 방법)
+    let user = await this.userRepository.findByProviderAndProviderId(
+      Provider.GOOGLE,
+      googleUser.providerId,
+    );
 
-    //기존 사용자 존재시
+    if (user) {
+      // 비활성 사용자 체크
+      if (!user.isActivate) {
+        throw new UserNotActiveException();
+      }
+
+      return user;
+    }
+
+    // 2순위: 이메일로 기존 사용자 조회 (폴백)
+    user = await this.userRepository.findByEmail(googleUser.email);
+
     if (user) {
       // 기존 사용자가 있지만 provider가 다른 경우
       if (user.provider !== Provider.GOOGLE) {
@@ -274,10 +288,24 @@ export class AuthService {
     name: string;
     picture?: string;
   }): Promise<User> {
-    // 이메일로 기존 사용자 조회
-    let user = await this.userRepository.findByEmail(naverUser.email);
+    // 1순위: providerId로 기존 사용자 조회 (가장 정확한 방법)
+    let user = await this.userRepository.findByProviderAndProviderId(
+      Provider.NAVER,
+      naverUser.providerId,
+    );
 
-    //기존 사용자 존재시
+    if (user) {
+      // 비활성 사용자 체크
+      if (!user.isActivate) {
+        throw new UserNotActiveException();
+      }
+
+      return user;
+    }
+
+    // 2순위: 이메일로 기존 사용자 조회 (폴백)
+    user = await this.userRepository.findByEmail(naverUser.email);
+
     if (user) {
       // 기존 사용자가 있지만 provider가 다른 경우
       if (user.provider !== Provider.NAVER) {
