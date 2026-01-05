@@ -10,6 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 import { CurrentUser } from '../../../global/decorators/CurrentUser';
 import { UserApiBearerAuth } from '../../../global/decorators/UserApiBearerAuth';
@@ -27,7 +28,10 @@ import { User } from '../../user/entity/User.entity';
 @ApiTags('auth')
 @Controller('v1/auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -112,9 +116,19 @@ export class AuthController {
     // Google OAuth 성공 후 일회용 인증 코드 발급
     const code = await this.authService.generateOAuthCode(req.user);
 
+    // 프론트엔드 리다이렉트 URL 가져오기
+    const frontendRedirectUrl = this.configService.get<string>(
+      'GOOGLE_FRONTEND_REDIRECT_URL',
+    );
+
+    if (!frontendRedirectUrl) {
+      throw new Error(
+        'GOOGLE_FRONTEND_REDIRECT_URL 환경 변수가 설정되지 않았습니다. .env 파일에 해당 값을 설정해주세요.',
+      );
+    }
+
     // 프론트엔드로 인증 코드 전달 (URL에 노출되지만 일회용이고 5분 후 만료)
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    res.redirect(`${frontendUrl}/auth/oauth/callback?code=${code}`);
+    res.redirect(`${frontendRedirectUrl}?code=${code}`);
   }
 
   @Post('oauth/exchange')
@@ -167,8 +181,18 @@ export class AuthController {
     // Naver OAuth 성공 후 일회용 인증 코드 발급
     const code = await this.authService.generateOAuthCode(req.user);
 
+    // 프론트엔드 리다이렉트 URL 가져오기
+    const frontendRedirectUrl = this.configService.get<string>(
+      'NAVER_FRONTEND_REDIRECT_URL',
+    );
+
+    if (!frontendRedirectUrl) {
+      throw new Error(
+        'NAVER_FRONTEND_REDIRECT_URL 환경 변수가 설정되지 않았습니다. .env 파일에 해당 값을 설정해주세요.',
+      );
+    }
+
     // 프론트엔드로 인증 코드 전달 (URL에 노출되지만 일회용이고 5분 후 만료)
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    res.redirect(`${frontendUrl}/auth/oauth/callback?code=${code}`);
+    res.redirect(`${frontendRedirectUrl}?code=${code}`);
   }
 }

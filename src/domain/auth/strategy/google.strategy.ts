@@ -16,6 +16,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       'GOOGLE_CLIENT_ID',
       'GOOGLE_CLIENT_SECRET',
       'GOOGLE_CALLBACK_URL',
+      'GOOGLE_FRONTEND_REDIRECT_URL',
     ] as const;
 
     const missingVars = requiredEnvVars.filter(

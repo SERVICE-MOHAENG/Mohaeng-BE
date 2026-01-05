@@ -16,6 +16,7 @@ export class NaverStrategy extends PassportStrategy(Strategy, 'naver') {
       'NAVER_CLIENT_ID',
       'NAVER_CLIENT_SECRET',
       'NAVER_CALLBACK_URL',
+      'NAVER_FRONTEND_REDIRECT_URL',
     ] as const;
 
     const missingVars = requiredEnvVars.filter(
