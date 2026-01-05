@@ -309,4 +309,18 @@ export class AuthService {
   }): Promise<User> {
     return this.validateOAuthUser(Provider.NAVER, naverUser);
   }
+
+  /**
+   * Kakao OAuth 사용자 검증 및 생성/조회
+   * @param kakaoUser - Kakao 사용자 정보
+   * @returns User 엔티티
+   */
+  async validateKakaoUser(kakaoUser: {
+    providerId: string;
+    email: string;
+    name: string;
+    picture?: string;
+  }): Promise<User> {
+    return this.validateOAuthUser(Provider.KAKAO, kakaoUser);
+  }
 }

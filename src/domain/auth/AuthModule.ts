@@ -10,6 +10,7 @@ import { AuthController } from './presentation/AuthController';
 import { AuthService } from './service/AuthService';
 import { GoogleStrategy } from './strategy/google.strategy';
 import { NaverStrategy } from './strategy/naver.strategy';
+import { KakaoStrategy } from './strategy/kakao.strategy';
 
 /**
  * AuthModule
@@ -31,6 +32,7 @@ import { NaverStrategy } from './strategy/naver.strategy';
     OAuthCodeRepository,
     GoogleStrategy,
     NaverStrategy,
+    KakaoStrategy,
   ],
   exports: [AuthService],
 })
