@@ -57,6 +57,16 @@ $ npm run test:e2e
 $ npm run test:cov
 ```
 
+## Email OTP
+
+Environment variables:
+- `SMTP_HOST` `SMTP_PORT` `SMTP_USER` `SMTP_PASS` `SMTP_FROM`
+- `REDIS_HOST` `REDIS_PORT` `REDIS_PASSWORD` `REDIS_DB`
+
+Endpoints:
+- `POST /api/v1/auth/email/otp/send` `{ "email": "user@example.com" }`
+- `POST /api/v1/auth/email/otp/verify` `{ "email": "user@example.com", "otp": "123456" }`
+
 ## Deployment
 
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.

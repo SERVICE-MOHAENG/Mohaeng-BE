@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { createHash } from 'crypto';
+import { createHash, randomInt } from 'crypto';
 import * as ms from 'ms';
 import type { StringValue } from 'ms';
 import { User } from '../../user/entity/User.entity';
@@ -15,10 +15,15 @@ import { AuthInvalidCredentialsException } from '../exception/AuthInvalidCredent
 import { AuthInvalidRefreshTokenException } from '../exception/AuthInvalidRefreshTokenException';
 import { AuthInvalidOAuthCodeException } from '../exception/AuthInvalidOAuthCodeException';
 import { AuthEmailAlreadyRegisteredWithDifferentProviderException } from '../exception/AuthEmailAlreadyRegisteredWithDifferentProviderException';
+import { AuthEmailOtpCooldownException } from '../exception/AuthEmailOtpCooldownException';
+import { AuthEmailOtpTooManyRequestsException } from '../exception/AuthEmailOtpTooManyRequestsException';
+import { AuthInvalidEmailOtpException } from '../exception/AuthInvalidEmailOtpException';
 import { LoginRequest } from '../presentation/dto/request/LoginRequest';
 import { RefreshTokenRepository } from '../persistence/RefreshTokenRepository';
 import { OAuthCodeRepository } from '../persistence/OAuthCodeRepository';
 import { GlobalJwtService } from '../../../global/jwt/GlobalJwtService';
+import { GlobalRedisService } from '../../../global/redis/GlobalRedisService';
+import { EmailOtpService } from './EmailOtpService';
 
 type JwtPayload = {
   sub: string;
@@ -31,6 +36,11 @@ type AuthTokens = {
   refreshToken: string;
 };
 
+const OTP_TTL_SECONDS = 5 * 60;
+const OTP_COOLDOWN_SECONDS = 60;
+const OTP_RATE_LIMIT_WINDOW_SECONDS = 60 * 60;
+const OTP_RATE_LIMIT_MAX = 5;
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -41,6 +51,8 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly globalJwtService: GlobalJwtService,
+    private readonly emailOtpService: EmailOtpService,
+    private readonly redisService: GlobalRedisService,
   ) {}
 
   async login(request: LoginRequest): Promise<AuthTokens> {
@@ -74,6 +86,60 @@ export class AuthService {
     }
 
     return this.issueTokens(user);
+  }
+
+  async sendEmailOtp(email: string): Promise<boolean> {
+    const normalizedEmail = this.normalizeEmail(email);
+    const otpKey = this.getOtpKey(normalizedEmail);
+    const cooldownKey = this.getOtpCooldownKey(normalizedEmail);
+    const rateLimitKey = this.getOtpRateLimitKey(normalizedEmail);
+
+    const isCooldownActive = await this.redisService.exists(cooldownKey);
+    if (isCooldownActive) {
+      throw new AuthEmailOtpCooldownException();
+    }
+
+    const currentCount = await this.redisService.get(rateLimitKey);
+    if (currentCount && Number(currentCount) >= OTP_RATE_LIMIT_MAX) {
+      throw new AuthEmailOtpTooManyRequestsException();
+    }
+
+    const otp = this.generateOtp();
+    await this.emailOtpService.sendOtp(normalizedEmail, otp);
+
+    await this.redisService.setWithExpiry(otpKey, otp, OTP_TTL_SECONDS);
+    await this.redisService.setWithExpiry(
+      cooldownKey,
+      '1',
+      OTP_COOLDOWN_SECONDS,
+    );
+
+    const nextCount = await this.redisService.increment(rateLimitKey);
+    if (nextCount === 1) {
+      await this.redisService.expire(
+        rateLimitKey,
+        OTP_RATE_LIMIT_WINDOW_SECONDS,
+      );
+    }
+
+    return true;
+  }
+
+  async verifyEmailOtp(email: string, otp: string): Promise<boolean> {
+    const normalizedEmail = this.normalizeEmail(email);
+    const otpKey = this.getOtpKey(normalizedEmail);
+    const storedOtp = await this.redisService.get(otpKey);
+
+    if (!storedOtp) {
+      throw new AuthInvalidEmailOtpException();
+    }
+
+    if (storedOtp !== otp) {
+      throw new AuthInvalidEmailOtpException();
+    }
+
+    await this.redisService.delete(otpKey);
+    return true;
   }
 
   async refreshTokens(refreshToken: string): Promise<AuthTokens> {
@@ -173,6 +239,27 @@ export class AuthService {
 
   private hashToken(token: string): string {
     return createHash('sha256').update(token).digest('hex');
+  }
+
+  private normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
+  }
+
+  private getOtpKey(email: string): string {
+    return `auth:email-otp:${email}`;
+  }
+
+  private getOtpCooldownKey(email: string): string {
+    return `auth:email-otp:cooldown:${email}`;
+  }
+
+  private getOtpRateLimitKey(email: string): string {
+    return `auth:email-otp:limit:${email}`;
+  }
+
+  private generateOtp(): string {
+    const value = randomInt(0, 1000000);
+    return value.toString().padStart(6, '0');
   }
 
   private async revokeAllUserTokens(userId: string): Promise<void> {
