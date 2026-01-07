@@ -10,6 +10,7 @@ import { UserNotActiveException } from '../../user/exception/UserNotActiveExcept
 import { UserNotFoundException } from '../../user/exception/UserNotFoundException';
 import { UserService } from '../../user/service/UserService';
 import { UserRepository } from '../../user/persistence/UserRepository';
+import { EmailAlreadyExistsException } from '../../user/exception/EmailAlreadyExistsException';
 import { RefreshToken } from '../entity/RefreshToken.entity';
 import { AuthInvalidCredentialsException } from '../exception/AuthInvalidCredentialsException';
 import { AuthInvalidRefreshTokenException } from '../exception/AuthInvalidRefreshTokenException';
@@ -18,6 +19,7 @@ import { AuthEmailAlreadyRegisteredWithDifferentProviderException } from '../exc
 import { AuthEmailOtpCooldownException } from '../exception/AuthEmailOtpCooldownException';
 import { AuthEmailOtpTooManyRequestsException } from '../exception/AuthEmailOtpTooManyRequestsException';
 import { AuthInvalidEmailOtpException } from '../exception/AuthInvalidEmailOtpException';
+import { AuthEmailOtpMaxAttemptsExceededException } from '../exception/AuthEmailOtpMaxAttemptsExceededException';
 import { LoginRequest } from '../presentation/dto/request/LoginRequest';
 import { RefreshTokenRepository } from '../persistence/RefreshTokenRepository';
 import { OAuthCodeRepository } from '../persistence/OAuthCodeRepository';
@@ -40,6 +42,8 @@ const OTP_TTL_SECONDS = 5 * 60;
 const OTP_COOLDOWN_SECONDS = 60;
 const OTP_RATE_LIMIT_WINDOW_SECONDS = 60 * 60;
 const OTP_RATE_LIMIT_MAX = 5;
+const OTP_MAX_VERIFY_ATTEMPTS = 5;
+const OTP_VERIFIED_FLAG_TTL_SECONDS = 10 * 60;
 
 @Injectable()
 export class AuthService {
@@ -90,9 +94,17 @@ export class AuthService {
 
   async sendEmailOtp(email: string): Promise<boolean> {
     const normalizedEmail = this.normalizeEmail(email);
+
+    // 이메일 중복 확인 (이미 가입된 이메일은 OTP 발송 차단)
+    const existingUser = await this.userRepository.findByEmail(normalizedEmail);
+    if (existingUser) {
+      throw new EmailAlreadyExistsException();
+    }
+
     const otpKey = this.getOtpKey(normalizedEmail);
     const cooldownKey = this.getOtpCooldownKey(normalizedEmail);
     const rateLimitKey = this.getOtpRateLimitKey(normalizedEmail);
+    const attemptsKey = this.getOtpAttemptsKey(normalizedEmail);
 
     const isCooldownActive = await this.redisService.exists(cooldownKey);
     if (isCooldownActive) {
@@ -107,7 +119,13 @@ export class AuthService {
     const otp = this.generateOtp();
     await this.emailOtpService.sendOtp(normalizedEmail, otp);
 
+    // 새 OTP 발송 시 기존 시도 횟수 초기화
+    await this.redisService.delete(attemptsKey);
+
+    //OTP 저장
     await this.redisService.setWithExpiry(otpKey, otp, OTP_TTL_SECONDS);
+
+    //쿨다운 플래그 저장
     await this.redisService.setWithExpiry(
       cooldownKey,
       '1',
@@ -128,17 +146,45 @@ export class AuthService {
   async verifyEmailOtp(email: string, otp: string): Promise<boolean> {
     const normalizedEmail = this.normalizeEmail(email);
     const otpKey = this.getOtpKey(normalizedEmail);
+    const attemptsKey = this.getOtpAttemptsKey(normalizedEmail);
+    const verifiedKey = this.getOtpVerifiedKey(normalizedEmail);
+
     const storedOtp = await this.redisService.get(otpKey);
 
     if (!storedOtp) {
       throw new AuthInvalidEmailOtpException();
     }
 
+    // 시도 횟수 확인
+    const currentAttempts = await this.redisService.get(attemptsKey);
+    const attempts = currentAttempts ? Number(currentAttempts) : 0;
+
+    if (attempts >= OTP_MAX_VERIFY_ATTEMPTS) {
+      throw new AuthEmailOtpMaxAttemptsExceededException();
+    }
+
+    // OTP 검증
     if (storedOtp !== otp) {
+      // 실패 시 시도 횟수 증가
+      const newAttempts = await this.redisService.increment(attemptsKey);
+      if (newAttempts === 1) {
+        // 첫 시도일 경우 만료 시간 설정 (OTP와 동일한 TTL)
+        await this.redisService.expire(attemptsKey, OTP_TTL_SECONDS);
+      }
       throw new AuthInvalidEmailOtpException();
     }
 
+    // 검증 성공 시 OTP 및 시도 횟수 삭제
     await this.redisService.delete(otpKey);
+    await this.redisService.delete(attemptsKey);
+
+    // 인증 완료 플래그 저장 (10분)
+    await this.redisService.setWithExpiry(
+      verifiedKey,
+      '1',
+      OTP_VERIFIED_FLAG_TTL_SECONDS,
+    );
+
     return true;
   }
 
@@ -255,6 +301,14 @@ export class AuthService {
 
   private getOtpRateLimitKey(email: string): string {
     return `auth:email-otp:limit:${email}`;
+  }
+
+  private getOtpAttemptsKey(email: string): string {
+    return `auth:email-otp:attempts:${email}`;
+  }
+
+  private getOtpVerifiedKey(email: string): string {
+    return `auth:email-verified:${email}`;
   }
 
   private generateOtp(): string {
