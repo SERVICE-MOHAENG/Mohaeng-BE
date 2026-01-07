@@ -19,7 +19,6 @@ export class DiscordService {
   private readonly webhookUrl: string | undefined;
 
   constructor(private readonly configService: ConfigService) {
-    // 할 일: 환경 변수에 웹훅 URL 추가하기
     this.webhookUrl = this.configService.get<string>('DISCORD_WEBHOOK_URL');
   }
 

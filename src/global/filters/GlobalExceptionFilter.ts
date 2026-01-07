@@ -53,29 +53,38 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     else if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
-      const isCritical = this.extractCriticalFlag(exceptionResponse);
-      const shouldLog =
-        status >= HttpStatus.INTERNAL_SERVER_ERROR ||
-        (status < HttpStatus.INTERNAL_SERVER_ERROR && isCritical);
-      const logMessage = this.buildLogMessage(
-        exceptionResponse,
-        exception.message,
-      );
 
-      if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
-        errorResponse = exceptionResponse as ApiResponseDto;
-      } else {
-        errorResponse = ApiResponseDto.error(
-          'INTERNAL_SERVER_ERROR',
+      // ValidationPipe 에러 감지 및 변환
+      if (this.isValidationError(exceptionResponse)) {
+        errorResponse = this.convertValidationError(exceptionResponse);
+        // Validation 에러는 로깅하지 않음 (클라이언트 책임)
+      }
+      // 기존 커스텀 예외 처리
+      else {
+        const isCritical = this.extractCriticalFlag(exceptionResponse);
+        const shouldLog =
+          status >= HttpStatus.INTERNAL_SERVER_ERROR ||
+          (status < HttpStatus.INTERNAL_SERVER_ERROR && isCritical);
+        const logMessage = this.buildLogMessage(
+          exceptionResponse,
           exception.message,
         );
-      }
 
-      if (shouldLog) {
-        if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
-          this.logger.error(logMessage, exception.stack);
+        if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
+          errorResponse = exceptionResponse as ApiResponseDto;
         } else {
-          this.logger.warn(logMessage);
+          errorResponse = ApiResponseDto.error(
+            'INTERNAL_SERVER_ERROR',
+            exception.message,
+          );
+        }
+
+        if (shouldLog) {
+          if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+            this.logger.error(logMessage, exception.stack);
+          } else {
+            this.logger.warn(logMessage);
+          }
         }
       }
     }
@@ -220,5 +229,35 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       constructorName === 'ParserError' ||
       constructorName === 'ConnectionError'
     );
+  }
+
+  /**
+   * ValidationPipe 에러인지 확인
+   * NestJS ValidationPipe가 던지는 BadRequestException 형식을 감지
+   */
+  private isValidationError(response: unknown): boolean {
+    if (!response || typeof response !== 'object') {
+      return false;
+    }
+
+    const record = response as Record<string, unknown>;
+    return (
+      typeof record.statusCode === 'number' &&
+      Array.isArray(record.message) &&
+      typeof record.error === 'string'
+    );
+  }
+
+  /**
+   * ValidationPipe 에러를 ApiResponseDto 형식으로 변환
+   */
+  private convertValidationError(response: unknown): ApiResponseDto {
+    const record = response as Record<string, unknown>;
+    const messages = record.message as string[];
+
+    // 여러 validation 메시지를 하나로 합침
+    const combinedMessage = messages.join(', ');
+
+    return ApiResponseDto.error('VALIDATION_ERROR', combinedMessage);
   }
 }
