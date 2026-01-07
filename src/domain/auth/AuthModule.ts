@@ -8,6 +8,7 @@ import { OAuthCodeRepository } from './persistence/OAuthCodeRepository';
 import { UserModule } from '../user/UserModule';
 import { AuthController } from './presentation/AuthController';
 import { AuthService } from './service/AuthService';
+import { EmailOtpService } from './service/EmailOtpService';
 import { GoogleStrategy } from './strategy/google.strategy';
 import { NaverStrategy } from './strategy/naver.strategy';
 import { KakaoStrategy } from './strategy/kakao.strategy';
@@ -28,6 +29,7 @@ import { KakaoStrategy } from './strategy/kakao.strategy';
   controllers: [AuthController],
   providers: [
     AuthService,
+    EmailOtpService,
     RefreshTokenRepository,
     OAuthCodeRepository,
     GoogleStrategy,

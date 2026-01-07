@@ -93,6 +93,32 @@ export class GlobalRedisService implements OnModuleDestroy {
   }
 
   /**
+   * 키가 없을 때만 값을 저장하고 만료 시간을 설정합니다
+   */
+  async setIfNotExistsWithExpiry(
+    key: string,
+    value: string,
+    expirySeconds: number,
+  ): Promise<boolean> {
+    const result = await this.client.set(key, value, 'EX', expirySeconds, 'NX');
+    return result === 'OK';
+  }
+
+  /**
+   * 값을 1 증가시킵니다
+   */
+  async increment(key: string): Promise<number> {
+    return await this.client.incr(key);
+  }
+
+  /**
+   * 키 만료 시간을 설정합니다
+   */
+  async expire(key: string, expirySeconds: number): Promise<void> {
+    await this.client.expire(key, expirySeconds);
+  }
+
+  /**
    * 패턴에 매칭되는 모든 키를 삭제합니다
    * 주의: KEYS 명령은 프로덕션 환경에서 성능 이슈를 유발할 수 있습니다
    */

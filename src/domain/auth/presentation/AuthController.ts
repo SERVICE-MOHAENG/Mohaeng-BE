@@ -21,6 +21,10 @@ import { RefreshTokenRequest } from './dto/request/RefreshTokenRequest';
 import { ExchangeAuthCodeRequest } from './dto/request/ExchangeAuthCodeRequest';
 import { AuthTokensResponse } from './dto/response/AuthTokensResponse';
 import { CurrentUserResponse } from './dto/response/CurrentUserResponse';
+import { SendEmailOtpRequest } from './dto/request/SendEmailOtpRequest';
+import { VerifyEmailOtpRequest } from './dto/request/VerifyEmailOtpRequest';
+import { SendEmailOtpResponse } from './dto/response/SendEmailOtpResponse';
+import { VerifyEmailOtpResponse } from './dto/response/VerifyEmailOtpResponse';
 import { GoogleAuthGuard } from '../guard/google-auth.guard';
 import { NaverAuthGuard } from '../guard/naver-auth.guard';
 import { KakaoAuthGuard } from '../guard/kakao-auth.guard';
@@ -49,6 +53,41 @@ export class AuthController {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
     };
+  }
+
+  @Post('email/otp/send')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'send email otp' })
+  @ApiResponse({
+    status: 200,
+    description: 'otp sent',
+    type: SendEmailOtpResponse,
+  })
+  @ApiResponse({ status: 429, description: 'rate limited' })
+  async sendEmailOtp(
+    @Body() request: SendEmailOtpRequest,
+  ): Promise<SendEmailOtpResponse> {
+    const sent = await this.authService.sendEmailOtp(request.email);
+    return { sent };
+  }
+
+  @Post('email/otp/verify')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'verify email otp' })
+  @ApiResponse({
+    status: 200,
+    description: 'otp verified',
+    type: VerifyEmailOtpResponse,
+  })
+  @ApiResponse({ status: 400, description: 'invalid otp' })
+  async verifyEmailOtp(
+    @Body() request: VerifyEmailOtpRequest,
+  ): Promise<VerifyEmailOtpResponse> {
+    const verified = await this.authService.verifyEmailOtp(
+      request.email,
+      request.otp,
+    );
+    return { verified };
   }
 
   @Post('refresh')

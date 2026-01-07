@@ -7,14 +7,28 @@ import { UserNotFoundException } from '../exception/UserNotFoundException';
 import { UserRepository } from '../persistence/UserRepository';
 import { SignupRequest } from '../presentation/dto/request/SignupRequest';
 import { UserResponse } from '../presentation/dto/response/UserResponse';
+import { GlobalRedisService } from '../../../global/redis/GlobalRedisService';
+import { AuthEmailNotVerifiedException } from '../../auth/exception/AuthEmailNotVerifiedException';
 
 const SALT_ROUNDS = 11;
 
 @Injectable()
 export class UserService {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly redisService: GlobalRedisService,
+  ) {}
 
   async signup(request: SignupRequest): Promise<UserResponse> {
+    // 이메일 인증 확인
+    const normalizedEmail = request.email.trim().toLowerCase();
+    const verifiedKey = `auth:email-verified:${normalizedEmail}`;
+    const isVerified = await this.redisService.get(verifiedKey);
+
+    if (!isVerified) {
+      throw new AuthEmailNotVerifiedException();
+    }
+
     // 이메일 중복 방지
     const existingUser = await this.userRepository.findByEmail(request.email);
     if (existingUser) {
@@ -26,10 +40,13 @@ export class UserService {
       throw new PasswordMismatchException();
     }
 
-    // 저장 전 비밀번호 해싱
+    // 비밀번호 해싱 후 user 저장
     const hashedPassword = await this.hashPassword(request.password);
     const user = User.create(request.name, request.email, hashedPassword);
     const savedUser = await this.userRepository.save(user);
+
+    // 인증 완료 플래그 삭제 (일회용)
+    await this.redisService.delete(verifiedKey);
 
     return UserResponse.fromEntity(savedUser);
   }
