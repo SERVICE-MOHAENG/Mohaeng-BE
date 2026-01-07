@@ -57,7 +57,7 @@ export class AuthController {
 
   @Post('email/otp/send')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'send email otp' })
+  @ApiOperation({ summary: '이메일 인증코드 발급' })
   @ApiResponse({
     status: 200,
     description: 'otp sent',
@@ -73,7 +73,7 @@ export class AuthController {
 
   @Post('email/otp/verify')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'verify email otp' })
+  @ApiOperation({ summary: '인증코드 검증' })
   @ApiResponse({
     status: 200,
     description: 'otp verified',
