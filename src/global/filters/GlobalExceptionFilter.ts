@@ -6,8 +6,10 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { QueryFailedError, EntityNotFoundError, TypeORMError } from 'typeorm';
 import { ApiResponseDto } from '../dto/ApiResponseDto';
 import { LogInterceptorService } from '../logger/LogInterceptorService';
+import { GlobalDatabaseErrorException } from '../exception/GlobalDatabaseErrorException';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -23,7 +25,32 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let errorResponse: ApiResponseDto;
 
-    if (exception instanceof HttpException) {
+    // TypeORM 에러 감지 (DB 연결 실패, 쿼리 실패 등)
+    if (
+      exception instanceof QueryFailedError ||
+      exception instanceof EntityNotFoundError ||
+      exception instanceof TypeORMError
+    ) {
+      const dbException = new GlobalDatabaseErrorException();
+      status = dbException.getStatus();
+      errorResponse = dbException.getResponse() as ApiResponseDto;
+      this.logger.error(
+        `[DB ERROR] ${(exception as Error).message}`,
+        (exception as Error).stack,
+      );
+    }
+    // Redis 에러 감지 (ioredis의 ReplyError, RedisError 등)
+    else if (this.isRedisError(exception)) {
+      const dbException = new GlobalDatabaseErrorException();
+      status = dbException.getStatus();
+      errorResponse = dbException.getResponse() as ApiResponseDto;
+      this.logger.error(
+        `[REDIS ERROR] ${(exception as Error).message}`,
+        (exception as Error).stack,
+      );
+    }
+    // HttpException (우리가 명시적으로 던진 예외)
+    else if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
       const isCritical = this.extractCriticalFlag(exceptionResponse);
@@ -51,7 +78,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           this.logger.warn(logMessage);
         }
       }
-    } else if (exception instanceof Error) {
+    }
+    // 일반 Error
+    else if (exception instanceof Error) {
       this.logger.error(
         `Unexpected error: ${exception.message}`,
         exception.stack,
@@ -60,7 +89,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         'INTERNAL_SERVER_ERROR',
         '서버 내부 오류가 발생했습니다.',
       );
-    } else {
+    }
+    // 알 수 없는 예외
+    else {
       this.logger.error(
         `Unknown error occurred: ${this.formatUnknownException(exception)}`,
       );
@@ -170,5 +201,24 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     } catch {
       return String(exception);
     }
+  }
+
+  /**
+   * Redis 에러인지 확인
+   * ioredis의 ReplyError, RedisError 등을 감지
+   */
+  private isRedisError(exception: unknown): boolean {
+    if (!exception || typeof exception !== 'object') {
+      return false;
+    }
+
+    const constructorName = exception.constructor?.name;
+    return (
+      constructorName === 'ReplyError' ||
+      constructorName === 'RedisError' ||
+      constructorName === 'AbortError' ||
+      constructorName === 'ParserError' ||
+      constructorName === 'ConnectionError'
+    );
   }
 }
