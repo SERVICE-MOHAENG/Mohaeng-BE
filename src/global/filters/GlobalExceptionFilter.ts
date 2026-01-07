@@ -110,7 +110,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       );
     }
 
-    //APIResponseDto 형식의 에러메세지 반환
+    //APIResponseDto 형식의 에러응답 반환
     response.status(status).json(errorResponse);
   }
 
