@@ -34,6 +34,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       const dbException = new GlobalDatabaseErrorException();
       status = dbException.getStatus();
       errorResponse = dbException.getResponse() as ApiResponseDto;
+      //LogInterceptor로 전송
       this.logger.error(
         `[DB ERROR] ${(exception as Error).message}`,
         (exception as Error).stack,
@@ -44,6 +45,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       const dbException = new GlobalDatabaseErrorException();
       status = dbException.getStatus();
       errorResponse = dbException.getResponse() as ApiResponseDto;
+        //LogInterceptor로 전송
       this.logger.error(
         `[REDIS ERROR] ${(exception as Error).message}`,
         (exception as Error).stack,
@@ -81,6 +83,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
         if (shouldLog) {
           if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+              //LogInterceptor로 전송
             this.logger.error(logMessage, exception.stack);
           } else {
             this.logger.warn(logMessage);
