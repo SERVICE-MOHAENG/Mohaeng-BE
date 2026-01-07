@@ -10,6 +10,8 @@ export enum AuthErrorCode {
   EMAIL_OTP_COOLDOWN = 'TRIP_CORE_HE_AUTH_A009',
   EMAIL_OTP_TOO_MANY_REQUESTS = 'TRIP_CORE_HE_AUTH_A010',
   EMAIL_OTP_INVALID = 'TRIP_CORE_HE_AUTH_A011',
+  EMAIL_OTP_MAX_ATTEMPTS_EXCEEDED = 'TRIP_CORE_HE_AUTH_A012',
+  EMAIL_NOT_VERIFIED = 'TRIP_CORE_HE_AUTH_A013',
 }
 
 export const AuthErrorMessage = {
@@ -31,4 +33,7 @@ export const AuthErrorMessage = {
   [AuthErrorCode.EMAIL_OTP_TOO_MANY_REQUESTS]:
     '인증번호는 1시간에 5회까지만 가능합니다',
   [AuthErrorCode.EMAIL_OTP_INVALID]: '인증번호가 올바르지 않습니다',
+  [AuthErrorCode.EMAIL_OTP_MAX_ATTEMPTS_EXCEEDED]:
+    '인증번호 입력 횟수를 초과했습니다. 인증번호를 다시 요청해주세요',
+  [AuthErrorCode.EMAIL_NOT_VERIFIED]: '이메일 인증이 완료되지 않았습니다',
 } as const;
