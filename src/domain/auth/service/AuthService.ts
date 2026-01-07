@@ -39,7 +39,7 @@ type AuthTokens = {
 const OTP_TTL_SECONDS = 5 * 60;
 const OTP_COOLDOWN_SECONDS = 60;
 const OTP_RATE_LIMIT_WINDOW_SECONDS = 60 * 60;
-const OTP_RATE_LIMIT_MAX = 100;
+const OTP_RATE_LIMIT_MAX = 5;
 
 @Injectable()
 export class AuthService {
