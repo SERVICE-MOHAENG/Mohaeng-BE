@@ -82,11 +82,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         }
 
         if (shouldLog) {
-          if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+            //status >= 500 → error 레벨로 로그
+            if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
               //LogInterceptor로 전송
             this.logger.error(logMessage, exception.stack);
-          } else {
-            this.logger.warn(logMessage);
+          } else { // status < 500 && isCritical === true → warn 레벨로 로그
+                this.logger.warn(logMessage);
           }
         }
       }
