@@ -185,41 +185,37 @@ export class AuthService {
   }
 
   async refreshTokens(refreshToken: string): Promise<AuthTokens> {
+    // 1. JWT 검증 및 디코딩
+    let payload: { userId: string; deviceType: string; jti: string };
+    try {
+      payload = this.jwtService.verify(refreshToken, {
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      });
+    } catch (error) {
+      throw new AuthInvalidRefreshTokenException();
+    }
+
+    const { userId, deviceType } = payload;
     const tokenHash = this.hashToken(refreshToken);
 
-    // 1. 블랙리스트 체크 (재사용 감지)
-    const isUsed = await this.redisService.get(`refresh:used:${tokenHash}`);
-    if (isUsed) {
-      // 재사용 공격 감지! 사용자의 모든 토큰 폐기
-      const userId = isUsed;
+    // 2. Redis에 저장된 토큰 해시 확인
+    const deviceKey = `refresh:device:${userId}:${deviceType}`;
+    const storedTokenHash = await this.redisService.get(deviceKey);
+
+    if (!storedTokenHash) {
+      // 토큰이 없음 → 해당 사용자의 모든 토큰 삭제 (보안 조치)
       await this.revokeAllUserTokens(userId);
       throw new AuthInvalidRefreshTokenException();
     }
 
-    // 2. 화이트리스트 체크
-    const data = await this.redisService.get(`refresh:valid:${tokenHash}`);
-    if (!data) {
-      // 토큰이 없음 → 만료되었거나 이미 사용됨
+    // 3. 토큰 해시 비교
+    if (storedTokenHash !== tokenHash) {
+      // 토큰 불일치 → 해당 사용자의 모든 토큰 삭제 (보안 조치)
+      await this.revokeAllUserTokens(userId);
       throw new AuthInvalidRefreshTokenException();
     }
 
-    const { userId, deviceType } = JSON.parse(data);
-
-    // 3. 토큰 회전 처리 (RTR)
-    // 화이트리스트에서 제거
-    await this.redisService.delete(`refresh:valid:${tokenHash}`);
-
-    // 디바이스 매핑도 삭제
-    await this.redisService.delete(`refresh:device:${userId}:${deviceType}`);
-
-    // 블랙리스트에 추가 (재사용 감지용, 7일 TTL)
-    await this.redisService.setWithExpiry(
-      `refresh:used:${tokenHash}`,
-      userId,
-      REFRESH_TOKEN_TTL_SECONDS,
-    );
-
-    // 4. 새 토큰 발급
+    // 4. 사용자 조회 및 검증
     const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new UserNotFoundException();
@@ -229,6 +225,7 @@ export class AuthService {
       throw new UserNotActiveException();
     }
 
+    // 5. 새 토큰 발급 (같은 deviceKey에 덮어쓰기)
     return this.issueTokens(user, deviceType);
   }
 
@@ -240,31 +237,22 @@ export class AuthService {
       sub: user.id,
     });
 
-    // Refresh 토큰 발급 (랜덤 문자열)
-    const refreshToken = randomBytes(32).toString('hex');
+    // Refresh 토큰 발급 (JWT)
+    const refreshTokenPayload = {
+      userId: user.id,
+      deviceType: deviceType,
+      jti: randomBytes(16).toString('hex'), // 토큰 고유 ID
+    };
+
+    const refreshToken = this.jwtService.sign(refreshTokenPayload, {
+      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      expiresIn: '7d',
+    });
+
     const tokenHash = this.hashToken(refreshToken);
 
-    // 기존 디바이스 토큰 확인 및 삭제 (같은 디바이스에서 재로그인 시)
+    // 디바이스별 토큰 저장 (같은 디바이스는 덮어쓰기)
     const deviceKey = `refresh:device:${user.id}:${deviceType}`;
-    const oldTokenHash = await this.redisService.get(deviceKey);
-
-    if (oldTokenHash) {
-      // 기존 토큰 무효화
-      await this.redisService.delete(`refresh:valid:${oldTokenHash}`);
-    }
-
-    // Redis 화이트리스트에 저장 (7일 TTL)
-    await this.redisService.setWithExpiry(
-      `refresh:valid:${tokenHash}`,
-      JSON.stringify({
-        userId: user.id,
-        deviceType: deviceType,
-        issuedAt: new Date().toISOString(),
-      }),
-      REFRESH_TOKEN_TTL_SECONDS,
-    );
-
-    // 디바이스 매핑 저장 (deviceType → tokenHash)
     await this.redisService.setWithExpiry(
       deviceKey,
       tokenHash,
@@ -308,36 +296,14 @@ export class AuthService {
     return value.toString().padStart(6, '0');
   }
 
-  /**
-   * 로그아웃 (현재 디바이스만)
-   * @param refreshToken - 리프레시 토큰
-   */
-  async logout(refreshToken: string): Promise<void> {
-    const tokenHash = this.hashToken(refreshToken);
-    await this.redisService.delete(`refresh:valid:${tokenHash}`);
-  }
 
   /**
    * 사용자의 모든 디바이스에서 강제 로그아웃
    * @param userId - 사용자 ID
    */
   private async revokeAllUserTokens(userId: string): Promise<void> {
-    const keys = await this.redisService.keys(`refresh:valid:*`);
-
-    for (const key of keys) {
-      const data = await this.redisService.get(key);
-      if (data) {
-        try {
-          const { userId: tokenUserId } = JSON.parse(data);
-          if (tokenUserId === userId) {
-            await this.redisService.delete(key);
-          }
-        } catch {
-          // JSON 파싱 실패 시 무시
-          continue;
-        }
-      }
-    }
+    // 모든 디바이스 매핑 삭제
+    await this.redisService.deletePattern(`refresh:device:${userId}:*`);
   }
 
   /**
