@@ -32,12 +32,14 @@ export class LogInterceptorService implements LoggerService {
       console.error(stack);
     }
 
+    //디스코드 웹훅 전송
     this.sendToExternalSystems('ERROR', message, logContext, stack);
   }
 
   warn(message: any, context?: string) {
     const logContext = context || this.context;
     console.warn(`[WARN] [${logContext}] ${this.formatMessage(message)}`);
+    //디스코드 웹훅 전송
     this.sendToExternalSystems('WARN', message, logContext);
   }
 

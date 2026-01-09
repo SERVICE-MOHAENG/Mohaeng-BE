@@ -4,6 +4,7 @@ import { UserRepository } from '../../domain/user/persistence/UserRepository';
 import { GlobalInvalidTokenException } from '../exception/GlobalInvalidTokenException';
 import { GlobalMissingTokenException } from '../exception/GlobalMissingTokenException';
 import { GlobalUnauthorizedException } from '../exception/GlobalUnauthorizedException';
+import { GlobalDatabaseErrorException } from '../exception/GlobalDatabaseErrorException';
 import { GlobalJwtService } from '../jwt/GlobalJwtService';
 
 type AuthenticatedUser = {
@@ -37,20 +38,33 @@ export class UserAuthGuard implements CanActivate {
       // Validate token and ensure user exists
       // 토큰 검증 및 사용자 존재 확인
       const payload = this.globalJwtService.verifyUserToken(token);
-      const user = await this.userRepository.findById(payload.userId);
+
+      // DB 조회 중 발생하는 에러를 별도로 처리
+      let user;
+      try {
+        user = await this.userRepository.findById(payload.userId);
+      } catch (dbError) {
+        // 데이터베이스 연결 실패 등의 서버 에러는 500으로 처리
+        throw new GlobalDatabaseErrorException();
+      }
+
       // 비활성/미존재 사용자 차단
       if (!user || !user.isActivate) {
         throw new GlobalUnauthorizedException();
       }
 
-      // Populate request.user after verifying token and user existence
       // 인증된 사용자 정보 주입
       request.user = this.toAuthenticatedUser(user.id, user.email);
       return true;
     } catch (error) {
-      if (error instanceof GlobalUnauthorizedException) {
+      // DB 에러와 인증 에러는 그대로 전파
+      if (
+        error instanceof GlobalDatabaseErrorException ||
+        error instanceof GlobalUnauthorizedException
+      ) {
         throw error;
       }
+      // JWT 검증 실패 등은 401로 처리
       throw new GlobalInvalidTokenException();
     }
   }
