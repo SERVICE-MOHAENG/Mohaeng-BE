@@ -72,9 +72,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           exception.message,
         );
 
+        //응답이 객체 형태이면 그대로 Response
         if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
-          errorResponse = exceptionResponse as ApiResponseDto;
-        } else {
+            errorResponse = exceptionResponse as ApiResponseDto;
+        } else { //string 형태이면 객체로 수정
           errorResponse = ApiResponseDto.error(
             'INTERNAL_SERVER_ERROR',
             exception.message,
