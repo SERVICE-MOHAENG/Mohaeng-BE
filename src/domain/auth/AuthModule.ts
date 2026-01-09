@@ -1,9 +1,6 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '../../global/jwt/Jwt.module';
-import { RefreshToken } from './entity/RefreshToken.entity';
-import { RefreshTokenRepository } from './persistence/RefreshTokenRepository';
 import { OAuthCodeRepository } from './persistence/OAuthCodeRepository';
 import { UserModule } from '../user/UserModule';
 import { AuthController } from './presentation/AuthController';
@@ -21,7 +18,6 @@ import { KakaoStrategy } from './strategy/kakao.strategy';
  */
 @Module({
   imports: [
-    TypeOrmModule.forFeature([RefreshToken]),
     PassportModule,
     JwtModule,
     UserModule, // UserService를 사용하기 위해 import
@@ -30,7 +26,6 @@ import { KakaoStrategy } from './strategy/kakao.strategy';
   providers: [
     AuthService,
     EmailOtpService,
-    RefreshTokenRepository,
     OAuthCodeRepository,
     GoogleStrategy,
     NaverStrategy,
