@@ -11,12 +11,12 @@ export class ExchangeAuthCodeRequest {
   code: string;
 
   @ApiProperty({
-    description: '디바이스 타입',
+    description: '디바이스 플랫폼 타입 (web, iOS, Android)',
     example: 'web',
     enum: ['web', 'ios', 'android'],
   })
   @IsString()
   @IsIn(['web', 'ios', 'android'])
   @IsNotEmpty()
-  deviceId: string;
+  deviceType: string;
 }

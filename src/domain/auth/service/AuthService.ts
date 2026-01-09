@@ -85,7 +85,7 @@ export class AuthService {
       throw new AuthInvalidCredentialsException();
     }
 
-    return this.issueTokens(user, request.deviceId);
+    return this.issueTokens(user, request.deviceType);
   }
 
   async sendEmailOtp(email: string): Promise<boolean> {
@@ -203,14 +203,14 @@ export class AuthService {
       throw new AuthInvalidRefreshTokenException();
     }
 
-    const { userId, deviceId } = JSON.parse(data);
+    const { userId, deviceType } = JSON.parse(data);
 
     // 3. 토큰 회전 처리 (RTR)
     // 화이트리스트에서 제거
     await this.redisService.delete(`refresh:valid:${tokenHash}`);
 
     // 디바이스 매핑도 삭제
-    await this.redisService.delete(`refresh:device:${userId}:${deviceId}`);
+    await this.redisService.delete(`refresh:device:${userId}:${deviceType}`);
 
     // 블랙리스트에 추가 (재사용 감지용, 7일 TTL)
     await this.redisService.setWithExpiry(
@@ -229,10 +229,10 @@ export class AuthService {
       throw new UserNotActiveException();
     }
 
-    return this.issueTokens(user, deviceId);
+    return this.issueTokens(user, deviceType);
   }
 
-  async issueTokens(user: User, deviceId: string): Promise<AuthTokens> {
+  async issueTokens(user: User, deviceType: string): Promise<AuthTokens> {
     // Access 토큰 발급 (JWT)
     const accessToken = this.globalJwtService.signUserToken({
       userId: user.id,
@@ -245,7 +245,7 @@ export class AuthService {
     const tokenHash = this.hashToken(refreshToken);
 
     // 기존 디바이스 토큰 확인 및 삭제 (같은 디바이스에서 재로그인 시)
-    const deviceKey = `refresh:device:${user.id}:${deviceId}`;
+    const deviceKey = `refresh:device:${user.id}:${deviceType}`;
     const oldTokenHash = await this.redisService.get(deviceKey);
 
     if (oldTokenHash) {
@@ -258,13 +258,13 @@ export class AuthService {
       `refresh:valid:${tokenHash}`,
       JSON.stringify({
         userId: user.id,
-        deviceId: deviceId,
+        deviceType: deviceType,
         issuedAt: new Date().toISOString(),
       }),
       REFRESH_TOKEN_TTL_SECONDS,
     );
 
-    // 디바이스 매핑 저장 (deviceId → tokenHash)
+    // 디바이스 매핑 저장 (deviceType → tokenHash)
     await this.redisService.setWithExpiry(
       deviceKey,
       tokenHash,
@@ -435,7 +435,7 @@ export class AuthService {
    */
   async exchangeOAuthCode(
     code: string,
-    deviceId: string,
+    deviceType: string,
   ): Promise<AuthTokens> {
     // 인증 코드 조회 및 삭제 (일회용)
     const codeData = await this.oauthCodeRepository.findAndDelete(code);
@@ -457,7 +457,7 @@ export class AuthService {
     }
 
     // 토큰 발급
-    return this.issueTokens(user, deviceId);
+    return this.issueTokens(user, deviceType);
   }
 
   /**

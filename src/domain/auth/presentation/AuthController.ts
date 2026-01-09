@@ -189,7 +189,7 @@ export class AuthController {
   ): Promise<AuthTokensResponse> {
     const tokens = await this.authService.exchangeOAuthCode(
       request.code,
-      request.deviceId,
+      request.deviceType,
     );
     return {
       accessToken: tokens.accessToken,
