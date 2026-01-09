@@ -12,9 +12,8 @@ import { ResponseInterceptor } from '../../../src/global/interceptors/ResponseIn
 import { TestDataBuilder } from '../../helpers/test-data-builder';
 import { AuthHelper } from '../../helpers/auth-helper';
 import { UserRepository } from '../../../src/domain/user/persistence/UserRepository';
-import { RefreshTokenRepository } from '../../../src/domain/auth/persistence/RefreshTokenRepository';
+import { GlobalRedisService } from '../../../src/global/redis/GlobalRedisService';
 import { UserErrorCode } from '../../../src/domain/user/exception/code';
-import { RefreshTokenStatus } from '../../../src/domain/auth/entity/RefreshTokenStatus.enum';
 
 describe('Integration: User Authentication Flow', () => {
   const getServer = (app: INestApplication): App =>
@@ -36,7 +35,7 @@ describe('Integration: User Authentication Flow', () => {
 
   let app: INestApplication;
   let userRepository: UserRepository;
-  let refreshTokenRepository: RefreshTokenRepository;
+  let redisService: GlobalRedisService;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -77,9 +76,7 @@ describe('Integration: User Authentication Flow', () => {
     await app.init();
 
     userRepository = moduleFixture.get<UserRepository>(UserRepository);
-    refreshTokenRepository = moduleFixture.get<RefreshTokenRepository>(
-      RefreshTokenRepository,
-    );
+    redisService = moduleFixture.get<GlobalRedisService>(GlobalRedisService);
   });
 
   afterAll(async () => {
@@ -87,7 +84,11 @@ describe('Integration: User Authentication Flow', () => {
   });
 
   beforeEach(async () => {
-    await refreshTokenRepository.clear();
+    // Redis의 모든 refresh token 키 삭제
+    const keys = await redisService.keys('refresh:*');
+    for (const key of keys) {
+      await redisService.delete(key);
+    }
     await userRepository.clear();
   });
 
@@ -198,12 +199,26 @@ describe('Integration: User Authentication Flow', () => {
       .send({ refreshToken: tokens.refreshToken })
       .expect(401);
 
-    // All user tokens should be revoked
-    const activeTokens = await refreshTokenRepository.count({
-      where: { user: { id: userId }, status: RefreshTokenStatus.ACTIVE },
-    });
+    // All user tokens should be revoked (Redis에서 삭제됨)
+    const allKeys = await redisService.keys('refresh:valid:*');
+    let hasUserToken = false;
 
-    expect(activeTokens).toBe(0);
+    for (const key of allKeys) {
+      const data = await redisService.get(key);
+      if (data) {
+        try {
+          const tokenData = JSON.parse(data);
+          if (tokenData.userId === userId) {
+            hasUserToken = true;
+            break;
+          }
+        } catch {
+          continue;
+        }
+      }
+    }
+
+    expect(hasUserToken).toBe(false);
 
     // New token should not work
     await request(app.getHttpServer())

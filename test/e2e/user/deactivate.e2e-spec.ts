@@ -10,13 +10,13 @@ import { GlobalExceptionFilter } from '../../../src/global/filters/GlobalExcepti
 import { ResponseInterceptor } from '../../../src/global/interceptors/ResponseInterceptor';
 import { AuthHelper } from '../../helpers/auth-helper';
 import { UserRepository } from '../../../src/domain/user/persistence/UserRepository';
-import { RefreshTokenRepository } from '../../../src/domain/auth/persistence/RefreshTokenRepository';
+import { GlobalRedisService } from '../../../src/global/redis/GlobalRedisService';
 import { UserErrorCode } from '../../../src/domain/user/exception/code';
 
 describe('DELETE /v1/users/me (Deactivate)', () => {
   let app: INestApplication;
   let userRepository: UserRepository;
-  let refreshTokenRepository: RefreshTokenRepository;
+  let redisService: GlobalRedisService;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -57,9 +57,7 @@ describe('DELETE /v1/users/me (Deactivate)', () => {
     await app.init();
 
     userRepository = moduleFixture.get<UserRepository>(UserRepository);
-    refreshTokenRepository = moduleFixture.get<RefreshTokenRepository>(
-      RefreshTokenRepository,
-    );
+    redisService = moduleFixture.get<GlobalRedisService>(GlobalRedisService);
   });
 
   afterAll(async () => {
@@ -67,7 +65,11 @@ describe('DELETE /v1/users/me (Deactivate)', () => {
   });
 
   beforeEach(async () => {
-    await refreshTokenRepository.clear();
+    // Redis의 모든 refresh token 키 삭제
+    const keys = await redisService.keys('refresh:*');
+    for (const key of keys) {
+      await redisService.delete(key);
+    }
     await userRepository.clear();
   });
 

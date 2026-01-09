@@ -12,9 +12,8 @@ import { GlobalExceptionFilter } from '../../../src/global/filters/GlobalExcepti
 import { ResponseInterceptor } from '../../../src/global/interceptors/ResponseInterceptor';
 import { AuthHelper } from '../../helpers/auth-helper';
 import { UserRepository } from '../../../src/domain/user/persistence/UserRepository';
-import { RefreshTokenRepository } from '../../../src/domain/auth/persistence/RefreshTokenRepository';
+import { GlobalRedisService } from '../../../src/global/redis/GlobalRedisService';
 import { AuthErrorCode } from '../../../src/domain/auth/exception/code';
-import { RefreshTokenStatus } from '../../../src/domain/auth/entity/RefreshTokenStatus.enum';
 
 describe('POST /v1/auth/refresh', () => {
   const getServer = (app: INestApplication): App =>
@@ -32,7 +31,7 @@ describe('POST /v1/auth/refresh', () => {
 
   let app: INestApplication;
   let userRepository: UserRepository;
-  let refreshTokenRepository: RefreshTokenRepository;
+  let redisService: GlobalRedisService;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -73,9 +72,7 @@ describe('POST /v1/auth/refresh', () => {
     await app.init();
 
     userRepository = moduleFixture.get<UserRepository>(UserRepository);
-    refreshTokenRepository = moduleFixture.get<RefreshTokenRepository>(
-      RefreshTokenRepository,
-    );
+    redisService = moduleFixture.get<GlobalRedisService>(GlobalRedisService);
   });
 
   afterAll(async () => {
@@ -83,7 +80,11 @@ describe('POST /v1/auth/refresh', () => {
   });
 
   beforeEach(async () => {
-    await refreshTokenRepository.clear();
+    // Redis의 모든 refresh token 키 삭제
+    const keys = await redisService.keys('refresh:*');
+    for (const key of keys) {
+      await redisService.delete(key);
+    }
     await userRepository.clear();
   });
 
@@ -103,7 +104,7 @@ describe('POST /v1/auth/refresh', () => {
       expect(body.refreshToken).not.toBe(tokens.refreshToken);
     });
 
-    it('should rotate old token status to ROTATED', async () => {
+    it('should move old token to blacklist after rotation', async () => {
       const { tokens } = await AuthHelper.signupAndLogin(app);
 
       const oldTokenHash = createHash('sha256')
@@ -112,15 +113,18 @@ describe('POST /v1/auth/refresh', () => {
 
       await AuthHelper.refreshTokens(app, tokens.refreshToken);
 
-      const oldToken =
-        await refreshTokenRepository.findByTokenHash(oldTokenHash);
+      // 화이트리스트에서 제거되었는지 확인
+      const validToken = await redisService.get(
+        `refresh:valid:${oldTokenHash}`,
+      );
+      expect(validToken).toBeNull();
 
-      expect(oldToken).toBeDefined();
-      expect(oldToken!.status).toBe(RefreshTokenStatus.ROTATED);
-      expect(oldToken!.rotatedAt).toBeDefined();
+      // 블랙리스트에 추가되었는지 확인
+      const usedToken = await redisService.get(`refresh:used:${oldTokenHash}`);
+      expect(usedToken).toBeDefined();
     });
 
-    it('should store new token with ACTIVE status', async () => {
+    it('should store new token in whitelist', async () => {
       const { tokens } = await AuthHelper.signupAndLogin(app);
 
       const newTokens = await AuthHelper.refreshTokens(
@@ -132,11 +136,13 @@ describe('POST /v1/auth/refresh', () => {
         .update(newTokens.refreshToken)
         .digest('hex');
 
-      const storedToken =
-        await refreshTokenRepository.findByTokenHash(newTokenHash);
+      const storedToken = await redisService.get(
+        `refresh:valid:${newTokenHash}`,
+      );
 
       expect(storedToken).toBeDefined();
-      expect(storedToken!.status).toBe(RefreshTokenStatus.ACTIVE);
+      const tokenData = JSON.parse(storedToken!);
+      expect(tokenData.userId).toBeDefined();
     });
   });
 
@@ -163,10 +169,10 @@ describe('POST /v1/auth/refresh', () => {
       expect(body.errorCode).toBe(AuthErrorCode.MISSING_REFRESH_TOKEN);
     });
 
-    it('should reject invalid JWT format', async () => {
+    it('should reject invalid refresh token', async () => {
       const response = await request(getServer(app))
         .post('/api/v1/auth/refresh')
-        .send({ refreshToken: 'invalid-jwt-token' })
+        .send({ refreshToken: 'invalid-random-token' })
         .expect(401);
 
       const body = response.body as ErrorResponse;
@@ -175,10 +181,11 @@ describe('POST /v1/auth/refresh', () => {
     });
 
     it('should reject non-existent token', async () => {
-      const { tokens } = await AuthHelper.signupAndLogin(app);
+      await AuthHelper.signupAndLogin(app);
 
-      // Use a valid JWT but not stored in DB
-      const fakeToken = tokens.refreshToken.slice(0, -10) + 'aaaaaaaaaa';
+      // Use a random token not stored in Redis
+      const fakeToken =
+        'a'.repeat(64); // 64자 hex string (랜덤 토큰과 같은 형식)
 
       const response = await request(getServer(app))
         .post('/api/v1/auth/refresh')
@@ -195,7 +202,7 @@ describe('POST /v1/auth/refresh', () => {
     it('should revoke all user tokens when rotated token is reused', async () => {
       const { tokens, userId } = await AuthHelper.signupAndLogin(app);
 
-      // First refresh (tokens.refreshToken becomes ROTATED)
+      // First refresh (tokens.refreshToken becomes blacklisted)
       const newTokens = await AuthHelper.refreshTokens(
         app,
         tokens.refreshToken,
@@ -210,16 +217,26 @@ describe('POST /v1/auth/refresh', () => {
       const body = response.body as ErrorResponse;
       expect(body.errorCode).toBe(AuthErrorCode.INVALID_REFRESH_TOKEN);
 
-      // All tokens should be revoked (including newTokens)
-      const allUserTokens = await refreshTokenRepository.findAll({
-        where: { user: { id: userId } },
-      });
+      // All user tokens should be revoked (Redis에서 삭제됨)
+      const allKeys = await redisService.keys('refresh:valid:*');
+      let hasUserToken = false;
 
-      // Check that all tokens are either ROTATED or REVOKED (none are ACTIVE)
-      const hasActiveToken = allUserTokens.some(
-        (token) => token.status === RefreshTokenStatus.ACTIVE,
-      );
-      expect(hasActiveToken).toBe(false);
+      for (const key of allKeys) {
+        const data = await redisService.get(key);
+        if (data) {
+          try {
+            const tokenData = JSON.parse(data);
+            if (tokenData.userId === userId) {
+              hasUserToken = true;
+              break;
+            }
+          } catch {
+            continue;
+          }
+        }
+      }
+
+      expect(hasUserToken).toBe(false);
 
       // New token should not work anymore
       const retryResponse = await request(getServer(app))
@@ -228,9 +245,7 @@ describe('POST /v1/auth/refresh', () => {
         .expect(401);
 
       const retryBody = retryResponse.body as ErrorResponse;
-      expect(retryBody.errorCode).toBe(
-        AuthErrorCode.INVALID_REFRESH_TOKEN,
-      );
+      expect(retryBody.errorCode).toBe(AuthErrorCode.INVALID_REFRESH_TOKEN);
     });
 
     it('should allow normal token rotation before reuse', async () => {
