@@ -14,10 +14,9 @@ import { ResponseInterceptor } from '../../../src/global/interceptors/ResponseIn
 import { TestDataBuilder } from '../../helpers/test-data-builder';
 import { AuthHelper } from '../../helpers/auth-helper';
 import { UserRepository } from '../../../src/domain/user/persistence/UserRepository';
-import { RefreshTokenRepository } from '../../../src/domain/auth/persistence/RefreshTokenRepository';
+import { GlobalRedisService } from '../../../src/global/redis/GlobalRedisService';
 import { AuthErrorCode } from '../../../src/domain/auth/exception/code';
 import { UserErrorCode } from '../../../src/domain/user/exception/code';
-import { RefreshTokenStatus } from '../../../src/domain/auth/entity/RefreshTokenStatus.enum';
 
 describe('POST /v1/auth/login', () => {
   const getServer = (app: INestApplication): App =>
@@ -38,7 +37,7 @@ describe('POST /v1/auth/login', () => {
 
   let app: INestApplication;
   let userRepository: UserRepository;
-  let refreshTokenRepository: RefreshTokenRepository;
+  let redisService: GlobalRedisService;
   let jwtService: JwtService;
 
   beforeAll(async () => {
@@ -80,9 +79,7 @@ describe('POST /v1/auth/login', () => {
     await app.init();
 
     userRepository = moduleFixture.get<UserRepository>(UserRepository);
-    refreshTokenRepository = moduleFixture.get<RefreshTokenRepository>(
-      RefreshTokenRepository,
-    );
+    redisService = moduleFixture.get<GlobalRedisService>(GlobalRedisService);
     jwtService = moduleFixture.get<JwtService>(JwtService);
   });
 
@@ -91,7 +88,11 @@ describe('POST /v1/auth/login', () => {
   });
 
   beforeEach(async () => {
-    await refreshTokenRepository.clear();
+    // Redis의 모든 refresh token 키 삭제
+    const keys = await redisService.keys('refresh:*');
+    for (const key of keys) {
+      await redisService.delete(key);
+    }
     await userRepository.clear();
   });
 
@@ -131,19 +132,20 @@ describe('POST /v1/auth/login', () => {
       expect(decoded.exp).toBeGreaterThan(decoded.iat);
     });
 
-    it('should store hashed refresh token in database', async () => {
+    it('should store hashed refresh token in Redis', async () => {
       const { tokens, userId } = await AuthHelper.signupAndLogin(app);
 
       const tokenHash = createHash('sha256')
         .update(tokens.refreshToken)
         .digest('hex');
 
-      const storedToken =
-        await refreshTokenRepository.findByTokenHash(tokenHash);
+      const storedToken = await redisService.get(
+        `refresh:valid:${tokenHash}`,
+      );
 
       expect(storedToken).toBeDefined();
-      expect(storedToken!.status).toBe(RefreshTokenStatus.ACTIVE);
-      expect(storedToken!.user.id).toBe(userId);
+      const tokenData = JSON.parse(storedToken!);
+      expect(tokenData.userId).toBe(userId);
     });
 
     it('should allow multiple logins from same user', async () => {

@@ -6,7 +6,6 @@ import { GlobalModule } from './global/GlobalModule';
 import { AuthModule } from './domain/auth/AuthModule';
 import { UserModule } from './domain/user/UserModule';
 import { User } from './domain/user/entity/User.entity';
-import { RefreshToken } from './domain/auth/entity/RefreshToken.entity';
 
 @Module({
   imports: [
@@ -23,7 +22,7 @@ import { RefreshToken } from './domain/auth/entity/RefreshToken.entity';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
-        entities: [User, RefreshToken],
+        entities: [User],
         synchronize:
           configService.get('SYNC_AUTO_DDL') === 'true' &&
           configService.get('NODE_ENV') !== 'production',

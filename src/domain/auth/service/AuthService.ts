@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { createHash, randomInt } from 'crypto';
-import * as ms from 'ms';
-import type { StringValue } from 'ms';
+import { createHash, randomBytes, randomInt } from 'crypto';
 import { User } from '../../user/entity/User.entity';
 import { Provider } from '../../user/entity/Provider.enum';
 import { UserNotActiveException } from '../../user/exception/UserNotActiveException';
@@ -11,7 +9,6 @@ import { UserNotFoundException } from '../../user/exception/UserNotFoundExceptio
 import { UserService } from '../../user/service/UserService';
 import { UserRepository } from '../../user/persistence/UserRepository';
 import { EmailAlreadyExistsException } from '../../user/exception/EmailAlreadyExistsException';
-import { RefreshToken } from '../entity/RefreshToken.entity';
 import { AuthInvalidCredentialsException } from '../exception/AuthInvalidCredentialsException';
 import { AuthInvalidRefreshTokenException } from '../exception/AuthInvalidRefreshTokenException';
 import { AuthInvalidOAuthCodeException } from '../exception/AuthInvalidOAuthCodeException';
@@ -21,7 +18,6 @@ import { AuthEmailOtpTooManyRequestsException } from '../exception/AuthEmailOtpT
 import { AuthInvalidEmailOtpException } from '../exception/AuthInvalidEmailOtpException';
 import { AuthEmailOtpMaxAttemptsExceededException } from '../exception/AuthEmailOtpMaxAttemptsExceededException';
 import { LoginRequest } from '../presentation/dto/request/LoginRequest';
-import { RefreshTokenRepository } from '../persistence/RefreshTokenRepository';
 import { OAuthCodeRepository } from '../persistence/OAuthCodeRepository';
 import { GlobalJwtService } from '../../../global/jwt/GlobalJwtService';
 import { GlobalRedisService } from '../../../global/redis/GlobalRedisService';
@@ -44,11 +40,11 @@ const OTP_RATE_LIMIT_WINDOW_SECONDS = 60 * 60;
 const OTP_RATE_LIMIT_MAX = 5;
 const OTP_MAX_VERIFY_ATTEMPTS = 5;
 const OTP_VERIFIED_FLAG_TTL_SECONDS = 10 * 60;
+const REFRESH_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60; // 7일
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly refreshTokenRepository: RefreshTokenRepository,
     private readonly oauthCodeRepository: OAuthCodeRepository,
     private readonly userService: UserService,
     private readonly userRepository: UserRepository,
@@ -89,7 +85,7 @@ export class AuthService {
       throw new AuthInvalidCredentialsException();
     }
 
-    return this.issueTokens(user);
+    return this.issueTokens(user, request.deviceType);
   }
 
   async sendEmailOtp(email: string): Promise<boolean> {
@@ -189,99 +185,83 @@ export class AuthService {
   }
 
   async refreshTokens(refreshToken: string): Promise<AuthTokens> {
-    // 리프레시 토큰 해시 조회
-    const tokenHash = this.hashToken(refreshToken);
-    const storedToken =
-      await this.refreshTokenRepository.findByTokenHash(tokenHash);
-
-    if (!storedToken) {
-      throw new AuthInvalidRefreshTokenException();
-    }
-
-    // 비활성 토큰 재사용 감지 시 전체 토큰 폐기
-    if (!storedToken.isActive()) {
-      await this.revokeAllUserTokens(storedToken.user.id);
-      throw new AuthInvalidRefreshTokenException();
-    }
-
-    const refreshSecret = this.configService.get<string>(
-      'JWT_REFRESH_TOKEN_SECRET',
-    );
-    if (!refreshSecret) {
-      throw new Error('JWT_REFRESH_TOKEN_SECRET is not set.');
-    }
-
-    // 리프레시 토큰 JWT 검증
+    // 1. JWT 검증 및 디코딩
+    let payload: { userId: string; deviceType: string; jti: string };
     try {
-      await this.jwtService.verifyAsync<JwtPayload>(refreshToken, {
-        secret: refreshSecret,
+      payload = this.jwtService.verify(refreshToken, {
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
       });
-    } catch {
-      // 유효하지 않은 토큰은 즉시 폐기
-      storedToken.revoke();
-      await this.refreshTokenRepository.save(storedToken);
+    } catch (error) {
       throw new AuthInvalidRefreshTokenException();
     }
 
-    // 리프레시 토큰 회전 처리
-    storedToken.rotate();
-    await this.refreshTokenRepository.save(storedToken);
+    const { userId, deviceType } = payload;
+    const tokenHash = this.hashToken(refreshToken);
 
-    return this.issueTokens(storedToken.user);
+    // 2. Redis에 저장된 토큰 해시 확인
+    const deviceKey = `refresh:device:${userId}:${deviceType}`;
+    const storedTokenHash = await this.redisService.get(deviceKey);
+
+    if (!storedTokenHash) {
+      // 토큰이 없음 → 해당 사용자의 모든 토큰 삭제 (보안 조치)
+      await this.revokeAllUserTokens(userId);
+      throw new AuthInvalidRefreshTokenException();
+    }
+
+    // 3. 토큰 해시 비교
+    if (storedTokenHash !== tokenHash) {
+      // 토큰 불일치 → 해당 사용자의 모든 토큰 삭제 (보안 조치)
+      await this.revokeAllUserTokens(userId);
+      throw new AuthInvalidRefreshTokenException();
+    }
+
+    // 4. 사용자 조회 및 검증
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new UserNotFoundException();
+    }
+
+    if (!user.isActivate) {
+      throw new UserNotActiveException();
+    }
+
+    // 5. 새 토큰 발급 (같은 deviceKey에 덮어쓰기)
+    return this.issueTokens(user, deviceType);
   }
 
-  async issueTokens(user: User): Promise<AuthTokens> {
-    // Access/Refresh 토큰 공용 페이로드 구성
-    const payload: JwtPayload = {
-      sub: user.id,
-      email: user.email,
-      userId: user.id,
-    };
-    // Access 토큰 발급
+  async issueTokens(user: User, deviceType: string): Promise<AuthTokens> {
+    // Access 토큰 발급 (JWT)
     const accessToken = this.globalJwtService.signUserToken({
       userId: user.id,
       email: user.email,
       sub: user.id,
     });
 
-    const refreshSecret = this.configService.get<string>(
-      'JWT_REFRESH_TOKEN_SECRET',
-    );
-    if (!refreshSecret) {
-      throw new Error('JWT_REFRESH_TOKEN_SECRET is not set.');
-    }
+    // Refresh 토큰 발급 (JWT)
+    const refreshTokenPayload = {
+      userId: user.id,
+      deviceType: deviceType,
+      jti: randomBytes(16).toString('hex'), // 토큰 고유 ID
+    };
 
-    const refreshExpiresIn = this.getRefreshExpiresIn();
-    // Refresh 토큰 발급
-    const refreshToken = await this.jwtService.signAsync(payload, {
-      secret: refreshSecret,
-      expiresIn: refreshExpiresIn,
+    const refreshToken = this.jwtService.sign(refreshTokenPayload, {
+      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      expiresIn: '7d',
     });
 
-    const expiresAt = this.getRefreshExpiresAt(refreshExpiresIn);
-    // Refresh 토큰 해시 저장
-    const refreshTokenEntity = RefreshToken.create(
-      user,
-      this.hashToken(refreshToken),
-      expiresAt,
+    const tokenHash = this.hashToken(refreshToken);
+
+    // 디바이스별 토큰 저장 (같은 디바이스는 덮어쓰기)
+    const deviceKey = `refresh:device:${user.id}:${deviceType}`;
+    await this.redisService.setWithExpiry(
+      deviceKey,
+      tokenHash,
+      REFRESH_TOKEN_TTL_SECONDS,
     );
-    await this.refreshTokenRepository.save(refreshTokenEntity);
 
     return { accessToken, refreshToken };
   }
 
-  private getRefreshExpiresIn(): StringValue {
-    return (this.configService.get<string>('JWT_REFRESH_TOKEN_EXPIRES_IN') ||
-      '7d') as StringValue;
-  }
-
-  private getRefreshExpiresAt(expiresIn: StringValue): Date {
-    const expiresInMs = ms(expiresIn);
-    if (typeof expiresInMs !== 'number') {
-      return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    }
-    return new Date(Date.now() + expiresInMs);
-  }
 
   private hashToken(token: string): string {
     return createHash('sha256').update(token).digest('hex');
@@ -316,8 +296,14 @@ export class AuthService {
     return value.toString().padStart(6, '0');
   }
 
+
+  /**
+   * 사용자의 모든 디바이스에서 강제 로그아웃
+   * @param userId - 사용자 ID
+   */
   private async revokeAllUserTokens(userId: string): Promise<void> {
-    await this.refreshTokenRepository.revokeAllActiveByUserId(userId);
+    // 모든 디바이스 매핑 삭제
+    await this.redisService.deletePattern(`refresh:device:${userId}:*`);
   }
 
   /**
@@ -413,7 +399,10 @@ export class AuthService {
    * @param code 인증 코드
    * @returns 액세스 토큰과 리프레시 토큰
    */
-  async exchangeOAuthCode(code: string): Promise<AuthTokens> {
+  async exchangeOAuthCode(
+    code: string,
+    deviceType: string,
+  ): Promise<AuthTokens> {
     // 인증 코드 조회 및 삭제 (일회용)
     const codeData = await this.oauthCodeRepository.findAndDelete(code);
 
@@ -434,7 +423,7 @@ export class AuthService {
     }
 
     // 토큰 발급
-    return this.issueTokens(user);
+    return this.issueTokens(user, deviceType);
   }
 
   /**

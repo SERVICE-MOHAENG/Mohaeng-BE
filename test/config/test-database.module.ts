@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import type { Database } from 'better-sqlite3';
 import { User } from '../../src/domain/user/entity/User.entity';
-import { RefreshToken } from '../../src/domain/auth/entity/RefreshToken.entity';
 
 /**
  * TestDatabaseModule
@@ -15,7 +14,7 @@ import { RefreshToken } from '../../src/domain/auth/entity/RefreshToken.entity';
     TypeOrmModule.forRoot({
       type: 'better-sqlite3',
       database: ':memory:',
-      entities: [User, RefreshToken],
+      entities: [User],
       synchronize: true,
       dropSchema: true,
       logging: false,
@@ -24,7 +23,7 @@ import { RefreshToken } from '../../src/domain/auth/entity/RefreshToken.entity';
         db.prepare('PRAGMA foreign_keys = ON;').run();
       },
     }),
-    TypeOrmModule.forFeature([User, RefreshToken]),
+    TypeOrmModule.forFeature([User]),
   ],
   exports: [TypeOrmModule],
 })

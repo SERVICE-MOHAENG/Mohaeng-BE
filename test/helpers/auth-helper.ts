@@ -48,10 +48,11 @@ export class AuthHelper {
     app: INestApplication,
     email: string,
     password: string,
+    deviceType: string = 'web',
   ): Promise<AuthTokens> {
     const response = await request(this.getServer(app))
       .post('/api/v1/auth/login')
-      .send({ email, password })
+      .send({ email, password, deviceType })
       .expect(200);
 
     const body = response.body as AuthTokens;

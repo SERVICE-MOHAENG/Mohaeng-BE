@@ -119,11 +119,41 @@ export class GlobalRedisService implements OnModuleDestroy {
   }
 
   /**
+   * Set에 멤버를 추가합니다
+   */
+  async sadd(key: string, ...members: string[]): Promise<number> {
+    return await this.client.sadd(key, ...members);
+  }
+
+  /**
+   * Set의 모든 멤버를 조회합니다
+   */
+  async smembers(key: string): Promise<string[]> {
+    return await this.client.smembers(key);
+  }
+
+  /**
+   * Set에서 멤버를 제거합니다
+   */
+  async srem(key: string, ...members: string[]): Promise<number> {
+    return await this.client.srem(key, ...members);
+  }
+
+  /**
+   * 패턴에 매칭되는 모든 키를 조회합니다
+   * 주의: KEYS 명령은 프로덕션 환경에서 성능 이슈를 유발할 수 있습니다
+   * 프로덕션에서는 SCAN 명령 사용을 권장합니다
+   */
+  async keys(pattern: string): Promise<string[]> {
+    return await this.client.keys(pattern);
+  }
+
+  /**
    * 패턴에 매칭되는 모든 키를 삭제합니다
    * 주의: KEYS 명령은 프로덕션 환경에서 성능 이슈를 유발할 수 있습니다
    */
   async deletePattern(pattern: string): Promise<void> {
-    const keys = await this.client.keys(pattern);
+    const keys = await this.keys(pattern);
     if (keys.length > 0) {
       await this.client.del(...keys);
     }
