@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsIn, IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class ExchangeAuthCodeRequest {
   @ApiProperty({
@@ -9,14 +9,4 @@ export class ExchangeAuthCodeRequest {
   @IsString()
   @IsNotEmpty()
   code: string;
-
-  @ApiProperty({
-    description: '디바이스 플랫폼 타입 (web, iOS, Android)',
-    example: 'web',
-    enum: ['web', 'ios', 'android'],
-  })
-  @IsString()
-  @IsIn(['web', 'ios', 'android'])
-  @IsNotEmpty()
-  deviceType: string;
 }

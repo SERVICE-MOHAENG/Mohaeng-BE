@@ -187,10 +187,7 @@ export class AuthController {
   async exchangeOAuthCode(
     @Body() request: ExchangeAuthCodeRequest,
   ): Promise<AuthTokensResponse> {
-    const tokens = await this.authService.exchangeOAuthCode(
-      request.code,
-      request.deviceType,
-    );
+    const tokens = await this.authService.exchangeOAuthCode(request.code);
     return {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,

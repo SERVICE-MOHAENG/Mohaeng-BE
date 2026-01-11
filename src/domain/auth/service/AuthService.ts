@@ -23,11 +23,6 @@ import { GlobalJwtService } from '../../../global/jwt/GlobalJwtService';
 import { GlobalRedisService } from '../../../global/redis/GlobalRedisService';
 import { EmailOtpService } from './EmailOtpService';
 
-type JwtPayload = {
-  sub: string;
-  email: string;
-  userId: string;
-};
 
 type AuthTokens = {
   accessToken: string;
@@ -85,7 +80,7 @@ export class AuthService {
       throw new AuthInvalidCredentialsException();
     }
 
-    return this.issueTokens(user, request.deviceType);
+    return this.issueTokens(user);
   }
 
   async sendEmailOtp(email: string): Promise<boolean> {
@@ -102,17 +97,20 @@ export class AuthService {
     const rateLimitKey = this.getOtpRateLimitKey(normalizedEmail);
     const attemptsKey = this.getOtpAttemptsKey(normalizedEmail);
 
+    // 쿨다운 중이면 재발송 차단
     const isCooldownActive = await this.redisService.exists(cooldownKey);
     if (isCooldownActive) {
       throw new AuthEmailOtpCooldownException();
     }
 
+    // 발송 횟수 제한 체크
     const currentCount = await this.redisService.get(rateLimitKey);
     if (currentCount && Number(currentCount) >= OTP_RATE_LIMIT_MAX) {
       throw new AuthEmailOtpTooManyRequestsException();
     }
 
     const otp = this.generateOtp();
+    // OTP 이메일 발송
     await this.emailOtpService.sendOtp(normalizedEmail, otp);
 
     // 새 OTP 발송 시 기존 시도 횟수 초기화
@@ -128,6 +126,7 @@ export class AuthService {
       OTP_COOLDOWN_SECONDS,
     );
 
+    // 발송 횟수 증가 및 윈도우 설정
     const nextCount = await this.redisService.increment(rateLimitKey);
     if (nextCount === 1) {
       await this.redisService.expire(
@@ -186,7 +185,7 @@ export class AuthService {
 
   async refreshTokens(refreshToken: string): Promise<AuthTokens> {
     // 1. JWT 검증 및 디코딩
-    let payload: { userId: string; deviceType: string; jti: string };
+    let payload: { userId: string; jti: string };
     try {
       payload = this.jwtService.verify(refreshToken, {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
@@ -195,21 +194,22 @@ export class AuthService {
       throw new AuthInvalidRefreshTokenException();
     }
 
-    const { userId, deviceType } = payload;
+    const { userId, jti } = payload;
     const tokenHash = this.hashToken(refreshToken);
 
-    // 2. Redis에 저장된 토큰 해시 확인
-    const deviceKey = `refresh:device:${userId}:${deviceType}`;
-    const storedTokenHash = await this.redisService.get(deviceKey);
+    // 2. Redis에 저장된 토큰 데이터 확인 (jti 기반)
+    const tokenKey = `refresh:user:${userId}:${jti}`;
+    const storedData = await this.redisService.get(tokenKey);
 
-    if (!storedTokenHash) {
+    if (!storedData) {
       // 토큰이 없음 → 해당 사용자의 모든 토큰 삭제 (보안 조치)
       await this.revokeAllUserTokens(userId);
       throw new AuthInvalidRefreshTokenException();
     }
 
     // 3. 토큰 해시 비교
-    if (storedTokenHash !== tokenHash) {
+    const [storedHash] = storedData.split(':');
+    if (storedHash !== tokenHash) {
       // 토큰 불일치 → 해당 사용자의 모든 토큰 삭제 (보안 조치)
       await this.revokeAllUserTokens(userId);
       throw new AuthInvalidRefreshTokenException();
@@ -225,11 +225,51 @@ export class AuthService {
       throw new UserNotActiveException();
     }
 
-    // 5. 새 토큰 발급 (같은 deviceKey에 덮어쓰기)
-    return this.issueTokens(user, deviceType);
+    // 5. 같은 jti로 새 토큰 발급 (같은 디바이스 슬롯 유지, LRU 구현)
+    return this.issueTokens(user, jti);
   }
 
-  async issueTokens(user: User, deviceType: string): Promise<AuthTokens> {
+  async issueTokens(user: User, existingJti?: string): Promise<AuthTokens> {
+    let jti: string;
+
+    if (existingJti) {
+      // Refresh 요청: 기존 jti 재사용 (같은 디바이스 슬롯 유지)
+      jti = existingJti;
+
+      // 기존 토큰 삭제 (덮어쓰기)
+      const oldKey = `refresh:user:${user.id}:${existingJti}`;
+      await this.redisService.delete(oldKey);
+    } else {
+      // 신규 로그인: LRU 처리
+      const pattern = `refresh:user:${user.id}:*`;
+      const existingKeys = await this.redisService.keys(pattern);
+
+      // 3개 이상이면 가장 오래된 토큰 삭제
+      if (existingKeys.length >= 3) {
+        const tokensWithTime: Array<{ key: string; createdAt: number }> = [];
+
+        for (const key of existingKeys) {
+          const data = await this.redisService.get(key);
+          if (data) {
+            const [, createdAtStr] = data.split(':');
+            tokensWithTime.push({
+              key,
+              createdAt: Number(createdAtStr),
+            });
+          }
+        }
+        // createdAt 기준 오름차순 정렬 (가장 오래된 것이 앞에)
+        tokensWithTime.sort((a, b) => a.createdAt - b.createdAt);
+
+        // 가장 오래된 토큰 삭제 (3개 -> 2개로 만들기)
+        const oldestToken = tokensWithTime[0];
+        await this.redisService.delete(oldestToken.key);
+      }
+
+      // 새 jti 생성
+      jti = randomBytes(16).toString('hex');
+    }
+
     // Access 토큰 발급 (JWT)
     const accessToken = this.globalJwtService.signUserToken({
       userId: user.id,
@@ -240,8 +280,7 @@ export class AuthService {
     // Refresh 토큰 발급 (JWT)
     const refreshTokenPayload = {
       userId: user.id,
-      deviceType: deviceType,
-      jti: randomBytes(16).toString('hex'), // 토큰 고유 ID
+      jti: jti,
     };
 
     const refreshToken = this.jwtService.sign(refreshTokenPayload, {
@@ -250,12 +289,13 @@ export class AuthService {
     });
 
     const tokenHash = this.hashToken(refreshToken);
+    const createdAt = Date.now();
 
-    // 디바이스별 토큰 저장 (같은 디바이스는 덮어쓰기)
-    const deviceKey = `refresh:device:${user.id}:${deviceType}`;
+    // 새 Refresh 토큰을 Redis에 저장 (jti 기반, LRU 구현)
+    const tokenKey = `refresh:user:${user.id}:${jti}`;
     await this.redisService.setWithExpiry(
-      deviceKey,
-      tokenHash,
+      tokenKey,
+      `${tokenHash}:${createdAt}`,
       REFRESH_TOKEN_TTL_SECONDS,
     );
 
@@ -298,12 +338,12 @@ export class AuthService {
 
 
   /**
-   * 사용자의 모든 디바이스에서 강제 로그아웃
+   * 사용자의 모든 리프레시 토큰 삭제 (강제 로그아웃)
    * @param userId - 사용자 ID
    */
   private async revokeAllUserTokens(userId: string): Promise<void> {
-    // 모든 디바이스 매핑 삭제
-    await this.redisService.deletePattern(`refresh:device:${userId}:*`);
+    // 해당 사용자의 모든 토큰 삭제
+    await this.redisService.deletePattern(`refresh:user:${userId}:*`);
   }
 
   /**
@@ -399,10 +439,7 @@ export class AuthService {
    * @param code 인증 코드
    * @returns 액세스 토큰과 리프레시 토큰
    */
-  async exchangeOAuthCode(
-    code: string,
-    deviceType: string,
-  ): Promise<AuthTokens> {
+  async exchangeOAuthCode(code: string): Promise<AuthTokens> {
     // 인증 코드 조회 및 삭제 (일회용)
     const codeData = await this.oauthCodeRepository.findAndDelete(code);
 
@@ -423,7 +460,7 @@ export class AuthService {
     }
 
     // 토큰 발급
-    return this.issueTokens(user, deviceType);
+    return this.issueTokens(user);
   }
 
   /**
