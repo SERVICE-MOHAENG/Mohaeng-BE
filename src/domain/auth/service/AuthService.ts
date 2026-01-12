@@ -208,8 +208,15 @@ export class AuthService {
     }
 
     // 3. 토큰 해시 비교
-    const [storedHash] = storedData.split(':');
-    if (storedHash !== tokenHash) {
+    const parts = storedData.split(':');
+    if (parts.length !== 2) {
+      // 잘못된 데이터 형식 → 해당 사용자의 모든 토큰 삭제 (보안 조치)
+      await this.revokeAllUserTokens(userId);
+      throw new AuthInvalidRefreshTokenException();
+    }
+
+    const storedHash = parts[0];
+    if (!storedHash || storedHash !== tokenHash) {
       // 토큰 불일치 → 해당 사용자의 모든 토큰 삭제 (보안 조치)
       await this.revokeAllUserTokens(userId);
       throw new AuthInvalidRefreshTokenException();
@@ -250,20 +257,25 @@ export class AuthService {
 
         for (const key of existingKeys) {
           const data = await this.redisService.get(key);
-          if (data) {
-            const [, createdAtStr] = data.split(':');
-            tokensWithTime.push({
-              key,
-              createdAt: Number(createdAtStr),
-            });
-          }
-        }
-        // createdAt 기준 오름차순 정렬 (가장 오래된 것이 앞에)
-        tokensWithTime.sort((a, b) => a.createdAt - b.createdAt);
+          if (!data) continue;
 
-        // 가장 오래된 토큰 삭제 (3개 -> 2개로 만들기)
-        const oldestToken = tokensWithTime[0];
-        await this.redisService.delete(oldestToken.key);
+          const parts = data.split(':');
+          if (parts.length !== 2) continue; // 잘못된 형식 스킵
+
+          const createdAt = Number(parts[1]);
+          if (isNaN(createdAt) || createdAt <= 0) continue; // 유효하지 않은 timestamp 스킵
+
+          tokensWithTime.push({ key, createdAt });
+        }
+        // 유효한 토큰이 있는 경우에만 처리
+        if (tokensWithTime.length > 0) {
+          // createdAt 기준 오름차순 정렬 (가장 오래된 것이 앞에)
+          tokensWithTime.sort((a, b) => a.createdAt - b.createdAt);
+
+          // 가장 오래된 토큰 삭제 (3개 -> 2개로 만들기)
+          const oldestToken = tokensWithTime[0];
+          await this.redisService.delete(oldestToken.key);
+        }
       }
 
       // 새 jti 생성
