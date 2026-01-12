@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsIn, IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
 export class LoginRequest {
   @ApiProperty({ description: '이메일', example: 'user@example.com' })
@@ -11,14 +11,4 @@ export class LoginRequest {
   @IsString()
   @IsNotEmpty()
   password: string;
-
-  @ApiProperty({
-    description: '디바이스 플랫폼 타입 (web, iOS, Android)',
-    example: 'web',
-    enum: ['web', 'ios', 'android'],
-  })
-  @IsString()
-  @IsIn(['web', 'ios', 'android'])
-  @IsNotEmpty()
-  deviceType: string;
 }
