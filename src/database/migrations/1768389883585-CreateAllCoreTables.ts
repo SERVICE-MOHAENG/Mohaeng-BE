@@ -3,7 +3,26 @@ import { MigrationInterface, QueryRunner } from "typeorm";
 export class CreateAllCoreTables1768389883585 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        // 1. Country 테이블 생성 (외래키 없음)
+        // 1. User 테이블 생성 (외래키 없음, 다른 테이블에서 참조됨)
+        await queryRunner.query(`
+            CREATE TABLE IF NOT EXISTS user_table (
+                id VARCHAR(36) PRIMARY KEY,
+                created_at DATETIME(6) NOT NULL,
+                updated_at DATETIME(6) NOT NULL,
+                name VARCHAR(100) NOT NULL,
+                email VARCHAR(255) NOT NULL UNIQUE,
+                password_hash VARCHAR(255) NULL,
+                provider VARCHAR(50) NOT NULL DEFAULT 'LOCAL',
+                provider_id VARCHAR(255) NULL,
+                profile_image VARCHAR(500) NULL COMMENT '프로필 이미지 URL',
+                visited_countries INT NOT NULL DEFAULT 0 COMMENT '방문한 국가 수',
+                is_activate BOOLEAN NOT NULL DEFAULT true,
+                INDEX idx_email (email),
+                INDEX idx_provider (provider)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `);
+
+        // 2. Country 테이블 생성 (외래키 없음, User와 독립적)
         await queryRunner.query(`
             CREATE TABLE country_table (
                 id VARCHAR(36) PRIMARY KEY,
@@ -15,7 +34,7 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 2. Region 테이블 생성 (Country 참조)
+        // 3. Region 테이블 생성 (Country 참조)
         await queryRunner.query(`
             CREATE TABLE region_table (
                 id VARCHAR(36) PRIMARY KEY,
@@ -31,7 +50,7 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 3. Place 테이블 생성 (Region 참조)
+        // 4. Place 테이블 생성 (Region 참조)
         await queryRunner.query(`
             CREATE TABLE place_table (
                 id VARCHAR(36) PRIMARY KEY,
@@ -51,7 +70,7 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 4. TravelCourse 테이블 생성 (User 참조)
+        // 5. TravelCourse 테이블 생성 (User 참조)
         await queryRunner.query(`
             CREATE TABLE travel_course_table (
                 id VARCHAR(36) PRIMARY KEY,
@@ -67,13 +86,13 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
                 like_count INT NOT NULL DEFAULT 0 COMMENT '좋아요 수',
                 bookmark_count INT NOT NULL DEFAULT 0 COMMENT '북마크 수',
                 user_id VARCHAR(36) NOT NULL,
-                FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES user_table(id) ON DELETE CASCADE,
                 INDEX idx_user_id (user_id),
                 INDEX idx_is_public (is_public)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 5. CourseCountry 테이블 생성 (TravelCourse, Country 참조)
+        // 6. CourseCountry 테이블 생성 (TravelCourse, Country 참조)
         await queryRunner.query(`
             CREATE TABLE course_country_table (
                 id VARCHAR(36) PRIMARY KEY,
@@ -89,7 +108,7 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 6. CoursePlace 테이블 생성 (TravelCourse, Place 참조)
+        // 7. CoursePlace 테이블 생성 (TravelCourse, Place 참조)
         await queryRunner.query(`
             CREATE TABLE course_place_table (
                 id VARCHAR(36) PRIMARY KEY,
@@ -107,7 +126,7 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 7. CourseHashTag 테이블 생성 (TravelCourse 참조)
+        // 8. CourseHashTag 테이블 생성 (TravelCourse 참조)
         await queryRunner.query(`
             CREATE TABLE course_hashtag_table (
                 id VARCHAR(36) PRIMARY KEY,
@@ -121,7 +140,7 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 8. CourseLike 테이블 생성 (TravelCourse, User 참조)
+        // 9. CourseLike 테이블 생성 (TravelCourse, User 참조)
         await queryRunner.query(`
             CREATE TABLE course_like_table (
                 id VARCHAR(36) PRIMARY KEY,
@@ -130,14 +149,14 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
                 travel_course_id VARCHAR(36) NOT NULL,
                 user_id VARCHAR(36) NOT NULL,
                 FOREIGN KEY (travel_course_id) REFERENCES travel_course_table(id) ON DELETE CASCADE,
-                FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES user_table(id) ON DELETE CASCADE,
                 UNIQUE KEY unique_course_like (travel_course_id, user_id),
                 INDEX idx_travel_course_id (travel_course_id),
                 INDEX idx_user_id (user_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 9. CourseBookmark 테이블 생성 (TravelCourse, User 참조)
+        // 10. CourseBookmark 테이블 생성 (TravelCourse, User 참조)
         await queryRunner.query(`
             CREATE TABLE course_bookmark_table (
                 id VARCHAR(36) PRIMARY KEY,
@@ -146,14 +165,14 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
                 travel_course_id VARCHAR(36) NOT NULL,
                 user_id VARCHAR(36) NOT NULL,
                 FOREIGN KEY (travel_course_id) REFERENCES travel_course_table(id) ON DELETE CASCADE,
-                FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES user_table(id) ON DELETE CASCADE,
                 UNIQUE KEY unique_course_bookmark (travel_course_id, user_id),
                 INDEX idx_travel_course_id (travel_course_id),
                 INDEX idx_user_id (user_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 10. TravelBlog 테이블 생성 (User 참조)
+        // 11. TravelBlog 테이블 생성 (User 참조)
         await queryRunner.query(`
             CREATE TABLE travel_blog_table (
                 id VARCHAR(36) PRIMARY KEY,
@@ -166,13 +185,13 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
                 view_count INT NOT NULL DEFAULT 0 COMMENT '조회수',
                 like_count INT NOT NULL DEFAULT 0 COMMENT '좋아요 수',
                 user_id VARCHAR(36) NOT NULL,
-                FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES user_table(id) ON DELETE CASCADE,
                 INDEX idx_user_id (user_id),
                 INDEX idx_is_public (is_public)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 11. BlogLike 테이블 생성 (TravelBlog, User 참조)
+        // 12. BlogLike 테이블 생성 (TravelBlog, User 참조)
         await queryRunner.query(`
             CREATE TABLE blog_like_table (
                 id VARCHAR(36) PRIMARY KEY,
@@ -181,14 +200,14 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
                 travel_blog_id VARCHAR(36) NOT NULL,
                 user_id VARCHAR(36) NOT NULL,
                 FOREIGN KEY (travel_blog_id) REFERENCES travel_blog_table(id) ON DELETE CASCADE,
-                FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES user_table(id) ON DELETE CASCADE,
                 UNIQUE KEY unique_blog_like (travel_blog_id, user_id),
                 INDEX idx_travel_blog_id (travel_blog_id),
                 INDEX idx_user_id (user_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 12. UserVisitedCountry 테이블 생성 (User, Country 참조)
+        // 13. UserVisitedCountry 테이블 생성 (User, Country 참조)
         await queryRunner.query(`
             CREATE TABLE user_visited_country_table (
                 id VARCHAR(36) PRIMARY KEY,
@@ -197,7 +216,7 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
                 visit_date DATE NULL COMMENT '방문 날짜',
                 user_id VARCHAR(36) NOT NULL,
                 country_id VARCHAR(36) NOT NULL,
-                FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES user_table(id) ON DELETE CASCADE,
                 FOREIGN KEY (country_id) REFERENCES country_table(id) ON DELETE CASCADE,
                 UNIQUE KEY unique_user_country (user_id, country_id),
                 INDEX idx_user_id (user_id),
@@ -205,7 +224,7 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 13. Notification 테이블 생성 (User 참조)
+        // 14. Notification 테이블 생성 (User 참조)
         await queryRunner.query(`
             CREATE TABLE notification_table (
                 id VARCHAR(36) PRIMARY KEY,
@@ -218,8 +237,8 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
                 reference_id VARCHAR(36) NULL COMMENT '참조 ID (블로그 ID, 코스 ID 등)',
                 user_id VARCHAR(36) NOT NULL,
                 sender_id VARCHAR(36) NULL,
-                FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
-                FOREIGN KEY (sender_id) REFERENCES user(id) ON DELETE SET NULL,
+                FOREIGN KEY (user_id) REFERENCES user_table(id) ON DELETE CASCADE,
+                FOREIGN KEY (sender_id) REFERENCES user_table(id) ON DELETE SET NULL,
                 INDEX idx_user_id (user_id),
                 INDEX idx_sender_id (sender_id),
                 INDEX idx_is_read (is_read)
@@ -242,6 +261,7 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
         await queryRunner.query(`DROP TABLE IF EXISTS place_table`);
         await queryRunner.query(`DROP TABLE IF EXISTS region_table`);
         await queryRunner.query(`DROP TABLE IF EXISTS country_table`);
+        await queryRunner.query(`DROP TABLE IF EXISTS user_table`);
     }
 
 }
