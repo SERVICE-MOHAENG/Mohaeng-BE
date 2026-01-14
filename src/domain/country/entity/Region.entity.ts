@@ -66,8 +66,8 @@ export class Region extends BaseEntity {
     const region = new Region();
     region.name = name;
     region.country = country;
-    region.latitude = latitude || null;
-    region.longitude = longitude || null;
+    region.latitude = latitude ?? null;
+    region.longitude = longitude ?? null;
     region.imageUrl = imageUrl || null;
     return region;
   }
