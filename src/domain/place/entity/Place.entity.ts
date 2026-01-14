@@ -99,8 +99,8 @@ export class Place extends BaseEntity {
     place.name = name;
     place.description = description || null;
     place.imageUrl = imageUrl || null;
-    place.latitude = latitude || null;
-    place.longitude = longitude || null;
+    place.latitude = latitude ?? null;
+    place.longitude = longitude ?? null;
     place.address = address || null;
     place.openingHours = openingHours || null;
     place.category = category || null;
