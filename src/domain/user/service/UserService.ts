@@ -25,6 +25,7 @@ export class UserService {
     const verifiedKey = `auth:email-verified:${normalizedEmail}`;
     const isVerified = await this.redisService.get(verifiedKey);
 
+    //이메일 인증 확인
     if (!isVerified) {
       throw new AuthEmailNotVerifiedException();
     }
