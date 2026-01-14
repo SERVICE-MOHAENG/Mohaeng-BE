@@ -38,14 +38,13 @@ export class NotificationService {
   }
 
   /**
-   * 사용자의 읽지 않은 알림 조회
+   * 사용자의 읽지 않은 알림 조회 (페이지당 20개)
    */
   async findUnreadByUserId(
     userId: string,
     page: number = 1,
-    limit: number = 20,
   ): Promise<[Notification[], number]> {
-    return this.notificationRepository.findUnreadByUserId(userId, page, limit);
+    return this.notificationRepository.findUnreadByUserId(userId, page);
   }
 
   /**

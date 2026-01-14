@@ -38,13 +38,12 @@ export class NotificationRepository {
   async findUnreadByUserId(
     userId: string,
     page: number = 1,
-    limit: number = 20,
   ): Promise<[Notification[], number]> {
-    const maxLimit = Math.min(limit, 100);
+    const pageSize = 20;
     return this.repository.findAndCount({
       where: { user: { id: userId }, isRead: false },
-      skip: (page - 1) * maxLimit,
-      take: maxLimit,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
       order: { createdAt: 'DESC' },
     });
   }
