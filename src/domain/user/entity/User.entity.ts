@@ -43,6 +43,24 @@ export class User extends BaseEntity {
   providerId: string | null;
 
   @Column({
+    type: 'varchar',
+    length: 500,
+    name: 'profile_image',
+    nullable: true,
+    comment: '프로필 이미지 URL',
+  })
+  profileImage: string | null;
+
+  @Column({
+    type: 'int',
+    name: 'visited_countries',
+    nullable: false,
+    default: 0,
+    comment: '방문한 국가 수',
+  })
+  visitedCountries: number;
+
+  @Column({
     type: 'boolean',
     name: 'is_activate',
     nullable: false,
@@ -60,6 +78,8 @@ export class User extends BaseEntity {
     user.passwordHash = passwordHash;
     user.provider = Provider.LOCAL;
     user.providerId = null;
+    user.profileImage = null;
+    user.visitedCountries = 0;
     user.isActivate = true;
     return user;
   }
@@ -72,6 +92,7 @@ export class User extends BaseEntity {
     email: string,
     provider: Provider,
     providerId: string,
+    profileImage?: string,
   ): User {
     const user = new User();
     user.name = name;
@@ -79,7 +100,25 @@ export class User extends BaseEntity {
     user.passwordHash = null;
     user.provider = provider;
     user.providerId = providerId;
+    user.profileImage = profileImage || null;
+    user.visitedCountries = 0;
     user.isActivate = true;
     return user;
+  }
+
+  /**
+   * 방문 국가 수 증가
+   */
+  incrementVisitedCountries(): void {
+    this.visitedCountries += 1;
+  }
+
+  /**
+   * 방문 국가 수 감소
+   */
+  decrementVisitedCountries(): void {
+    if (this.visitedCountries > 0) {
+      this.visitedCountries -= 1;
+    }
   }
 }

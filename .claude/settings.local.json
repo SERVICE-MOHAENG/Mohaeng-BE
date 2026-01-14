@@ -7,7 +7,9 @@
       "Bash(mv:*)",
       "Bash(npm run build:*)",
       "Bash(find:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(tree:*)",
+      "mcp__filesystem__read_multiple_files"
     ]
   }
 }
