@@ -9,7 +9,8 @@
       "Bash(find:*)",
       "Bash(npm install:*)",
       "Bash(tree:*)",
-      "mcp__filesystem__read_multiple_files"
+      "mcp__filesystem__read_multiple_files",
+      "Bash(npm run migration:generate:*)"
     ]
   }
 }

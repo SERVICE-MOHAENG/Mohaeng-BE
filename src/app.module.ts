@@ -6,6 +6,19 @@ import { GlobalModule } from './global/GlobalModule';
 import { AuthModule } from './domain/auth/AuthModule';
 import { UserModule } from './domain/user/UserModule';
 import { User } from './domain/user/entity/User.entity';
+import { TravelCourse } from './domain/course/entity/TravelCourse.entity';
+import { CoursePlace } from './domain/course/entity/CoursePlace.entity';
+import { CourseHashTag } from './domain/course/entity/CourseHashTag.entity';
+import { CourseLike } from './domain/course/entity/CourseLike.entity';
+import { CourseBookmark } from './domain/course/entity/CourseBookmark.entity';
+import { CourseCountry } from './domain/course/entity/CourseCountry.entity';
+import { TravelBlog } from './domain/blog/entity/TravelBlog.entity';
+import { BlogLike } from './domain/blog/entity/BlogLike.entity';
+import { Country } from './domain/country/entity/Country.entity';
+import { Region } from './domain/country/entity/Region.entity';
+import { Place } from './domain/place/entity/Place.entity';
+import { UserVisitedCountry } from './domain/visited-country/entity/UserVisitedCountry.entity';
+import { Notification } from './domain/notification/entity/Notification.entity';
 
 @Module({
   imports: [
@@ -22,7 +35,22 @@ import { User } from './domain/user/entity/User.entity';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
-        entities: [User],
+        entities: [
+          User,
+          TravelCourse,
+          CoursePlace,
+          CourseHashTag,
+          CourseLike,
+          CourseBookmark,
+          CourseCountry,
+          TravelBlog,
+          BlogLike,
+          Country,
+          Region,
+          Place,
+          UserVisitedCountry,
+          Notification,
+        ],
         synchronize:
           configService.get('SYNC_AUTO_DDL') === 'true' &&
           configService.get('NODE_ENV') !== 'production',
