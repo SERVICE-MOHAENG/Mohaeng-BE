@@ -43,9 +43,9 @@ export class UserVisitedCountryService {
   }
 
   /**
-   * 방문 국가 생성 또는 방문 횟수 증가
+   * 방문 국가 생성 또는 방문 날짜 업데이트"
    */
-  async createOrIncrementVisit(
+  async createOrUpdateVisitDate(
     user: User,
     country: Country,
     visitDate?: Date,

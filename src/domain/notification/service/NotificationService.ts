@@ -40,8 +40,12 @@ export class NotificationService {
   /**
    * 사용자의 읽지 않은 알림 조회
    */
-  async findUnreadByUserId(userId: string): Promise<Notification[]> {
-    return this.notificationRepository.findUnreadByUserId(userId);
+  async findUnreadByUserId(
+    userId: string,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<[Notification[], number]> {
+    return this.notificationRepository.findUnreadByUserId(userId, page, limit);
   }
 
   /**
