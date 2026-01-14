@@ -10,7 +10,9 @@
       "Bash(npm install:*)",
       "Bash(tree:*)",
       "mcp__filesystem__read_multiple_files",
-      "Bash(npm run migration:generate:*)"
+      "Bash(npm run migration:generate:*)",
+      "mcp__filesystem__list_directory",
+      "Bash(npm run migration:create:*)"
     ]
   }
 }
