@@ -35,9 +35,16 @@ export class NotificationRepository {
     });
   }
 
-  async findUnreadByUserId(userId: string): Promise<Notification[]> {
-    return this.repository.find({
+  async findUnreadByUserId(
+    userId: string,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<[Notification[], number]> {
+    const maxLimit = Math.min(limit, 100);
+    return this.repository.findAndCount({
       where: { user: { id: userId }, isRead: false },
+      skip: (page - 1) * maxLimit,
+      take: maxLimit,
       order: { createdAt: 'DESC' },
     });
   }
