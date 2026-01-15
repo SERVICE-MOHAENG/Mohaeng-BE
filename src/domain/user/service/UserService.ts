@@ -79,4 +79,13 @@ export class UserService {
     }
     return user;
   }
+
+  async getMainpageUser(userId: string): Promise<UserResponse>{
+    const user = await this.userRepository.findById(userId);
+    if(!user){
+      throw new UserNotFoundException();
+    }
+    return user;
+  }
+
 }

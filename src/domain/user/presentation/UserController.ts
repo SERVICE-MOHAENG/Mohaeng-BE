@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Get,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UserApiBearerAuth } from '../../../global/decorators/UserApiBearerAuth';
@@ -43,6 +44,17 @@ export class UserController {
   async signup(@Body() request: SignupRequest): Promise<UserResponse> {
     const user = await this.userService.signup(request);
     return user;
+  }
+  
+  @Get("mainpage/me")
+  @ApiOperation({ summary: '메인페이지 유저 정보'})
+  @ApiResponse({
+    status: 200,
+    description: '유저 정보 전송',
+    type:UserResponse,
+  })
+  async getUser(@UserId() userId: string): Promise<UserResponse>{
+    return this.userService.getMainpageUser(userId)
   }
 
   @Delete('me')
