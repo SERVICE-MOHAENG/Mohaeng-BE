@@ -16,7 +16,7 @@ export class MainpageResponse{
   @ApiProperty({ description: '프로필 이미지', example: 'https://cdn.mohaeng.com/profiles/.jpg'})
   profileImage: string | null;
 
-  @ApiProperty({ description: '방문 국가 수', example: '12'})
+  @ApiProperty({ description: '방문 국가 수', example: 12 })
   visitedCountries: number;
 
   static fromEntity(user: {

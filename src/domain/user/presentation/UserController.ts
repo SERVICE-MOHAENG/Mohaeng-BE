@@ -48,6 +48,7 @@ export class UserController {
   }
   
   @Get("mainpage/me")
+  @UserApiBearerAuth()
   @ApiOperation({ summary: '메인페이지 유저 정보'})
   @ApiResponse({
     status: 200,

@@ -86,7 +86,7 @@ export class UserService {
     if(!user){
       throw new UserNotFoundException();
     }
-    return user;
+    return MainpageResponse.fromEntity(user);
   }
 
 }
