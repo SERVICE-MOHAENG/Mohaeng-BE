@@ -13,6 +13,7 @@ import { UserId } from '../../../global/decorators/UserId';
 import { UserService } from '../service/UserService';
 import { SignupRequest } from './dto/request/SignupRequest';
 import { UserResponse } from './dto/response/UserResponse';
+import { MainpageResponse } from './dto/response/MainPageResponse';
 
 /**
  * UserController
@@ -53,7 +54,7 @@ export class UserController {
     description: '유저 정보 전송',
     type:UserResponse,
   })
-  async getUser(@UserId() userId: string): Promise<UserResponse>{
+  async getUser(@UserId() userId: string): Promise<MainpageResponse>{
     return this.userService.getMainpageUser(userId)
   }
 

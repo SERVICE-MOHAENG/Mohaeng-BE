@@ -9,6 +9,7 @@ import { SignupRequest } from '../presentation/dto/request/SignupRequest';
 import { UserResponse } from '../presentation/dto/response/UserResponse';
 import { GlobalRedisService } from '../../../global/redis/GlobalRedisService';
 import { AuthEmailNotVerifiedException } from '../../auth/exception/AuthEmailNotVerifiedException';
+import { MainpageResponse } from '../presentation/dto/response/MainPageResponse';
 
 const SALT_ROUNDS = 11;
 
@@ -80,7 +81,7 @@ export class UserService {
     return user;
   }
 
-  async getMainpageUser(userId: string): Promise<UserResponse>{
+  async getMainpageUser(userId: string): Promise<MainpageResponse>{
     const user = await this.userRepository.findById(userId);
     if(!user){
       throw new UserNotFoundException();
