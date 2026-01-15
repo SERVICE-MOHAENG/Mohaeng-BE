@@ -13,7 +13,7 @@ export class MainpageResponse{
   @ApiProperty({ description: '이메일', example: 'example@gmail.com'})
   email: string;
 
-  @ApiProperty({ description: '프로필 이미지', example: '@gmail.https://cdn.mohaeng.com/profiles/.jpg'})
+  @ApiProperty({ description: '프로필 이미지', example: 'https://cdn.mohaeng.com/profiles/.jpg'})
   profileImage: string | null;
 
   @ApiProperty({ description: '방문 국가 수', example: '12'})
