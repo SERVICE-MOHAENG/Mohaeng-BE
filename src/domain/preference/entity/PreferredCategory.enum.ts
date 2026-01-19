@@ -15,6 +15,5 @@ export enum PreferredCategory {
   CAFE = 'CAFE', // 카페
   MARKET = 'MARKET', // 시장
   SHOPPING_MALL = 'SHOPPING_MALL', // 쇼핑몰
-  NIGHTLIFE = 'NIGHTLIFE', // 나이트라이프
   LANDMARK = 'LANDMARK', // 랜드마크
 }
