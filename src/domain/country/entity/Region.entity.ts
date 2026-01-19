@@ -6,6 +6,8 @@ import { RegionFoodPersonality } from './RegionFoodPersonality.entity';
 import { RegionMainInterest } from './RegionMainInterest.entity';
 import { RegionCategory } from './RegionCategory.entity';
 import { RegionTravelStyle } from './RegionTravelStyle.entity';
+import { TravelRange } from '../../preference/entity/TravelRange.enum';
+import { BudgetLevel } from '../../preference/entity/BudgetLevel.enum';
 
 /**
  * Region Entity
@@ -53,11 +55,30 @@ export class Region extends BaseEntity {
   imageUrl: string | null;
 
   @Column({
-    type: 'int',
+    type: 'varchar',
+    length: 50,
+    name: 'travel_range',
+    nullable: false,
+    comment: '한국에서 이동 거리 (설문 2번과 매칭)',
+  })
+  travelRange: TravelRange;
+
+  @Column({
+    type: 'varchar',
+    length: 50,
+    name: 'average_budget_level',
+    nullable: false,
+    default: BudgetLevel.MEDIUM,
+    comment: '평균 여행 예산 수준',
+  })
+  averageBudgetLevel: BudgetLevel;
+
+  @Column({
+    type: 'decimal',
     name: 'popularity_score',
     nullable: false,
     default: 0,
-    comment: '인기도 점수 (0-1000)',
+    comment: '인기도 점수 0 부터 5',
   })
   popularityScore: number;
 
@@ -65,7 +86,7 @@ export class Region extends BaseEntity {
     type: 'decimal',
     precision: 5,
     scale: 2,
-    name: 'recommendation_score',
+    name: '',
     nullable: false,
     default: 0,
     comment: 'AI 추천 점수 (0-100)',
@@ -117,6 +138,8 @@ export class Region extends BaseEntity {
   static create(
     name: string,
     country: Country,
+    travelRange: TravelRange,
+    averageBudgetLevel: BudgetLevel = BudgetLevel.MEDIUM,
     latitude?: number,
     longitude?: number,
     imageUrl?: string,
@@ -124,6 +147,8 @@ export class Region extends BaseEntity {
     const region = new Region();
     region.name = name;
     region.country = country;
+    region.travelRange = travelRange;
+    region.averageBudgetLevel = averageBudgetLevel;
     region.latitude = latitude ?? null;
     region.longitude = longitude ?? null;
     region.imageUrl = imageUrl || null;
