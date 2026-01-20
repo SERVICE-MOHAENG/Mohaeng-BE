@@ -4,6 +4,7 @@ import { TravelBlog } from './entity/TravelBlog.entity';
 import { BlogLike } from './entity/BlogLike.entity';
 import { TravelBlogRepository } from './persistence/TravelBlogRepository';
 import { TravelBlogService } from './service/TravelBlogService';
+import { TravelBlogController } from './presentation/TravelBlogController';
 
 /**
  * Blog Module
@@ -12,6 +13,7 @@ import { TravelBlogService } from './service/TravelBlogService';
  */
 @Module({
   imports: [TypeOrmModule.forFeature([TravelBlog, BlogLike])],
+  controllers: [TravelBlogController],
   providers: [TravelBlogRepository, TravelBlogService],
   exports: [TravelBlogService],
 })

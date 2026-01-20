@@ -8,6 +8,7 @@ import { CourseBookmark } from './entity/CourseBookmark.entity';
 import { CourseCountry } from './entity/CourseCountry.entity';
 import { TravelCourseRepository } from './persistence/TravelCourseRepository';
 import { TravelCourseService } from './service/TravelCourseService';
+import { TravelCourseController } from './presentation/TravelCourseController';
 
 /**
  * Course Module
@@ -25,6 +26,7 @@ import { TravelCourseService } from './service/TravelCourseService';
       CourseCountry,
     ]),
   ],
+  controllers: [TravelCourseController],
   providers: [TravelCourseRepository, TravelCourseService],
   exports: [TravelCourseService],
 })
