@@ -101,6 +101,14 @@ export class Region extends BaseEntity {
   })
   recommendationScore: number;
 
+  @Column({
+    type: 'text',
+    name: 'region_description',
+    nullable: true,
+    comment: '지역 설명하는 요약 글',
+  })
+  regionDescription: string | null;
+
   @ManyToOne(() => Country, (country) => country.regions, {
     nullable: false,
     onDelete: 'CASCADE',
