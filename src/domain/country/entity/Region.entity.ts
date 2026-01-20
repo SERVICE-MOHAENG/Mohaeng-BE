@@ -159,6 +159,7 @@ export class Region extends BaseEntity {
     latitude?: number,
     longitude?: number,
     imageUrl?: string,
+    regionDescription?: string,
   ): Region {
     const region = new Region();
     region.name = name;
@@ -167,7 +168,8 @@ export class Region extends BaseEntity {
     region.averageBudgetLevel = averageBudgetLevel;
     region.latitude = latitude ?? null;
     region.longitude = longitude ?? null;
-    region.imageUrl = imageUrl || null;
+    region.imageUrl = imageUrl ?? null;
+    region.regionDescription = regionDescription ?? null;
     region.popularityScore = 0;
     region.recommendationScore = 0;
     region.environments = [];
