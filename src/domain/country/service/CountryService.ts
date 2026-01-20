@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CountryRepository } from '../persistence/CountryRepository';
 import { Country } from '../entity/Country.entity';
 import { CountryNotFoundException } from '../exception/CountryNotFoundException';
+import { Continent } from '../../preference/entity/Continent.enum';
 
 /**
  * Country Service
@@ -44,12 +45,8 @@ export class CountryService {
   /**
    * 국가 생성
    */
-  async create(
-    name: string,
-    code: string,
-    imageUrl?: string,
-  ): Promise<Country> {
-    const country = Country.create(name, code, imageUrl);
+  async create(name: string, code: string, continent: Continent, imageUrl?: string): Promise<Country> {
+    const country = Country.create(name, code, continent, imageUrl);
     return this.countryRepository.save(country);
   }
 

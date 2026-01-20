@@ -1,6 +1,7 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, OneToOne } from 'typeorm';
 import { BaseEntity } from '../../../global/BaseEntity';
 import { Provider } from './Provider.enum';
+import { UserPreference } from '../../preference/entity/UserPreference.entity';
 
 /**
  * User Entity
@@ -67,6 +68,9 @@ export class User extends BaseEntity {
     default: true,
   })
   isActivate: boolean;
+
+  @OneToOne(() => UserPreference, (preference) => preference.user)
+  preference: UserPreference;
 
   /**
    * 일반 회원가입용 팩토리 메서드
