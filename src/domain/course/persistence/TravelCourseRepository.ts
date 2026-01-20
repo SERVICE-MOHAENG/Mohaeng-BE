@@ -101,6 +101,9 @@ export class TravelCourseRepository {
       queryBuilder.andWhere('country.code = :countryCode', { countryCode });
     }
 
+    // 1:N 조인으로 인한 중복 제거
+    queryBuilder.distinct(true);
+
     // 좋아요순 정렬
     queryBuilder.orderBy('course.likeCount', 'DESC');
 
