@@ -6,8 +6,9 @@ import { Environment } from '../../preference/entity/Environment.enum';
 /**
  * RegionEnvironment Entity
  * @description
- * - 지역의 환경 태그 중간 테이블
- * - Region과 Environment의 N:M 관계 매핑
+ * - 지역별 환경 태그를 저장하는 테이블
+ * - Region과 1:N 관계 (하나의 Region은 여러 Environment를 가질 수 있음)
+ * - Environment는 Enum 값으로 varchar 컬럼에 저장됨
  * - 설문 3번: 선호 환경과 매칭
  */
 @Entity('region_environment_table')

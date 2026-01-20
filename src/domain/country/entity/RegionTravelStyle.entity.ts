@@ -6,8 +6,9 @@ import { TravelStyle } from '../../preference/entity/TravelStyle.enum';
 /**
  * RegionTravelStyle Entity
  * @description
- * - 지역의 여행 스타일 태그 중간 테이블
- * - Region과 TravelStyle의 Many-to-Many 관계 매핑
+ * - 지역별 여행 스타일 적합도 점수를 저장하는 테이블
+ * - Region과 1:N 관계 (하나의 Region은 여러 TravelStyle 점수를 가질 수 있음)
+ * - TravelStyle은 Enum 값으로 varchar 컬럼에 저장됨
  */
 @Entity('region_travel_style_table')
 @Unique(['region', 'travelStyle'])

@@ -6,8 +6,9 @@ import { FoodPersonality } from '../../preference/entity/FoodPersonality.enum';
 /**
  * RegionFoodPersonality Entity
  * @description
- * - 지역의 식도락 성향 태그 중간 테이블
- * - Region과 FoodPersonality의 N:M 관계 매핑
+ * - 지역별 식도락 성향 태그를 저장하는 테이블
+ * - Region과 1:N 관계 (하나의 Region은 여러 FoodPersonality를 가질 수 있음)
+ * - FoodPersonality는 Enum 값으로 varchar 컬럼에 저장됨
  * - 설문 5번: 식도락 성향과 매칭
  */
 @Entity('region_food_personality_table')

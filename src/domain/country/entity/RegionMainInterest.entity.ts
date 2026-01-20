@@ -6,8 +6,9 @@ import { MainInterest } from '../../preference/entity/MainInterest.enum';
 /**
  * RegionMainInterest Entity
  * @description
- * - 지역의 핵심 관심사 태그 중간 테이블
- * - Region과 MainInterest의 N:M 관계 매핑
+ * - 지역별 핵심 관심사 태그를 저장하는 테이블
+ * - Region과 1:N 관계 (하나의 Region은 여러 MainInterest를 가질 수 있음)
+ * - MainInterest는 Enum 값으로 varchar 컬럼에 저장됨
  * - 설문 6번: 핵심 관심사와 매칭
  */
 @Entity('region_main_interest_table')

@@ -81,6 +81,10 @@ export class Region extends BaseEntity {
     nullable: false,
     default: 0,
     comment: '인기도 점수 0-5',
+    transformer: {
+      from: (value: string | null | undefined) => parseFloat(value ?? '0'),
+      to: (value: number | null | undefined) => value?.toString() ?? '0',
+    },
   })
   @Min(0)
   @Max(5)
@@ -170,7 +174,8 @@ export class Region extends BaseEntity {
    * 인기도 점수 증가
    */
   incrementPopularityScore(points: number = 1): void {
-    this.popularityScore = Math.min(5, Math.max(0, this.popularityScore + points));
+    const current = Number(this.popularityScore);
+    this.popularityScore = Math.min(5, Math.max(0, current + points));
   }
 
   /**
