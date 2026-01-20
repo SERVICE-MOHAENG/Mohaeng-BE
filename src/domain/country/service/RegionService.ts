@@ -3,6 +3,8 @@ import { RegionRepository } from '../persistence/RegionRepository';
 import { CountryService } from './CountryService';
 import { Region } from '../entity/Region.entity';
 import { RegionNotFoundException } from '../exception/RegionNotFoundException';
+import { TravelRange } from '../../preference/entity/TravelRange.enum';
+import { BudgetLevel } from '../../preference/entity/BudgetLevel.enum';
 
 /**
  * Region Service
@@ -47,12 +49,14 @@ export class RegionService {
   async create(
     name: string,
     countryId: string,
+    travelRange: TravelRange,
+    averageBudgetLevel: BudgetLevel = BudgetLevel.MEDIUM,
     latitude?: number,
     longitude?: number,
     imageUrl?: string,
   ): Promise<Region> {
     const country = await this.countryService.findById(countryId);
-    const region = Region.create(name, country, latitude, longitude, imageUrl);
+    const region = Region.create(name, country, travelRange, averageBudgetLevel, latitude, longitude, imageUrl);
     return this.regionRepository.save(region);
   }
 
