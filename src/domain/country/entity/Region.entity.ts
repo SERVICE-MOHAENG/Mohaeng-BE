@@ -1,4 +1,5 @@
-import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, OneToMany, Check } from 'typeorm';
+import { Max, Min } from 'class-validator';
 import { BaseEntity } from '../../../global/BaseEntity';
 import { Country } from './Country.entity';
 import { RegionEnvironment } from './RegionEnvironment.entity';
@@ -17,6 +18,7 @@ import { BudgetLevel } from '../../preference/entity/BudgetLevel.enum';
  * - 추천 알고리즘을 위한 환경, 식도락, 관심사 태그 포함
  */
 @Entity('region_table')
+@Check('chk_region_popularity_score', '"popularity_score" >= 0 AND "popularity_score" <= 5')
 export class Region extends BaseEntity {
   @Column({
     type: 'varchar',
@@ -78,15 +80,17 @@ export class Region extends BaseEntity {
     name: 'popularity_score',
     nullable: false,
     default: 0,
-    comment: '인기도 점수 0 부터 5',
+    comment: '인기도 점수 0-5',
   })
+  @Min(0)
+  @Max(5)
   popularityScore: number;
 
   @Column({
     type: 'decimal',
     precision: 5,
     scale: 2,
-    name: '',
+    name: 'ai_score',
     nullable: false,
     default: 0,
     comment: 'AI 추천 점수 (0-100)',
@@ -166,10 +170,7 @@ export class Region extends BaseEntity {
    * 인기도 점수 증가
    */
   incrementPopularityScore(points: number = 1): void {
-    this.popularityScore += points;
-    if (this.popularityScore > 1000) {
-      this.popularityScore = 1000;
-    }
+    this.popularityScore = Math.min(5, Math.max(0, this.popularityScore + points));
   }
 
   /**

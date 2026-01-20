@@ -1,4 +1,5 @@
-import { Entity, Column, OneToMany } from 'typeorm';
+import { Entity, Column, OneToMany, Check } from 'typeorm';
+import { Max, Min } from 'class-validator';
 import { BaseEntity } from '../../../global/BaseEntity';
 import { Region } from './Region.entity';
 import { CourseCountry } from '../../course/entity/CourseCountry.entity';
@@ -11,6 +12,7 @@ import { Continent } from '../../preference/entity/Continent.enum';
  * - 국가별 지역(Region)을 관리
  */
 @Entity('country_table')
+@Check('chk_country_popularity_score', '"popularity_score" >= 0 AND "popularity_score" <= 5')
 export class Country extends BaseEntity {
   @Column({
     type: 'varchar',
@@ -53,8 +55,10 @@ export class Country extends BaseEntity {
     name: 'popularity_score',
     nullable: false,
     default: 0,
-    comment: '0부터5까지',
+    comment: '인기도 점수 0-5',
   })
+  @Min(0)
+  @Max(5)
   popularityScore: number;
 
   @OneToMany(() => Region, (region) => region.country)
@@ -80,9 +84,6 @@ export class Country extends BaseEntity {
    * 인기도 점수 증가
    */
   incrementPopularityScore(points: number = 1): void {
-    this.popularityScore += points;
-    if (this.popularityScore > 1000) {
-      this.popularityScore = 1000;
-    }
+    this.popularityScore = Math.min(5, Math.max(0, this.popularityScore + points));
   }
 }

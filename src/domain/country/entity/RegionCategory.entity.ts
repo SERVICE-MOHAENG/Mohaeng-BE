@@ -20,7 +20,7 @@ export class RegionCategory extends BaseEntity {
   region: Region;
 
   @Column({
-    type: 'varchar',
+    type: 'enum',
     length: 50,
     name: 'category',
     nullable: false,
