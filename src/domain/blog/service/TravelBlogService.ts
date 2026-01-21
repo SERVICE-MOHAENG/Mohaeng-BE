@@ -2,13 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { TravelBlogRepository } from '../persistence/TravelBlogRepository';
 import { TravelBlog } from '../entity/TravelBlog.entity';
 import { BlogNotFoundException } from '../exception/BlogNotFoundException';
-import { BlogAccessDeniedException } from '../exception/BlogAccessDeniedException';
 import { User } from '../../user/entity/User.entity';
 import { BlogsResponse } from '../presentation/dto/response/BlogsResponse';
 import { BlogResponse } from '../presentation/dto/response/BlogResponse';
 import { BlogSortType } from '../presentation/dto/request/GetBlogsRequest';
-import { CreateBlogRequest } from '../presentation/dto/request/CreateBlogRequest';
-import { UpdateBlogRequest } from '../presentation/dto/request/UpdateBlogRequest';
 
 /**
  * TravelBlog Service
@@ -52,7 +49,7 @@ export class TravelBlogService {
   }
 
   /**
-   * 여행 블로그 생성 (레거시)
+   * 여행 블로그 생성
    */
   async create(
     title: string,
@@ -66,58 +63,6 @@ export class TravelBlogService {
   }
 
   /**
-   * 여행 블로그 생성 (새로운 메서드)
-   */
-  async createBlog(
-    userId: string,
-    request: CreateBlogRequest,
-  ): Promise<TravelBlog> {
-    const user = new User();
-    user.id = userId;
-
-    const blog = TravelBlog.create(
-      request.title,
-      request.content,
-      user,
-      request.imageUrl,
-      request.isPublic ?? false,
-    );
-    return this.travelBlogRepository.save(blog);
-  }
-
-  /**
-   * 여행 블로그 수정
-   */
-  async update(
-    blogId: string,
-    userId: string,
-    request: UpdateBlogRequest,
-  ): Promise<TravelBlog> {
-    const blog = await this.findById(blogId);
-
-    // 소유권 검증
-    if (blog.user.id !== userId) {
-      throw new BlogAccessDeniedException();
-    }
-
-    // 필드별 업데이트
-    if (request.title !== undefined) {
-      blog.title = request.title;
-    }
-    if (request.content !== undefined) {
-      blog.content = request.content;
-    }
-    if (request.imageUrl !== undefined) {
-      blog.imageUrl = request.imageUrl;
-    }
-    if (request.isPublic !== undefined) {
-      blog.isPublic = request.isPublic;
-    }
-
-    return this.travelBlogRepository.save(blog);
-  }
-
-  /**
    * 여행 블로그 조회수 증가
    */
   async incrementViewCount(id: string): Promise<TravelBlog> {
@@ -127,16 +72,10 @@ export class TravelBlogService {
   }
 
   /**
-   * 여행 블로그 삭제 (소유권 검증 포함)
+   * 여행 블로그 삭제
    */
-  async delete(blogId: string, userId: string): Promise<void> {
-    const blog = await this.findById(blogId);
-
-    // 소유권 검증
-    if (blog.user.id !== userId) {
-      throw new BlogAccessDeniedException();
-    }
-
+  async delete(id: string): Promise<void> {
+    const blog = await this.findById(id);
     await this.travelBlogRepository.delete(blog.id);
   }
 
@@ -161,9 +100,17 @@ export class TravelBlogService {
         ? await this.travelBlogRepository.findBlogsByLatest(page, limit)
         : await this.travelBlogRepository.findBlogsByPopular(page, limit);
 
-    const blogResponses: BlogResponse[] = blogs.map((blog) =>
-      BlogResponse.fromEntityWithUser(blog),
-    );
+    const blogResponses: BlogResponse[] = blogs.map((blog) => ({
+      id: blog.id,
+      title: blog.title,
+      content: blog.content,
+      imageUrl: blog.imageUrl,
+      viewCount: blog.viewCount,
+      likeCount: blog.likeCount,
+      userId: blog.user.id,
+      userName: blog.user.name,
+      createdAt: blog.createdAt,
+    }));
 
     return {
       blogs: blogResponses,

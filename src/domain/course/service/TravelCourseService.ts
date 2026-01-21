@@ -2,15 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { TravelCourseRepository } from '../persistence/TravelCourseRepository';
 import { TravelCourse } from '../entity/TravelCourse.entity';
 import { CourseNotFoundException } from '../exception/CourseNotFoundException';
-import { CourseAccessDeniedException } from '../exception/CourseAccessDeniedException';
 import { User } from '../../user/entity/User.entity';
 import { Country } from '../../country/entity/Country.entity';
-import { UserRepository } from '../../user/persistence/UserRepository';
-import { UserNotFoundException } from '../../user/exception/UserNotFoundException';
-import { CreateCourseRequest } from '../presentation/dto/request/CreateCourseRequest';
-import { UpdateCourseRequest } from '../presentation/dto/request/UpdateCourseRequest';
-import { CourseResponse } from '../presentation/dto/response/CourseResponse';
-import { CoursesResponse } from '../presentation/dto/response/CoursesResponse';
 
 /**
  * TravelCourse Service
@@ -21,7 +14,6 @@ import { CoursesResponse } from '../presentation/dto/response/CoursesResponse';
 export class TravelCourseService {
   constructor(
     private readonly travelCourseRepository: TravelCourseRepository,
-    private readonly userRepository: UserRepository,
   ) {}
 
   /**
@@ -57,34 +49,7 @@ export class TravelCourseService {
   }
 
   /**
-   * 여행 코스 생성 (DTO 기반)
-   */
-  async createCourse(
-    userId: string,
-    request: CreateCourseRequest,
-  ): Promise<CourseResponse> {
-    const user = await this.userRepository.findById(userId);
-    if (!user) {
-      throw new UserNotFoundException();
-    }
-
-    const course = TravelCourse.create(
-      request.title,
-      user,
-      request.nights,
-      request.days,
-      request.description,
-      undefined,
-      request.isPublic ?? false,
-      undefined,
-    );
-
-    const savedCourse = await this.travelCourseRepository.save(course);
-    return CourseResponse.fromEntity(savedCourse);
-  }
-
-  /**
-   * 여행 코스 생성 (레거시 - 하위 호환성 유지)
+   * 여행 코스 생성
    */
   async create(
     title: string,
@@ -110,61 +75,6 @@ export class TravelCourseService {
   }
 
   /**
-   * 여행 코스 수정
-   */
-  async updateCourse(
-    courseId: string,
-    userId: string,
-    request: UpdateCourseRequest,
-  ): Promise<CourseResponse> {
-    const course = await this.findById(courseId);
-
-    // 소유권 검증
-    if (course.user.id !== userId) {
-      throw new CourseAccessDeniedException();
-    }
-
-    // 필드 업데이트
-    if (request.title !== undefined) {
-      course.title = request.title;
-    }
-    if (request.description !== undefined) {
-      course.description = request.description;
-    }
-    if (request.nights !== undefined) {
-      course.nights = request.nights;
-    }
-    if (request.days !== undefined) {
-      course.days = request.days;
-    }
-    if (request.isPublic !== undefined) {
-      course.isPublic = request.isPublic;
-    }
-
-    const updatedCourse = await this.travelCourseRepository.save(course);
-    return CourseResponse.fromEntity(updatedCourse);
-  }
-
-  /**
-   * 내 여행 코스 목록 조회
-   */
-  async getMyCourses(
-    userId: string,
-    page: number = 1,
-    limit: number = 20,
-  ): Promise<CoursesResponse> {
-    const [courses, total] = await this.findByUserId(userId, page, limit);
-
-    return {
-      items: courses.map((course) => CourseResponse.fromEntity(course)),
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-    };
-  }
-
-  /**
    * 여행 코스 조회수 증가
    */
   async incrementViewCount(id: string): Promise<TravelCourse> {
@@ -174,21 +84,7 @@ export class TravelCourseService {
   }
 
   /**
-   * 여행 코스 삭제 (소유권 검증 포함)
-   */
-  async deleteCourse(courseId: string, userId: string): Promise<void> {
-    const course = await this.findById(courseId);
-
-    // 소유권 검증
-    if (course.user.id !== userId) {
-      throw new CourseAccessDeniedException();
-    }
-
-    await this.travelCourseRepository.delete(course.id);
-  }
-
-  /**
-   * 여행 코스 삭제 (레거시 - 하위 호환성 유지)
+   * 여행 코스 삭제
    */
   async delete(id: string): Promise<void> {
     const course = await this.findById(id);

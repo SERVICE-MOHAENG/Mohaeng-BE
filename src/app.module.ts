@@ -5,9 +5,6 @@ import { LoggerModule } from './global/logger/Logger.module';
 import { GlobalModule } from './global/GlobalModule';
 import { AuthModule } from './domain/auth/AuthModule';
 import { UserModule } from './domain/user/UserModule';
-import { CourseModule } from './domain/course/CourseModule';
-import { BlogModule } from './domain/blog/BlogModule';
-import { VisitedCountryModule } from './domain/visited-country/VisitedCountryModule';
 import { User } from './domain/user/entity/User.entity';
 import { TravelCourse } from './domain/course/entity/TravelCourse.entity';
 import { CoursePlace } from './domain/course/entity/CoursePlace.entity';
@@ -94,9 +91,6 @@ import { RegionTravelStyle } from './domain/country/entity/RegionTravelStyle.ent
     GlobalModule,
     AuthModule,
     UserModule,
-    CourseModule,
-    BlogModule,
-    VisitedCountryModule,
   ],
   controllers: [],
   providers: [],
