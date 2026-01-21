@@ -13,6 +13,13 @@ export class UserResponse {
   @ApiProperty({ description: '이메일', example: 'user@example.com' })
   email: string;
 
+  @ApiProperty({
+    description: '프로필 이미지 URL',
+    example: 'https://example.com/profile.jpg',
+    nullable: true,
+  })
+  profileImage: string | null;
+
   @ApiProperty({ description: '활성 상태', example: true })
   isActivate: boolean;
 
@@ -23,6 +30,7 @@ export class UserResponse {
     id: string;
     name: string;
     email: string;
+    profileImage?: string | null;
     isActivate: boolean;
     createdAt: Date;
   }): UserResponse {
@@ -30,6 +38,7 @@ export class UserResponse {
     response.id = user.id;
     response.name = user.name;
     response.email = user.email;
+    response.profileImage = user.profileImage ?? null;
     response.isActivate = user.isActivate;
     response.createdAt = user.createdAt;
     return response;

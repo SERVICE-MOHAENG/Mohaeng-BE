@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { TravelCourse } from '../../../entity/TravelCourse.entity';
 
 /**
  * CourseResponse DTO
@@ -45,6 +46,36 @@ export class CourseResponse {
   @ApiProperty({ description: '해시태그 목록', type: [String] })
   hashTags: string[];
 
+  @ApiProperty({ description: '공개 여부' })
+  isPublic: boolean;
+
   @ApiProperty({ description: '생성일시' })
   createdAt: Date;
+
+  @ApiProperty({ description: '수정일시' })
+  updatedAt: Date;
+
+  /**
+   * Entity -> DTO 변환
+   */
+  static fromEntity(course: TravelCourse): CourseResponse {
+    const response = new CourseResponse();
+    response.id = course.id;
+    response.title = course.title;
+    response.description = course.description;
+    response.imageUrl = course.imageUrl;
+    response.viewCount = course.viewCount;
+    response.nights = course.nights;
+    response.days = course.days;
+    response.likeCount = course.likeCount;
+    response.bookmarkCount = course.bookmarkCount;
+    response.userId = course.user.id;
+    response.userName = course.user.name;
+    response.countries = course.courseCountries?.map((cc) => cc.country.name) || [];
+    response.hashTags = course.hashTags?.map((ht) => ht.tagName) || [];
+    response.isPublic = course.isPublic;
+    response.createdAt = course.createdAt;
+    response.updatedAt = course.updatedAt;
+    return response;
+  }
 }
