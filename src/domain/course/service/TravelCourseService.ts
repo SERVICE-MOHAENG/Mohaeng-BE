@@ -246,7 +246,9 @@ export class TravelCourseService {
       userName: course.user.name,
       countries: course.courseCountries?.map((cc) => cc.country.name) || [],
       hashTags: course.hashTags?.map((ht) => ht.tagName) || [],
+      isPublic: course.isPublic,
       createdAt: course.createdAt,
+      updatedAt: course.updatedAt,
     };
   }
 }
