@@ -6,6 +6,7 @@ import { PasswordMismatchException } from '../exception/PasswordMismatchExceptio
 import { UserNotFoundException } from '../exception/UserNotFoundException';
 import { UserRepository } from '../persistence/UserRepository';
 import { SignupRequest } from '../presentation/dto/request/SignupRequest';
+import { UpdateProfileRequest } from '../presentation/dto/request/UpdateProfileRequest';
 import { UserResponse } from '../presentation/dto/response/UserResponse';
 import { GlobalRedisService } from '../../../global/redis/GlobalRedisService';
 import { AuthEmailNotVerifiedException } from '../../auth/exception/AuthEmailNotVerifiedException';
@@ -87,6 +88,41 @@ export class UserService {
       throw new UserNotFoundException();
     }
     return MainpageResponse.fromEntity(user);
+  }
+
+  async updateProfile(userId: string, request: UpdateProfileRequest): Promise<UserResponse> {
+    // 사용자 존재 확인
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new UserNotFoundException();
+    }
+
+    // 비밀번호 확인 일치 검증 (둘 다 제공되어야 함)
+    if (request.password !== undefined || request.passwordConfirm !== undefined) {
+      if (request.password !== request.passwordConfirm ||
+          request.password === undefined ||
+          request.passwordConfirm === undefined) {
+        throw new PasswordMismatchException();
+      }
+    }
+
+    // 제공된 필드만 업데이트
+    if (request.name !== undefined) {
+      user.name = request.name;
+    }
+
+    if (request.profileImage !== undefined) {
+      user.profileImage = request.profileImage;
+    }
+
+    if (request.password !== undefined) {
+      const hashedPassword = await this.hashPassword(request.password);
+      user.passwordHash = hashedPassword;
+    }
+
+    // 저장 및 응답 반환
+    const updatedUser = await this.userRepository.save(user);
+    return UserResponse.fromEntity(updatedUser);
   }
 
 }
