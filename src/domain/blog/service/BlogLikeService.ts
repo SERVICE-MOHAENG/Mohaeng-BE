@@ -5,6 +5,7 @@ import { TravelBlogRepository } from '../persistence/TravelBlogRepository';
 import { BlogLike } from '../entity/BlogLike.entity';
 import { TravelBlog } from '../entity/TravelBlog.entity';
 import { BlogNotFoundException } from '../exception/BlogNotFoundException';
+import { BlogAccessDeniedException } from '../exception/BlogAccessDeniedException';
 import { UserRepository } from '../../user/persistence/UserRepository';
 import { UserNotFoundException } from '../../user/exception/UserNotFoundException';
 
@@ -41,10 +42,14 @@ export class BlogLikeService {
       // 블로그 존재 확인 (비관적 락 적용)
       const blog = await blogRepo.findOne({
         where: { id: blogId },
+        relations: ['user'],
         lock: { mode: 'pessimistic_write' },
       });
       if (!blog) {
         throw new BlogNotFoundException();
+      }
+      if (!blog.isPublic && blog.user.id !== userId) {
+        throw new BlogAccessDeniedException();
       }
 
       // 기존 좋아요 확인

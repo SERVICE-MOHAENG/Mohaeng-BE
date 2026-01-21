@@ -43,7 +43,7 @@ export class BlogLikeRepository {
     const safeLimit = Math.max(1, Math.min(100, limit));
 
     return this.repository.findAndCount({
-      where: { user: { id: userId } },
+      where: { user: { id: userId }, travelBlog: { isPublic: true } },
       relations: ['travelBlog', 'travelBlog.user'],
       skip: (safePage - 1) * safeLimit,
       take: safeLimit,
