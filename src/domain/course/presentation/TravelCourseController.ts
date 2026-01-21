@@ -32,6 +32,7 @@ import { BookmarkToggleResponse } from './dto/response/BookmarkToggleResponse';
 import { LikeToggleResponse } from './dto/response/LikeToggleResponse';
 import { CourseBookmarksResponse } from './dto/response/CourseBookmarksResponse';
 import { CourseLikesResponse } from './dto/response/CourseLikesResponse';
+import { CourseAccessDeniedException } from '../exception/CourseAccessDeniedException';
 
 /**
  * TravelCourseController
@@ -266,8 +267,14 @@ export class TravelCourseController {
   })
   @ApiResponse({ status: 401, description: '인증 실패' })
   @ApiResponse({ status: 404, description: '코스를 찾을 수 없음' })
-  async getCourseById(@Param('id') id: string): Promise<CourseResponse> {
+  async getCourseById(
+    @Param('id') id: string,
+    @UserId() userId: string,
+  ): Promise<CourseResponse> {
     const course = await this.travelCourseService.findById(id);
+    if (!course.isPublic && course.user.id !== userId) {
+      throw new CourseAccessDeniedException();
+    }
     return CourseResponse.fromEntity(course);
   }
 

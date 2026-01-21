@@ -37,6 +37,7 @@ export class TravelCourseRepository {
     return this.repository.findAndCount({
       where: { user: { id: userId } },
       relations: [
+        'user',
         'courseCountries',
         'courseCountries.country',
         'coursePlaces',
