@@ -5,6 +5,7 @@ import { TravelCourseRepository } from '../persistence/TravelCourseRepository';
 import { CourseBookmark } from '../entity/CourseBookmark.entity';
 import { TravelCourse } from '../entity/TravelCourse.entity';
 import { CourseNotFoundException } from '../exception/CourseNotFoundException';
+import { CourseAccessDeniedException } from '../exception/CourseAccessDeniedException';
 import { UserRepository } from '../../user/persistence/UserRepository';
 import { UserNotFoundException } from '../../user/exception/UserNotFoundException';
 
@@ -41,10 +42,14 @@ export class CourseBookmarkService {
       // 코스 존재 확인 (비관적 락 적용)
       const course = await courseRepo.findOne({
         where: { id: courseId },
+        relations: ['user'],
         lock: { mode: 'pessimistic_write' },
       });
       if (!course) {
         throw new CourseNotFoundException();
+      }
+      if (!course.isPublic && course.user.id !== userId) {
+        throw new CourseAccessDeniedException();
       }
 
       // 기존 북마크 확인
