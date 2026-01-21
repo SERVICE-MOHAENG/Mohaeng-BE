@@ -7,7 +7,13 @@ import { CourseLike } from './entity/CourseLike.entity';
 import { CourseBookmark } from './entity/CourseBookmark.entity';
 import { CourseCountry } from './entity/CourseCountry.entity';
 import { TravelCourseRepository } from './persistence/TravelCourseRepository';
+import { CourseBookmarkRepository } from './persistence/CourseBookmarkRepository';
+import { CourseLikeRepository } from './persistence/CourseLikeRepository';
 import { TravelCourseService } from './service/TravelCourseService';
+import { CourseBookmarkService } from './service/CourseBookmarkService';
+import { CourseLikeService } from './service/CourseLikeService';
+import { TravelCourseController } from './presentation/TravelCourseController';
+import { UserModule } from '../user/UserModule';
 
 /**
  * Course Module
@@ -24,8 +30,17 @@ import { TravelCourseService } from './service/TravelCourseService';
       CourseBookmark,
       CourseCountry,
     ]),
+    UserModule,
   ],
-  providers: [TravelCourseRepository, TravelCourseService],
-  exports: [TravelCourseService],
+  controllers: [TravelCourseController],
+  providers: [
+    TravelCourseRepository,
+    CourseBookmarkRepository,
+    CourseLikeRepository,
+    TravelCourseService,
+    CourseBookmarkService,
+    CourseLikeService,
+  ],
+  exports: [TravelCourseService, CourseBookmarkService, CourseLikeService],
 })
 export class CourseModule {}
