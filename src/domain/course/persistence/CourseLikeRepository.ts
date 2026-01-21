@@ -39,6 +39,9 @@ export class CourseLikeRepository {
     page: number = 1,
     limit: number = 20,
   ): Promise<[CourseLike[], number]> {
+    const safePage = Math.max(1, page);
+    const safeLimit = Math.max(1, Math.min(100, limit));
+
     return this.repository.findAndCount({
       where: { user: { id: userId } },
       relations: [
@@ -49,8 +52,8 @@ export class CourseLikeRepository {
         'travelCourse.coursePlaces',
         'travelCourse.hashTags',
       ],
-      skip: (page - 1) * limit,
-      take: limit,
+      skip: (safePage - 1) * safeLimit,
+      take: safeLimit,
       order: { createdAt: 'DESC' },
     });
   }

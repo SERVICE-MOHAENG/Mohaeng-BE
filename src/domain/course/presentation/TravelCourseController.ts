@@ -36,6 +36,7 @@ import { CourseLikesResponse } from './dto/response/CourseLikesResponse';
  * TravelCourseController
  * @description
  * - 여행 코스 관련 HTTP 요청 처리
+ * - 라우트 순서: literal 라우트 (me, me/bookmarks, me/likes)를 parameterized 라우트 (:id) 앞에 배치
  */
 @ApiTags('courses')
 @Controller('v1/courses')
@@ -87,6 +88,92 @@ export class TravelCourseController {
   }
 
   /**
+   * 내 북마크 목록 조회
+   * @description
+   * - 로그인한 사용자가 북마크한 코스 목록 조회
+   * @param userId - 사용자 ID (자동 주입)
+   * @param request - 페이지네이션 요청
+   * @returns CourseBookmarksResponse
+   */
+  @Get('me/bookmarks')
+  @UserApiBearerAuth()
+  @ApiOperation({ summary: '내 북마크 목록 조회' })
+  @ApiQuery({
+    name: 'page',
+    description: '페이지 번호',
+    required: false,
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    description: '페이지 크기',
+    required: false,
+    example: 20,
+  })
+  @ApiResponse({
+    status: 200,
+    description: '조회 성공',
+    type: CourseBookmarksResponse,
+  })
+  @ApiResponse({ status: 401, description: '인증 실패' })
+  async getMyBookmarks(
+    @UserId() userId: string,
+    @Query() request: GetMyCoursesRequest,
+  ): Promise<CourseBookmarksResponse> {
+    const page = request.page ?? 1;
+    const limit = request.limit ?? 20;
+    const [bookmarks, total] = await this.courseBookmarkService.getMyBookmarks(
+      userId,
+      page,
+      limit,
+    );
+    return CourseBookmarksResponse.from(bookmarks, total, page, limit);
+  }
+
+  /**
+   * 내 좋아요 목록 조회
+   * @description
+   * - 로그인한 사용자가 좋아요한 코스 목록 조회
+   * @param userId - 사용자 ID (자동 주입)
+   * @param request - 페이지네이션 요청
+   * @returns CourseLikesResponse
+   */
+  @Get('me/likes')
+  @UserApiBearerAuth()
+  @ApiOperation({ summary: '내 좋아요 목록 조회' })
+  @ApiQuery({
+    name: 'page',
+    description: '페이지 번호',
+    required: false,
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    description: '페이지 크기',
+    required: false,
+    example: 20,
+  })
+  @ApiResponse({
+    status: 200,
+    description: '조회 성공',
+    type: CourseLikesResponse,
+  })
+  @ApiResponse({ status: 401, description: '인증 실패' })
+  async getMyLikes(
+    @UserId() userId: string,
+    @Query() request: GetMyCoursesRequest,
+  ): Promise<CourseLikesResponse> {
+    const page = request.page ?? 1;
+    const limit = request.limit ?? 20;
+    const [likes, total] = await this.courseLikeService.getMyLikes(
+      userId,
+      page,
+      limit,
+    );
+    return CourseLikesResponse.from(likes, total, page, limit);
+  }
+
+  /**
    * 여행 코스 생성
    * @description
    * - 새로운 여행 코스 생성
@@ -114,11 +201,12 @@ export class TravelCourseController {
   /**
    * 여행 코스 상세 조회
    * @description
-   * - ID로 여행 코스 상세 정보 조회 (공개 API)
+   * - ID로 여행 코스 상세 정보 조회
    * @param id - 코스 ID
    * @returns CourseResponse
    */
   @Get(':id')
+  @UserApiBearerAuth()
   @ApiOperation({ summary: '여행 코스 상세 조회' })
   @ApiParam({
     name: 'id',
@@ -130,6 +218,7 @@ export class TravelCourseController {
     description: '조회 성공',
     type: CourseResponse,
   })
+  @ApiResponse({ status: 401, description: '인증 실패' })
   @ApiResponse({ status: 404, description: '코스를 찾을 수 없음' })
   async getCourseById(@Param('id') id: string): Promise<CourseResponse> {
     const course = await this.travelCourseService.findById(id);
@@ -231,49 +320,6 @@ export class TravelCourseController {
   }
 
   /**
-   * 내 북마크 목록 조회
-   * @description
-   * - 로그인한 사용자가 북마크한 코스 목록 조회
-   * @param userId - 사용자 ID (자동 주입)
-   * @param page - 페이지 번호
-   * @param limit - 페이지 크기
-   * @returns CourseBookmarksResponse
-   */
-  @Get('me/bookmarks')
-  @UserApiBearerAuth()
-  @ApiOperation({ summary: '내 북마크 목록 조회' })
-  @ApiQuery({
-    name: 'page',
-    description: '페이지 번호',
-    required: false,
-    example: 1,
-  })
-  @ApiQuery({
-    name: 'limit',
-    description: '페이지 크기',
-    required: false,
-    example: 20,
-  })
-  @ApiResponse({
-    status: 200,
-    description: '조회 성공',
-    type: CourseBookmarksResponse,
-  })
-  @ApiResponse({ status: 401, description: '인증 실패' })
-  async getMyBookmarks(
-    @UserId() userId: string,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 20,
-  ): Promise<CourseBookmarksResponse> {
-    const [bookmarks, total] = await this.courseBookmarkService.getMyBookmarks(
-      userId,
-      page,
-      limit,
-    );
-    return CourseBookmarksResponse.from(bookmarks, total, page, limit);
-  }
-
-  /**
    * 여행 코스 좋아요 토글
    * @description
    * - 좋아요 추가/취소
@@ -303,48 +349,5 @@ export class TravelCourseController {
   ): Promise<LikeToggleResponse> {
     const result = await this.courseLikeService.toggleLike(userId, id);
     return LikeToggleResponse.of(result.liked);
-  }
-
-  /**
-   * 내 좋아요 목록 조회
-   * @description
-   * - 로그인한 사용자가 좋아요한 코스 목록 조회
-   * @param userId - 사용자 ID (자동 주입)
-   * @param page - 페이지 번호
-   * @param limit - 페이지 크기
-   * @returns CourseLikesResponse
-   */
-  @Get('me/likes')
-  @UserApiBearerAuth()
-  @ApiOperation({ summary: '내 좋아요 목록 조회' })
-  @ApiQuery({
-    name: 'page',
-    description: '페이지 번호',
-    required: false,
-    example: 1,
-  })
-  @ApiQuery({
-    name: 'limit',
-    description: '페이지 크기',
-    required: false,
-    example: 20,
-  })
-  @ApiResponse({
-    status: 200,
-    description: '조회 성공',
-    type: CourseLikesResponse,
-  })
-  @ApiResponse({ status: 401, description: '인증 실패' })
-  async getMyLikes(
-    @UserId() userId: string,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 20,
-  ): Promise<CourseLikesResponse> {
-    const [likes, total] = await this.courseLikeService.getMyLikes(
-      userId,
-      page,
-      limit,
-    );
-    return CourseLikesResponse.from(likes, total, page, limit);
   }
 }

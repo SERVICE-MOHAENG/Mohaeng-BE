@@ -140,6 +140,31 @@ export class UserController {
 
 ## 인증 API
 
+## 인증 적용 원칙
+
+- **기본값은 인증 필수**로 두고, 공개 API만 예외 처리합니다.
+- 컨트롤러마다 인증 데코레이터를 전부 붙이지 말고, **전역 Guard 또는 모듈 단위 Guard**로 기본 인증을 적용합니다.
+- 공개 엔드포인트는 `@Public` 같은 **명시적 예외 데코레이터**로 allowlist 처리합니다.
+- 사용자/관리자 분리는 기존 `@UserApiBearerAuth`, `@AdminApiBearerAuth` 데코레이터를 사용합니다.
+
+### 공개 API 데코레이터 (`@Public`)
+
+```typescript
+// src/global/decorators/Public.ts
+import { SetMetadata } from '@nestjs/common';
+
+export const IS_PUBLIC_KEY = 'isPublic';
+export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
+```
+
+```typescript
+@Public()
+@Get('health')
+async healthCheck() {
+  return { status: 'ok' };
+}
+```
+
 ### 관리자 인증
 
 ```typescript

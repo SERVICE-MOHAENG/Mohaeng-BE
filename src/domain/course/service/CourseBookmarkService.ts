@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { CourseBookmarkRepository } from '../persistence/CourseBookmarkRepository';
 import { TravelCourseRepository } from '../persistence/TravelCourseRepository';
 import { CourseBookmark } from '../entity/CourseBookmark.entity';
+import { TravelCourse } from '../entity/TravelCourse.entity';
 import { CourseNotFoundException } from '../exception/CourseNotFoundException';
 import { UserRepository } from '../../user/persistence/UserRepository';
 import { UserNotFoundException } from '../../user/exception/UserNotFoundException';
@@ -17,6 +19,7 @@ export class CourseBookmarkService {
     private readonly courseBookmarkRepository: CourseBookmarkRepository,
     private readonly travelCourseRepository: TravelCourseRepository,
     private readonly userRepository: UserRepository,
+    private readonly dataSource: DataSource,
   ) {}
 
   /**
@@ -25,43 +28,53 @@ export class CourseBookmarkService {
    * - 북마크가 존재하면 삭제 (북마크 취소)
    * - 북마크가 없으면 생성 (북마크 추가)
    * - TravelCourse의 bookmarkCount 업데이트
+   * - 트랜잭션으로 Race Condition 방지
    */
   async toggleBookmark(
     userId: string,
     courseId: string,
   ): Promise<{ bookmarked: boolean }> {
-    // 코스 존재 확인
-    const course = await this.travelCourseRepository.findById(courseId);
-    if (!course) {
-      throw new CourseNotFoundException();
-    }
+    return this.dataSource.transaction(async (manager) => {
+      const courseRepo = manager.getRepository(TravelCourse);
+      const bookmarkRepo = manager.getRepository(CourseBookmark);
 
-    // 기존 북마크 확인
-    const existingBookmark =
-      await this.courseBookmarkRepository.findByUserIdAndCourseId(
-        userId,
-        courseId,
-      );
-
-    if (existingBookmark) {
-      // 북마크 삭제 및 카운트 감소
-      await this.courseBookmarkRepository.delete(existingBookmark.id);
-      course.decrementBookmarkCount();
-      await this.travelCourseRepository.save(course);
-      return { bookmarked: false };
-    } else {
-      // 북마크 생성 및 카운트 증가
-      const user = await this.userRepository.findById(userId);
-      if (!user) {
-        throw new UserNotFoundException();
+      // 코스 존재 확인 (비관적 락 적용)
+      const course = await courseRepo.findOne({
+        where: { id: courseId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!course) {
+        throw new CourseNotFoundException();
       }
 
-      const bookmark = CourseBookmark.create(course, user);
-      await this.courseBookmarkRepository.save(bookmark);
-      course.incrementBookmarkCount();
-      await this.travelCourseRepository.save(course);
-      return { bookmarked: true };
-    }
+      // 기존 북마크 확인
+      const existingBookmark = await bookmarkRepo.findOne({
+        where: {
+          user: { id: userId },
+          travelCourse: { id: courseId },
+        },
+      });
+
+      if (existingBookmark) {
+        // 북마크 삭제 및 카운트 감소
+        await bookmarkRepo.delete({ id: existingBookmark.id });
+        course.decrementBookmarkCount();
+        await courseRepo.save(course);
+        return { bookmarked: false };
+      } else {
+        // 북마크 생성 및 카운트 증가
+        const user = await this.userRepository.findById(userId);
+        if (!user) {
+          throw new UserNotFoundException();
+        }
+
+        const bookmark = CourseBookmark.create(course, user);
+        await bookmarkRepo.save(bookmark);
+        course.incrementBookmarkCount();
+        await courseRepo.save(course);
+        return { bookmarked: true };
+      }
+    });
   }
 
   /**

@@ -36,7 +36,7 @@ export class BlogLikesResponse {
     response.page = page;
     response.limit = limit;
     response.total = total;
-    response.totalPages = Math.ceil(total / limit);
+    response.totalPages = limit > 0 ? Math.ceil(total / limit) : 0;
     return response;
   }
 }

@@ -4,6 +4,7 @@ import {
   IsString,
   IsOptional,
   IsBoolean,
+  IsUrl,
   MinLength,
   MaxLength,
 } from 'class-validator';
@@ -42,7 +43,7 @@ export class CreateBlogRequest {
     required: false,
   })
   @IsOptional()
-  @IsString()
+  @IsUrl({}, { message: '유효한 URL 형식이어야 합니다' })
   imageUrl?: string;
 
   @ApiProperty({

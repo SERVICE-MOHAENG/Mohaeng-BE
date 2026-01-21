@@ -38,6 +38,21 @@ export class UserVisitedCountryService {
   }
 
   /**
+   * 사용자 ID로 방문 국가 목록 조회 (페이지네이션)
+   */
+  async findByUserIdWithPagination(
+    userId: string,
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<[UserVisitedCountry[], number]> {
+    return this.userVisitedCountryRepository.findByUserIdWithPagination(
+      userId,
+      page,
+      limit,
+    );
+  }
+
+  /**
    * 사용자의 방문 국가 개수 조회
    */
   async countByUserId(userId: string): Promise<number> {
@@ -70,17 +85,35 @@ export class UserVisitedCountryService {
   }
 
   /**
-   * 방문 국가 생성
+   * 방문 국가 생성 (중복 시 방문 날짜 업데이트)
+   * @description
+   * - 동일 사용자-국가 조합이 이미 존재하면 방문 날짜만 업데이트
+   * - 존재하지 않으면 새로 생성
    */
   async create(
     userId: string,
     country: Country,
     request: AddVisitedCountryRequest,
   ): Promise<UserVisitedCountry> {
+    const visitDate = new Date(request.visitDate);
+
+    // 기존 방문 기록 확인
+    const existing =
+      await this.userVisitedCountryRepository.findByUserIdAndCountryId(
+        userId,
+        country.id,
+      );
+
+    if (existing) {
+      // 이미 존재하면 방문 날짜만 업데이트
+      existing.visitDate = visitDate;
+      return this.userVisitedCountryRepository.save(existing);
+    }
+
+    // 새로 생성
     const user = new User();
     user.id = userId;
 
-    const visitDate = new Date(request.visitDate);
     const visitedCountry = UserVisitedCountry.create(user, country, visitDate);
     return this.userVisitedCountryRepository.save(visitedCountry);
   }

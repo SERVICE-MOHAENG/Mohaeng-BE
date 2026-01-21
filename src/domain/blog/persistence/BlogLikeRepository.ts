@@ -39,11 +39,14 @@ export class BlogLikeRepository {
     page: number = 1,
     limit: number = 6,
   ): Promise<[BlogLike[], number]> {
+    const safePage = Math.max(1, page);
+    const safeLimit = Math.max(1, Math.min(100, limit));
+
     return this.repository.findAndCount({
       where: { user: { id: userId } },
       relations: ['travelBlog', 'travelBlog.user'],
-      skip: (page - 1) * limit,
-      take: limit,
+      skip: (safePage - 1) * safeLimit,
+      take: safeLimit,
       order: { createdAt: 'DESC' },
     });
   }

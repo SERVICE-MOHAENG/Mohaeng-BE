@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsDateString } from 'class-validator';
+import { IsNotEmpty, IsString, Matches } from 'class-validator';
 
 /**
  * AddVisitedCountryRequest DTO
@@ -20,6 +20,8 @@ export class AddVisitedCountryRequest {
     example: '2024-01-15',
   })
   @IsNotEmpty()
-  @IsDateString()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, {
+    message: '날짜는 YYYY-MM-DD 형식이어야 합니다',
+  })
   visitDate: string;
 }

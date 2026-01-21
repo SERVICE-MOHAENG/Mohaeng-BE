@@ -35,7 +35,7 @@ export class UserVisitedCountryController {
   /**
    * 내 방문 국가 목록 조회
    * @description
-   * - 인증된 사용자의 방문 국가 목록 조회
+   * - 인증된 사용자의 방문 국가 목록 조회 (DB 레벨 페이지네이션)
    * @param userId - 인증된 사용자 ID
    * @param request - 페이지네이션 요청
    * @returns 방문 국가 목록
@@ -53,19 +53,17 @@ export class UserVisitedCountryController {
     @UserId() userId: string,
     @Query() request: GetMyVisitedCountriesRequest,
   ): Promise<VisitedCountriesResponse> {
-    const visitedCountries =
-      await this.visitedCountryService.findByUserId(userId);
+    const page = request.page ?? 1;
+    const limit = request.limit ?? 10;
 
-    const page = request.page || 1;
-    const limit = request.limit || 10;
-    const total = visitedCountries.length;
+    const [visitedCountries, total] =
+      await this.visitedCountryService.findByUserIdWithPagination(
+        userId,
+        page,
+        limit,
+      );
 
-    // 페이지네이션 적용
-    const start = (page - 1) * limit;
-    const end = start + limit;
-    const paginatedItems = visitedCountries.slice(start, end);
-
-    const items = paginatedItems.map((vc) =>
+    const items = visitedCountries.map((vc) =>
       VisitedCountryResponse.fromEntity(vc),
     );
 
@@ -74,7 +72,7 @@ export class UserVisitedCountryController {
       page,
       limit,
       total,
-      totalPages: Math.ceil(total / limit),
+      totalPages: limit > 0 ? Math.ceil(total / limit) : 0,
     };
   }
 

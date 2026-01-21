@@ -30,6 +30,26 @@ export class UserVisitedCountryRepository {
     });
   }
 
+  /**
+   * 사용자의 방문 국가 목록 조회 (페이지네이션)
+   */
+  async findByUserIdWithPagination(
+    userId: string,
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<[UserVisitedCountry[], number]> {
+    const safePage = Math.max(1, page);
+    const safeLimit = Math.max(1, Math.min(100, limit));
+
+    return this.repository.findAndCount({
+      where: { user: { id: userId } },
+      relations: ['country'],
+      order: { visitDate: 'DESC' },
+      skip: (safePage - 1) * safeLimit,
+      take: safeLimit,
+    });
+  }
+
   async findByUserIdAndCountryId(
     userId: string,
     countryId: string,
