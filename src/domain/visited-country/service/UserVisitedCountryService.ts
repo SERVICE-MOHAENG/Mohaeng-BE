@@ -2,8 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { UserVisitedCountryRepository } from '../persistence/UserVisitedCountryRepository';
 import { UserVisitedCountry } from '../entity/UserVisitedCountry.entity';
 import { VisitedCountryNotFoundException } from '../exception/VisitedCountryNotFoundException';
+import { VisitedCountryAccessDeniedException } from '../exception/VisitedCountryAccessDeniedException';
 import { User } from '../../user/entity/User.entity';
 import { Country } from '../../country/entity/Country.entity';
+import { AddVisitedCountryRequest } from '../presentation/dto/request/AddVisitedCountryRequest';
 
 /**
  * UserVisitedCountry Service
@@ -68,10 +70,32 @@ export class UserVisitedCountryService {
   }
 
   /**
-   * 방문 국가 삭제
+   * 방문 국가 생성
    */
-  async delete(id: string): Promise<void> {
+  async create(
+    userId: string,
+    country: Country,
+    request: AddVisitedCountryRequest,
+  ): Promise<UserVisitedCountry> {
+    const user = new User();
+    user.id = userId;
+
+    const visitDate = new Date(request.visitDate);
+    const visitedCountry = UserVisitedCountry.create(user, country, visitDate);
+    return this.userVisitedCountryRepository.save(visitedCountry);
+  }
+
+  /**
+   * 방문 국가 삭제 (소유권 검증 포함)
+   */
+  async delete(id: string, userId: string): Promise<void> {
     const visitedCountry = await this.findById(id);
+
+    // 소유권 검증
+    if (visitedCountry.user.id !== userId) {
+      throw new VisitedCountryAccessDeniedException();
+    }
+
     await this.userVisitedCountryRepository.delete(visitedCountry.id);
   }
 }
