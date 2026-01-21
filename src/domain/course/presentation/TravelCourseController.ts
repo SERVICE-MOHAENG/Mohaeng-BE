@@ -33,6 +33,7 @@ import { LikeToggleResponse } from './dto/response/LikeToggleResponse';
 import { CourseBookmarksResponse } from './dto/response/CourseBookmarksResponse';
 import { CourseLikesResponse } from './dto/response/CourseLikesResponse';
 import { CourseAccessDeniedException } from '../exception/CourseAccessDeniedException';
+import { CourseNotFoundException } from '../exception/CourseNotFoundException';
 
 /**
  * TravelCourseController
@@ -272,6 +273,9 @@ export class TravelCourseController {
     @UserId() userId: string,
   ): Promise<CourseResponse> {
     const course = await this.travelCourseService.findById(id);
+    if (!course) {
+      throw new CourseNotFoundException();
+    }
     if (!course.isPublic && course.user.id !== userId) {
       throw new CourseAccessDeniedException();
     }
