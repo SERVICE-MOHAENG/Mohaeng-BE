@@ -11,7 +11,7 @@ export class CoursesResponse {
     description: '코스 목록',
     type: [CourseResponse],
   })
-  items: CourseResponse[];
+  courses: CourseResponse[];
 
   @ApiProperty({ description: '현재 페이지' })
   page: number;
