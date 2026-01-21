@@ -6,12 +6,14 @@ import {
   HttpStatus,
   Post,
   Get,
+  Patch,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UserApiBearerAuth } from '../../../global/decorators/UserApiBearerAuth';
 import { UserId } from '../../../global/decorators/UserId';
 import { UserService } from '../service/UserService';
 import { SignupRequest } from './dto/request/SignupRequest';
+import { UpdateProfileRequest } from './dto/request/UpdateProfileRequest';
 import { UserResponse } from './dto/response/UserResponse';
 import { MainpageResponse } from './dto/response/MainPageResponse';
 
@@ -57,6 +59,24 @@ export class UserController {
   })
   async getUser(@UserId() userId: string): Promise<MainpageResponse>{
     return this.userService.getMainpageUser(userId)
+  }
+
+  @Patch('me')
+  @UserApiBearerAuth()
+  @ApiOperation({ summary: '내 정보 수정' })
+  @ApiResponse({
+    status: 200,
+    description: '정보 수정 성공',
+    type: UserResponse,
+  })
+  @ApiResponse({ status: 400, description: '잘못된 요청' })
+  @ApiResponse({ status: 401, description: '인증 실패' })
+  @ApiResponse({ status: 404, description: '사용자를 찾을 수 없음' })
+  async updateProfile(
+    @UserId() userId: string,
+    @Body() request: UpdateProfileRequest,
+  ): Promise<UserResponse> {
+    return this.userService.updateProfile(userId, request);
   }
 
   @Delete('me')
