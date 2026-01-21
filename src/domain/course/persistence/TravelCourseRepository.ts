@@ -37,6 +37,7 @@ export class TravelCourseRepository {
     return this.repository.findAndCount({
       where: { user: { id: userId } },
       relations: [
+        'user',
         'courseCountries',
         'courseCountries.country',
         'coursePlaces',
@@ -73,5 +74,43 @@ export class TravelCourseRepository {
 
   async delete(id: string): Promise<void> {
     await this.repository.delete({ id });
+  }
+
+  /**
+   * 메인페이지용 인기 코스 조회
+   * @description
+   * - 공개 코스만 조회
+   * - 좋아요순 정렬
+   * - 국가 필터링 옵션 (ISO 3166-1 alpha-2 코드)
+   * - 최대 10개까지 조회
+   */
+  async findPopularCoursesForMainPage(
+    countryCode?: string,
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<[TravelCourse[], number]> {
+    const queryBuilder = this.repository
+      .createQueryBuilder('course')
+      .leftJoinAndSelect('course.user', 'user')
+      .leftJoinAndSelect('course.courseCountries', 'courseCountries')
+      .leftJoinAndSelect('courseCountries.country', 'country')
+      .leftJoinAndSelect('course.hashTags', 'hashTags')
+      .where('course.isPublic = :isPublic', { isPublic: true });
+
+    // 국가 코드로 필터링
+    if (countryCode) {
+      queryBuilder.andWhere('country.code = :countryCode', { countryCode });
+    }
+
+    // 1:N 조인으로 인한 중복 제거
+    queryBuilder.distinct(true);
+
+    // 좋아요순 정렬
+    queryBuilder.orderBy('course.likeCount', 'DESC');
+
+    // 페이지네이션
+    queryBuilder.skip((page - 1) * limit).take(limit);
+
+    return queryBuilder.getManyAndCount();
   }
 }
