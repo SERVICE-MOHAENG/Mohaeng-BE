@@ -2,7 +2,7 @@ const { DataSource } = require('typeorm');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 function generateUUID() {
   return crypto.randomUUID();
@@ -25,6 +25,21 @@ const AppDataSource = new DataSource({
 async function insertDummyData() {
   try {
     console.log('데이터베이스 연결 중...');
+
+    // 먼저 데이터베이스 없이 연결하여 데이터베이스 생성
+    const tempDataSource = new DataSource({
+      type: 'mysql',
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT || '3306'),
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+    });
+
+    await tempDataSource.initialize();
+    await tempDataSource.query(`CREATE DATABASE IF NOT EXISTS ${process.env.DB_DATABASE} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+    console.log(`데이터베이스 '${process.env.DB_DATABASE}' 확인/생성 완료`);
+    await tempDataSource.destroy();
+
     await AppDataSource.initialize();
     console.log('데이터베이스 연결 성공!');
 
@@ -59,11 +74,11 @@ async function insertDummyData() {
           ]
         );
 
-        const [rows] = await queryRunner.query(
+        const rows = await queryRunner.query(
           `SELECT id FROM country_table WHERE country_code = ?`,
           [country.code]
         );
-        countryIds[country.code] = rows.id;
+        countryIds[country.code] = rows[0].id;
         console.log(`✓ 국가 삽입 완료: ${country.name} (${country.code})`);
       }
 
