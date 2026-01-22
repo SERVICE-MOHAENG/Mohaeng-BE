@@ -222,19 +222,11 @@ export class TravelBlogController {
     @Param('id') id: string,
     @UserId() userId: string,
   ): Promise<BlogResponse> {
-    // 접근 권한 확인 및 좋아요 상태 조회
-    const blogResponse = await this.travelBlogService.findByIdWithUserStatus(
-      id,
-      userId,
-    );
-
-    // 조회수 증가
+    // 조회수 증가 먼저 수행
     await this.travelBlogService.incrementViewCount(id);
 
-    // 조회수 +1 반영
-    blogResponse.viewCount += 1;
-
-    return blogResponse;
+    // 증가된 조회수 포함하여 조회
+    return this.travelBlogService.findByIdWithUserStatus(id, userId);
   }
 
   /**
