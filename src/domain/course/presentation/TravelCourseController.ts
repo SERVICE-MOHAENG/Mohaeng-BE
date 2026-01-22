@@ -29,11 +29,8 @@ import { GetCoursesRequest } from './dto/request/GetCoursesRequest';
 import { CourseResponse } from './dto/response/CourseResponse';
 import { CoursesResponse } from './dto/response/CoursesResponse';
 import { BookmarkToggleResponse } from './dto/response/BookmarkToggleResponse';
-import { LikeToggleResponse } from './dto/response/LikeToggleResponse';
 import { CourseBookmarksResponse } from './dto/response/CourseBookmarksResponse';
 import { CourseLikesResponse } from './dto/response/CourseLikesResponse';
-import { CourseAccessDeniedException } from '../exception/CourseAccessDeniedException';
-import { CourseNotFoundException } from '../exception/CourseNotFoundException';
 
 /**
  * TravelCourseController
@@ -250,7 +247,9 @@ export class TravelCourseController {
    * 여행 코스 상세 조회
    * @description
    * - ID로 여행 코스 상세 정보 조회
+   * - 좋아요/북마크 상태 포함
    * @param id - 코스 ID
+   * @param userId - 사용자 ID (자동 주입)
    * @returns CourseResponse
    */
   @Get(':id')
@@ -272,14 +271,7 @@ export class TravelCourseController {
     @Param('id') id: string,
     @UserId() userId: string,
   ): Promise<CourseResponse> {
-    const course = await this.travelCourseService.findById(id);
-    if (!course) {
-      throw new CourseNotFoundException();
-    }
-    if (!course.isPublic && course.user.id !== userId) {
-      throw new CourseAccessDeniedException();
-    }
-    return CourseResponse.fromEntity(course);
+    return this.travelCourseService.findByIdWithUserStatus(id, userId);
   }
 
   /**
@@ -377,34 +369,55 @@ export class TravelCourseController {
   }
 
   /**
-   * 여행 코스 좋아요 토글
+   * 여행 코스 좋아요 추가
    * @description
-   * - 좋아요 추가/취소
-   * - 좋아요가 있으면 삭제, 없으면 추가
+   * - 좋아요 추가 (이미 존재하면 409 Conflict)
    * @param id - 코스 ID
    * @param userId - 사용자 ID (자동 주입)
-   * @returns LikeToggleResponse
    */
   @Post(':id/like')
   @UserApiBearerAuth()
-  @ApiOperation({ summary: '여행 코스 좋아요 토글' })
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: '여행 코스 좋아요 추가' })
   @ApiParam({
     name: 'id',
     description: '코스 ID',
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
-  @ApiResponse({
-    status: 200,
-    description: '좋아요 토글 성공',
-    type: LikeToggleResponse,
-  })
+  @ApiResponse({ status: 201, description: '좋아요 추가 성공' })
   @ApiResponse({ status: 401, description: '인증 실패' })
   @ApiResponse({ status: 404, description: '코스를 찾을 수 없음' })
-  async toggleLike(
+  @ApiResponse({ status: 409, description: '이미 좋아요한 코스' })
+  async addLike(
     @Param('id') id: string,
     @UserId() userId: string,
-  ): Promise<LikeToggleResponse> {
-    const result = await this.courseLikeService.toggleLike(userId, id);
-    return LikeToggleResponse.of(result.liked);
+  ): Promise<void> {
+    await this.courseLikeService.addLike(userId, id);
+  }
+
+  /**
+   * 여행 코스 좋아요 삭제
+   * @description
+   * - 좋아요 삭제 (멱등성 보장: 없어도 204 반환)
+   * @param id - 코스 ID
+   * @param userId - 사용자 ID (자동 주입)
+   */
+  @Delete(':id/like')
+  @UserApiBearerAuth()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: '여행 코스 좋아요 삭제' })
+  @ApiParam({
+    name: 'id',
+    description: '코스 ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({ status: 204, description: '좋아요 삭제 성공' })
+  @ApiResponse({ status: 401, description: '인증 실패' })
+  @ApiResponse({ status: 404, description: '코스를 찾을 수 없음' })
+  async removeLike(
+    @Param('id') id: string,
+    @UserId() userId: string,
+  ): Promise<void> {
+    await this.courseLikeService.removeLike(userId, id);
   }
 }

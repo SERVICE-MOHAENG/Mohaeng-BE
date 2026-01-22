@@ -55,6 +55,12 @@ export class CourseResponse {
   @ApiProperty({ description: '수정일시' })
   updatedAt: Date;
 
+  @ApiProperty({ description: '현재 사용자의 좋아요 여부', required: false })
+  isLiked?: boolean;
+
+  @ApiProperty({ description: '현재 사용자의 북마크 여부', required: false })
+  isBookmarked?: boolean;
+
   /**
    * Entity -> DTO 변환
    */
@@ -76,6 +82,20 @@ export class CourseResponse {
     response.isPublic = course.isPublic;
     response.createdAt = course.createdAt;
     response.updatedAt = course.updatedAt;
+    return response;
+  }
+
+  /**
+   * Entity -> DTO 변환 (좋아요/북마크 상태 포함)
+   */
+  static fromEntityWithUserStatus(
+    course: TravelCourse,
+    isLiked: boolean,
+    isBookmarked: boolean,
+  ): CourseResponse {
+    const response = CourseResponse.fromEntity(course);
+    response.isLiked = isLiked;
+    response.isBookmarked = isBookmarked;
     return response;
   }
 }

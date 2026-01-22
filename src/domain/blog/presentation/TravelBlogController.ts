@@ -19,7 +19,6 @@ import {
 } from '@nestjs/swagger';
 import { UserApiBearerAuth } from '../../../global/decorators/UserApiBearerAuth';
 import { UserId } from '../../../global/decorators/UserId';
-import { BlogAccessDeniedException } from '../exception/BlogAccessDeniedException';
 import { TravelBlogService } from '../service/TravelBlogService';
 import { BlogLikeService } from '../service/BlogLikeService';
 import { GetBlogsRequest } from './dto/request/GetBlogsRequest';
@@ -28,7 +27,6 @@ import { UpdateBlogRequest } from './dto/request/UpdateBlogRequest';
 import { GetMyBlogsRequest } from './dto/request/GetMyBlogsRequest';
 import { BlogsResponse } from './dto/response/BlogsResponse';
 import { BlogResponse } from './dto/response/BlogResponse';
-import { BlogLikeToggleResponse } from './dto/response/BlogLikeToggleResponse';
 import { BlogLikesResponse } from './dto/response/BlogLikesResponse';
 
 /**
@@ -81,12 +79,14 @@ export class TravelBlogController {
   @ApiResponse({ status: 400, description: '잘못된 요청' })
   @ApiResponse({ status: 401, description: '인증되지 않음' })
   async getMainpageBlogs(
+    @UserId() userId: string,
     @Query() request: GetBlogsRequest,
   ): Promise<BlogsResponse> {
     return this.travelBlogService.getBlogs(
       request.sortBy,
       request.page,
       request.limit,
+      userId,
     );
   }
 
@@ -123,21 +123,7 @@ export class TravelBlogController {
     @UserId() userId: string,
     @Query() request: GetMyBlogsRequest,
   ): Promise<BlogsResponse> {
-    const [blogs, total] = await this.travelBlogService.findByUserId(
-      userId,
-      request.page,
-      request.limit,
-    );
-
-    const blogResponses = blogs.map((blog) => BlogResponse.fromEntity(blog));
-
-    return {
-      blogs: blogResponses,
-      page: request.page || 1,
-      limit: request.limit || 6,
-      total,
-      totalPages: Math.ceil(total / (request.limit || 6)),
-    };
+    return this.travelBlogService.getMyBlogs(userId, request.page, request.limit);
   }
 
   /**
@@ -215,6 +201,7 @@ export class TravelBlogController {
    * - 블로그 ID로 상세 조회 (조회수 증가)
    * - 공개 블로그는 로그인한 사용자 모두 조회 가능
    * - 비공개 블로그는 소유자만 조회 가능
+   * - 좋아요 상태 포함
    * @param id - 블로그 ID
    * @param userId - 인증된 사용자 ID
    * @returns 블로그 상세 정보
@@ -235,16 +222,19 @@ export class TravelBlogController {
     @Param('id') id: string,
     @UserId() userId: string,
   ): Promise<BlogResponse> {
-    const blog = await this.travelBlogService.findById(id);
+    // 접근 권한 확인 및 좋아요 상태 조회
+    const blogResponse = await this.travelBlogService.findByIdWithUserStatus(
+      id,
+      userId,
+    );
 
-    // 비공개 블로그는 소유자만 접근 가능
-    if (!blog.isPublic && blog.user.id !== userId) {
-      throw new BlogAccessDeniedException();
-    }
+    // 조회수 증가
+    await this.travelBlogService.incrementViewCount(id);
 
-    // 조회수 증가 후 반환
-    const updatedBlog = await this.travelBlogService.incrementViewCount(id);
-    return BlogResponse.fromEntityWithUser(updatedBlog);
+    // 조회수 +1 반영
+    blogResponse.viewCount += 1;
+
+    return blogResponse;
   }
 
   /**
@@ -302,35 +292,55 @@ export class TravelBlogController {
   }
 
   /**
-   * 블로그 좋아요 토글
+   * 블로그 좋아요 추가
    * @description
-   * - 좋아요 추가/취소
-   * - 좋아요가 있으면 삭제, 없으면 추가
+   * - 좋아요 추가 (이미 존재하면 409 Conflict)
    * @param id - 블로그 ID
    * @param userId - 사용자 ID (자동 주입)
-   * @returns BlogLikeToggleResponse
    */
   @Post(':id/like')
   @UserApiBearerAuth()
-  @ApiOperation({ summary: '블로그 좋아요 토글' })
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: '블로그 좋아요 추가' })
   @ApiParam({
     name: 'id',
     description: '블로그 ID',
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
-  @ApiResponse({
-    status: 200,
-    description: '좋아요 토글 성공',
-    type: BlogLikeToggleResponse,
-  })
+  @ApiResponse({ status: 201, description: '좋아요 추가 성공' })
   @ApiResponse({ status: 401, description: '인증 실패' })
   @ApiResponse({ status: 404, description: '블로그를 찾을 수 없음' })
-  async toggleLike(
+  @ApiResponse({ status: 409, description: '이미 좋아요한 블로그' })
+  async addLike(
     @Param('id') id: string,
     @UserId() userId: string,
-  ): Promise<BlogLikeToggleResponse> {
-    const result = await this.blogLikeService.toggleLike(userId, id);
-    return BlogLikeToggleResponse.of(result.liked);
+  ): Promise<void> {
+    await this.blogLikeService.addLike(userId, id);
   }
 
+  /**
+   * 블로그 좋아요 삭제
+   * @description
+   * - 좋아요 삭제 (멱등성 보장: 없어도 204 반환)
+   * @param id - 블로그 ID
+   * @param userId - 사용자 ID (자동 주입)
+   */
+  @Delete(':id/like')
+  @UserApiBearerAuth()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: '블로그 좋아요 삭제' })
+  @ApiParam({
+    name: 'id',
+    description: '블로그 ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({ status: 204, description: '좋아요 삭제 성공' })
+  @ApiResponse({ status: 401, description: '인증 실패' })
+  @ApiResponse({ status: 404, description: '블로그를 찾을 수 없음' })
+  async removeLike(
+    @Param('id') id: string,
+    @UserId() userId: string,
+  ): Promise<void> {
+    await this.blogLikeService.removeLike(userId, id);
+  }
 }

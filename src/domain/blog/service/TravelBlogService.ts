@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { TravelBlogRepository } from '../persistence/TravelBlogRepository';
+import { BlogLikeRepository } from '../persistence/BlogLikeRepository';
 import { TravelBlog } from '../entity/TravelBlog.entity';
 import { BlogNotFoundException } from '../exception/BlogNotFoundException';
 import { BlogAccessDeniedException } from '../exception/BlogAccessDeniedException';
@@ -17,7 +18,10 @@ import { UpdateBlogRequest } from '../presentation/dto/request/UpdateBlogRequest
  */
 @Injectable()
 export class TravelBlogService {
-  constructor(private readonly travelBlogRepository: TravelBlogRepository) {}
+  constructor(
+    private readonly travelBlogRepository: TravelBlogRepository,
+    private readonly blogLikeRepository: BlogLikeRepository,
+  ) {}
 
   /**
    * ID로 여행 블로그 조회
@@ -31,6 +35,28 @@ export class TravelBlogService {
   }
 
   /**
+   * ID로 여행 블로그 조회 (사용자 상태 포함)
+   */
+  async findByIdWithUserStatus(
+    id: string,
+    userId: string,
+  ): Promise<BlogResponse> {
+    const blog = await this.findById(id);
+
+    // 비공개 블로그 접근 검증
+    if (!blog.isPublic && blog.user.id !== userId) {
+      throw new BlogAccessDeniedException();
+    }
+
+    const isLiked = await this.blogLikeRepository.existsByUserIdAndBlogId(
+      userId,
+      id,
+    );
+
+    return BlogResponse.fromEntityWithUserStatus(blog, isLiked);
+  }
+
+  /**
    * 사용자 ID로 여행 블로그 목록 조회
    */
   async findByUserId(
@@ -39,6 +65,35 @@ export class TravelBlogService {
     limit: number = 6,
   ): Promise<[TravelBlog[], number]> {
     return this.travelBlogRepository.findByUserId(userId, page, limit);
+  }
+
+  /**
+   * 내 블로그 목록 조회 (좋아요 상태 포함)
+   */
+  async getMyBlogs(
+    userId: string,
+    page: number = 1,
+    limit: number = 6,
+  ): Promise<BlogsResponse> {
+    const [blogs, total] = await this.findByUserId(userId, page, limit);
+
+    const blogResponses = await Promise.all(
+      blogs.map(async (blog) => {
+        const isLiked = await this.blogLikeRepository.existsByUserIdAndBlogId(
+          userId,
+          blog.id,
+        );
+        return BlogResponse.fromEntityWithUserStatus(blog, isLiked);
+      }),
+    );
+
+    return {
+      blogs: blogResponses,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   /**
@@ -146,24 +201,39 @@ export class TravelBlogService {
    * - 정렬 기준에 따라 공개 블로그 조회
    * - latest: 최신순 (createdAt DESC)
    * - popular: 인기순 (likeCount DESC)
+   * - userId가 제공되면 좋아요 상태 포함
    * @param sortBy - 정렬 기준
    * @param page - 페이지 번호
    * @param limit - 페이지 크기
+   * @param userId - 사용자 ID (선택)
    * @returns BlogsResponse
    */
   async getBlogs(
     sortBy: BlogSortType = BlogSortType.LATEST,
     page: number = 1,
     limit: number = 6,
+    userId?: string,
   ): Promise<BlogsResponse> {
     const [blogs, total] =
       sortBy === BlogSortType.LATEST
         ? await this.travelBlogRepository.findBlogsByLatest(page, limit)
         : await this.travelBlogRepository.findBlogsByPopular(page, limit);
 
-    const blogResponses: BlogResponse[] = blogs.map((blog) =>
-      BlogResponse.fromEntityWithUser(blog),
-    );
+    let blogResponses: BlogResponse[];
+
+    if (userId) {
+      blogResponses = await Promise.all(
+        blogs.map(async (blog) => {
+          const isLiked = await this.blogLikeRepository.existsByUserIdAndBlogId(
+            userId,
+            blog.id,
+          );
+          return BlogResponse.fromEntityWithUserStatus(blog, isLiked);
+        }),
+      );
+    } else {
+      blogResponses = blogs.map((blog) => BlogResponse.fromEntityWithUser(blog));
+    }
 
     return {
       blogs: blogResponses,
