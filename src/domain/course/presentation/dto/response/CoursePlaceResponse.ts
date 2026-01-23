@@ -19,11 +19,11 @@ export class CoursePlaceResponse {
   @ApiProperty({ description: '장소 방문 메모', nullable: true })
   memo: string | null;
 
-  @ApiProperty({ description: '장소 ID' })
-  placeId: string;
+  @ApiProperty({ description: '장소 ID', nullable: true })
+  placeId: string | null;
 
-  @ApiProperty({ description: '장소 이름' })
-  placeName: string;
+  @ApiProperty({ description: '장소 이름', nullable: true })
+  placeName: string | null;
 
   @ApiProperty({ description: '장소 설명', nullable: true })
   placeDescription: string | null;
@@ -54,6 +54,7 @@ export class CoursePlaceResponse {
 
   /**
    * Entity -> DTO 변환
+   * @description place relation이 로드되지 않은 경우 방어적으로 처리
    */
   static fromEntity(coursePlace: CoursePlace): CoursePlaceResponse {
     const response = new CoursePlaceResponse();
@@ -61,15 +62,18 @@ export class CoursePlaceResponse {
     response.visitOrder = coursePlace.visitOrder;
     response.dayNumber = coursePlace.dayNumber;
     response.memo = coursePlace.memo;
-    response.placeId = coursePlace.place.id;
-    response.placeName = coursePlace.place.name;
-    response.placeDescription = coursePlace.place.description;
-    response.placeImageUrl = coursePlace.place.imageUrl;
-    response.latitude = coursePlace.place.latitude;
-    response.longitude = coursePlace.place.longitude;
-    response.address = coursePlace.place.address;
-    response.openingHours = coursePlace.place.openingHours;
-    response.category = coursePlace.place.category;
+
+    const place = coursePlace.place;
+    response.placeId = place?.id ?? null;
+    response.placeName = place?.name ?? null;
+    response.placeDescription = place?.description ?? null;
+    response.placeImageUrl = place?.imageUrl ?? null;
+    response.latitude = place?.latitude ?? null;
+    response.longitude = place?.longitude ?? null;
+    response.address = place?.address ?? null;
+    response.openingHours = place?.openingHours ?? null;
+    response.category = place?.category ?? null;
+
     response.createdAt = coursePlace.createdAt;
     response.updatedAt = coursePlace.updatedAt;
     return response;

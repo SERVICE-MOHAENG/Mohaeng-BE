@@ -7,8 +7,8 @@ import { TravelCourse } from '../entity/TravelCourse.entity';
 import { CourseNotFoundException } from '../exception/CourseNotFoundException';
 import { CourseAccessDeniedException } from '../exception/CourseAccessDeniedException';
 import { CourseBookmarkAlreadyExistsException } from '../exception/CourseBookmarkAlreadyExistsException';
-import { UserRepository } from '../../user/persistence/UserRepository';
 import { UserNotFoundException } from '../../user/exception/UserNotFoundException';
+import { User } from '../../user/entity/User.entity';
 
 /**
  * CourseBookmark Service
@@ -20,7 +20,6 @@ export class CourseBookmarkService {
   constructor(
     private readonly courseBookmarkRepository: CourseBookmarkRepository,
     private readonly travelCourseRepository: TravelCourseRepository,
-    private readonly userRepository: UserRepository,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -63,7 +62,11 @@ export class CourseBookmarkService {
       }
 
       // 북마크 생성 및 카운트 증가
-      const user = await this.userRepository.findById(userId);
+      const userRepo = manager.getRepository(User);
+      let user = course.user;
+      if (!user || user.id !== userId) {
+        user = await userRepo.findOne({ where: { id: userId } });
+      }
       if (!user) {
         throw new UserNotFoundException();
       }
