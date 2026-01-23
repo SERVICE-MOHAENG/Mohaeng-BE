@@ -2,9 +2,7 @@ import {
   Controller,
   Get,
   Post,
-  Patch,
   Delete,
-  Body,
   Param,
   Query,
   HttpCode,
@@ -22,8 +20,6 @@ import { UserId } from '../../../global/decorators/UserId';
 import { TravelBlogService } from '../service/TravelBlogService';
 import { BlogLikeService } from '../service/BlogLikeService';
 import { GetBlogsRequest } from './dto/request/GetBlogsRequest';
-import { CreateBlogRequest } from './dto/request/CreateBlogRequest';
-import { UpdateBlogRequest } from './dto/request/UpdateBlogRequest';
 import { GetMyBlogsRequest } from './dto/request/GetMyBlogsRequest';
 import { BlogsResponse } from './dto/response/BlogsResponse';
 import { BlogResponse } from './dto/response/BlogResponse';
@@ -170,32 +166,6 @@ export class TravelBlogController {
   }
 
   /**
-   * 블로그 생성
-   * @description
-   * - 새로운 여행 블로그 생성
-   * @param userId - 인증된 사용자 ID
-   * @param request - 블로그 생성 요청
-   * @returns 생성된 블로그 정보
-   */
-  @Post()
-  @UserApiBearerAuth()
-  @ApiOperation({ summary: '블로그 생성' })
-  @ApiResponse({
-    status: 201,
-    description: '생성 성공',
-    type: BlogResponse,
-  })
-  @ApiResponse({ status: 400, description: '잘못된 요청' })
-  @ApiResponse({ status: 401, description: '인증되지 않음' })
-  async createBlog(
-    @UserId() userId: string,
-    @Body() request: CreateBlogRequest,
-  ): Promise<BlogResponse> {
-    const blog = await this.travelBlogService.createBlog(userId, request);
-    return BlogResponse.fromEntity(blog);
-  }
-
-  /**
    * 블로그 상세 조회
    * @description
    * - 블로그 ID로 상세 조회 (조회수 증가)
@@ -227,60 +197,6 @@ export class TravelBlogController {
 
     // 증가된 조회수 포함하여 조회
     return this.travelBlogService.findByIdWithUserStatus(id, userId);
-  }
-
-  /**
-   * 블로그 수정
-   * @description
-   * - 블로그 수정 (소유권 검증 포함)
-   * @param userId - 인증된 사용자 ID
-   * @param id - 블로그 ID
-   * @param request - 블로그 수정 요청
-   * @returns 수정된 블로그 정보
-   */
-  @Patch(':id')
-  @UserApiBearerAuth()
-  @ApiOperation({ summary: '블로그 수정' })
-  @ApiParam({ name: 'id', description: '블로그 ID' })
-  @ApiResponse({
-    status: 200,
-    description: '수정 성공',
-    type: BlogResponse,
-  })
-  @ApiResponse({ status: 400, description: '잘못된 요청' })
-  @ApiResponse({ status: 401, description: '인증되지 않음' })
-  @ApiResponse({ status: 403, description: '접근 권한 없음' })
-  @ApiResponse({ status: 404, description: '블로그를 찾을 수 없음' })
-  async updateBlog(
-    @UserId() userId: string,
-    @Param('id') id: string,
-    @Body() request: UpdateBlogRequest,
-  ): Promise<BlogResponse> {
-    const blog = await this.travelBlogService.update(id, userId, request);
-    return BlogResponse.fromEntity(blog);
-  }
-
-  /**
-   * 블로그 삭제
-   * @description
-   * - 블로그 삭제 (소유권 검증 포함)
-   * @param userId - 인증된 사용자 ID
-   * @param id - 블로그 ID
-   */
-  @Delete(':id')
-  @UserApiBearerAuth()
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: '블로그 삭제' })
-  @ApiParam({ name: 'id', description: '블로그 ID' })
-  @ApiResponse({ status: 204, description: '삭제 성공' })
-  @ApiResponse({ status: 401, description: '인증되지 않음' })
-  @ApiResponse({ status: 403, description: '접근 권한 없음' })
-  @ApiResponse({ status: 404, description: '블로그를 찾을 수 없음' })
-  async deleteBlog(
-    @UserId() userId: string,
-    @Param('id') id: string,
-  ): Promise<void> {
-    await this.travelBlogService.delete(id, userId);
   }
 
   /**
