@@ -63,7 +63,7 @@ export class CourseBookmarkService {
 
       // 북마크 생성 및 카운트 증가
       const userRepo = manager.getRepository(User);
-      let user = course.user;
+      let user: User | null = course.user;
       if (!user || user.id !== userId) {
         user = await userRepo.findOne({ where: { id: userId } });
       }
