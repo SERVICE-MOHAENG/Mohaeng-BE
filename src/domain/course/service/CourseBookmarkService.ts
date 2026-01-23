@@ -90,19 +90,6 @@ export class CourseBookmarkService {
       const courseRepo = manager.getRepository(TravelCourse);
       const bookmarkRepo = manager.getRepository(CourseBookmark);
 
-      // 코스 존재 확인 (비관적 락 적용)
-      const course = await courseRepo.findOne({
-        where: { id: courseId },
-        relations: ['user'],
-        lock: { mode: 'pessimistic_write' },
-      });
-      if (!course) {
-        throw new CourseNotFoundException();
-      }
-      if (!course.isPublic && course.user.id !== userId) {
-        throw new CourseAccessDeniedException();
-      }
-
       // 기존 북마크 확인
       const existingBookmark = await bookmarkRepo.findOne({
         where: {
@@ -113,13 +100,32 @@ export class CourseBookmarkService {
 
       // 멱등성 보장: 북마크가 없으면 그냥 리턴
       if (!existingBookmark) {
+        // 코스 존재 확인 (비관적 락 적용)
+        const course = await courseRepo.findOne({
+          where: { id: courseId },
+          relations: ['user'],
+          lock: { mode: 'pessimistic_write' },
+        });
+        if (!course) {
+          throw new CourseNotFoundException();
+        }
+        if (!course.isPublic && course.user.id !== userId) {
+          throw new CourseAccessDeniedException();
+        }
         return;
       }
 
       // 북마크 삭제 및 카운트 감소
       await bookmarkRepo.delete({ id: existingBookmark.id });
-      course.decrementBookmarkCount();
-      await courseRepo.save(course);
+      const course = await courseRepo.findOne({
+        where: { id: courseId },
+        relations: ['user'],
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (course) {
+        course.decrementBookmarkCount();
+        await courseRepo.save(course);
+      }
     });
   }
 
