@@ -13,6 +13,7 @@ import { CreateCourseRequest } from '../presentation/dto/request/CreateCourseReq
 import { UpdateCourseRequest } from '../presentation/dto/request/UpdateCourseRequest';
 import { CourseResponse } from '../presentation/dto/response/CourseResponse';
 import { CoursesResponse } from '../presentation/dto/response/CoursesResponse';
+import { CoursePlaceResponse } from '../presentation/dto/response/CoursePlaceResponse';
 
 /**
  * TravelCourse Service
@@ -299,6 +300,7 @@ export class TravelCourseService {
       userName: course.user.name,
       countries: course.courseCountries?.map((cc) => cc.country.name) || [],
       hashTags: course.hashTags?.map((ht) => ht.tagName) || [],
+      places: course.coursePlaces?.map((cp) => CoursePlaceResponse.fromEntity(cp)) || [],
       isPublic: course.isPublic,
       createdAt: course.createdAt,
       updatedAt: course.updatedAt,
