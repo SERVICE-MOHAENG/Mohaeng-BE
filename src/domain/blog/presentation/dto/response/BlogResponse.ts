@@ -40,6 +40,9 @@ export class BlogResponse {
   @ApiProperty({ description: '작성자 닉네임', required: false })
   userName?: string;
 
+  @ApiProperty({ description: '현재 사용자의 좋아요 여부', required: false })
+  isLiked?: boolean;
+
   /**
    * Entity를 Response DTO로 변환 (기본)
    */
@@ -74,5 +77,17 @@ export class BlogResponse {
       userId: entity.user?.id,
       userName: entity.user?.name,
     };
+  }
+
+  /**
+   * Entity를 Response DTO로 변환 (좋아요 상태 포함)
+   */
+  static fromEntityWithUserStatus(
+    entity: TravelBlog,
+    isLiked: boolean,
+  ): BlogResponse {
+    const response = BlogResponse.fromEntityWithUser(entity);
+    response.isLiked = isLiked;
+    return response;
   }
 }

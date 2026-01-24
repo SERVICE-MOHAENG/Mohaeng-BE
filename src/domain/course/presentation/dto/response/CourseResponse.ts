@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { TravelCourse } from '../../../entity/TravelCourse.entity';
+import { CoursePlaceResponse } from './CoursePlaceResponse';
 
 /**
  * CourseResponse DTO
@@ -46,6 +47,9 @@ export class CourseResponse {
   @ApiProperty({ description: '해시태그 목록', type: [String] })
   hashTags: string[];
 
+  @ApiProperty({ description: '코스 장소 목록', type: [CoursePlaceResponse] })
+  places: CoursePlaceResponse[];
+
   @ApiProperty({ description: '공개 여부' })
   isPublic: boolean;
 
@@ -54,6 +58,12 @@ export class CourseResponse {
 
   @ApiProperty({ description: '수정일시' })
   updatedAt: Date;
+
+  @ApiProperty({ description: '현재 사용자의 좋아요 여부', required: false })
+  isLiked?: boolean;
+
+  @ApiProperty({ description: '현재 사용자의 북마크 여부', required: false })
+  isBookmarked?: boolean;
 
   /**
    * Entity -> DTO 변환
@@ -73,9 +83,24 @@ export class CourseResponse {
     response.userName = course.user.name;
     response.countries = course.courseCountries?.map((cc) => cc.country.name) || [];
     response.hashTags = course.hashTags?.map((ht) => ht.tagName) || [];
+    response.places = course.coursePlaces?.map((cp) => CoursePlaceResponse.fromEntity(cp)) || [];
     response.isPublic = course.isPublic;
     response.createdAt = course.createdAt;
     response.updatedAt = course.updatedAt;
+    return response;
+  }
+
+  /**
+   * Entity -> DTO 변환 (좋아요/북마크 상태 포함)
+   */
+  static fromEntityWithUserStatus(
+    course: TravelCourse,
+    isLiked: boolean,
+    isBookmarked: boolean,
+  ): CourseResponse {
+    const response = CourseResponse.fromEntity(course);
+    response.isLiked = isLiked;
+    response.isBookmarked = isBookmarked;
     return response;
   }
 }

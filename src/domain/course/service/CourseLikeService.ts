@@ -6,6 +6,7 @@ import { CourseLike } from '../entity/CourseLike.entity';
 import { TravelCourse } from '../entity/TravelCourse.entity';
 import { CourseNotFoundException } from '../exception/CourseNotFoundException';
 import { CourseAccessDeniedException } from '../exception/CourseAccessDeniedException';
+import { CourseLikeAlreadyExistsException } from '../exception/CourseLikeAlreadyExistsException';
 import { UserRepository } from '../../user/persistence/UserRepository';
 import { UserNotFoundException } from '../../user/exception/UserNotFoundException';
 
@@ -24,17 +25,13 @@ export class CourseLikeService {
   ) {}
 
   /**
-   * 좋아요 토글
+   * 좋아요 추가
    * @description
-   * - 좋아요가 존재하면 삭제 (좋아요 취소)
-   * - 좋아요가 없으면 생성 (좋아요 추가)
-   * - TravelCourse의 likeCount 업데이트
+   * - 좋아요가 이미 존재하면 409 Conflict
+   * - TravelCourse의 likeCount 증가
    * - 트랜잭션으로 Race Condition 방지
    */
-  async toggleLike(
-    userId: string,
-    courseId: string,
-  ): Promise<{ liked: boolean }> {
+  async addLike(userId: string, courseId: string): Promise<void> {
     return this.dataSource.transaction(async (manager) => {
       const courseRepo = manager.getRepository(TravelCourse);
       const likeRepo = manager.getRepository(CourseLike);
@@ -61,24 +58,64 @@ export class CourseLikeService {
       });
 
       if (existingLike) {
-        // 좋아요 삭제 및 카운트 감소
-        await likeRepo.delete({ id: existingLike.id });
-        course.decrementLikeCount();
-        await courseRepo.save(course);
-        return { liked: false };
-      } else {
-        // 좋아요 생성 및 카운트 증가
-        const user = await this.userRepository.findById(userId);
-        if (!user) {
-          throw new UserNotFoundException();
-        }
-
-        const like = CourseLike.create(course, user);
-        await likeRepo.save(like);
-        course.incrementLikeCount();
-        await courseRepo.save(course);
-        return { liked: true };
+        throw new CourseLikeAlreadyExistsException();
       }
+
+      // 좋아요 생성 및 카운트 증가
+      const user = await this.userRepository.findById(userId);
+      if (!user) {
+        throw new UserNotFoundException();
+      }
+
+      const like = CourseLike.create(course, user);
+      await likeRepo.save(like);
+      course.incrementLikeCount();
+      await courseRepo.save(course);
+    });
+  }
+
+  /**
+   * 좋아요 삭제
+   * @description
+   * - 좋아요가 없어도 멱등성 보장 (204 반환)
+   * - TravelCourse의 likeCount 감소
+   * - 트랜잭션으로 Race Condition 방지
+   */
+  async removeLike(userId: string, courseId: string): Promise<void> {
+    return this.dataSource.transaction(async (manager) => {
+      const courseRepo = manager.getRepository(TravelCourse);
+      const likeRepo = manager.getRepository(CourseLike);
+
+      // 코스 존재 확인 (비관적 락 적용)
+      const course = await courseRepo.findOne({
+        where: { id: courseId },
+        relations: ['user'],
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!course) {
+        throw new CourseNotFoundException();
+      }
+      if (!course.isPublic && course.user.id !== userId) {
+        throw new CourseAccessDeniedException();
+      }
+
+      // 기존 좋아요 확인
+      const existingLike = await likeRepo.findOne({
+        where: {
+          user: { id: userId },
+          travelCourse: { id: courseId },
+        },
+      });
+
+      // 멱등성 보장: 좋아요가 없으면 그냥 리턴
+      if (!existingLike) {
+        return;
+      }
+
+      // 좋아요 삭제 및 카운트 감소
+      await likeRepo.delete({ id: existingLike.id });
+      course.decrementLikeCount();
+      await courseRepo.save(course);
     });
   }
 
