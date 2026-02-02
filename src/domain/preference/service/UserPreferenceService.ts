@@ -6,7 +6,6 @@ import { UserPreferenceTravelRange } from '../entity/UserPreferenceTravelRange.e
 import { UserPreferenceEnvironment } from '../entity/UserPreferenceEnvironment.entity';
 import { UserPreferenceFoodPersonality } from '../entity/UserPreferenceFoodPersonality.entity';
 import { UserPreferenceMainInterest } from '../entity/UserPreferenceMainInterest.entity';
-import { UserPreferenceContinent } from '../entity/UserPreferenceContinent.entity';
 import { UserPreferenceBudget } from '../entity/UserPreferenceBudget.entity';
 import { WeatherPreference } from '../entity/WeatherPreference.enum';
 import { TravelRange } from '../entity/TravelRange.enum';
@@ -83,10 +82,6 @@ export class UserPreferenceService {
 
     saved.mainInterests = dto.mainInterests.map((interest) =>
       UserPreferenceMainInterest.create(saved.id, interest),
-    );
-
-    saved.continents = dto.continents.map((continent) =>
-      UserPreferenceContinent.create(saved.id, continent),
     );
 
     saved.budgets = dto.budgets.map((budget) =>
