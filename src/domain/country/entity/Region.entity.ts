@@ -70,7 +70,7 @@ export class Region extends BaseEntity {
     length: 50,
     name: 'average_budget_level',
     nullable: false,
-    default: BudgetLevel.MEDIUM,
+    default: BudgetLevel.BALANCED,
     comment: '평균 여행 예산 수준',
   })
   averageBudgetLevel: BudgetLevel;
@@ -155,7 +155,7 @@ export class Region extends BaseEntity {
     name: string,
     country: Country,
     travelRange: TravelRange,
-    averageBudgetLevel: BudgetLevel = BudgetLevel.MEDIUM,
+    averageBudgetLevel: BudgetLevel = BudgetLevel.BALANCED,
     latitude?: number,
     longitude?: number,
     imageUrl?: string,

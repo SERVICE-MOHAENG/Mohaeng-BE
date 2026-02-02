@@ -3,10 +3,9 @@ import { BaseEntity } from '../../../global/BaseEntity';
 import { User } from '../../user/entity/User.entity';
 import { UserPreferenceWeather } from './UserPreferenceWeather.entity';
 import { UserPreferenceTravelRange } from './UserPreferenceTravelRange.entity';
-import { UserPreferenceEnvironment } from './UserPreferenceEnvironment.entity';
+import { UserPreferenceTravelStyle } from './UserPreferenceTravelStyle.entity';
 import { UserPreferenceFoodPersonality } from './UserPreferenceFoodPersonality.entity';
 import { UserPreferenceMainInterest } from './UserPreferenceMainInterest.entity';
-import { UserPreferenceContinent } from './UserPreferenceContinent.entity';
 import { UserPreferenceBudget } from './UserPreferenceBudget.entity';
 
 /**
@@ -39,12 +38,11 @@ export class UserPreference extends BaseEntity {
 
   // 3. 선호 환경 (복수 선택)
   @OneToMany(
-    () => UserPreferenceEnvironment,
-    (environment) => environment.preference,
+    () => UserPreferenceTravelStyle,
+    (travelStyle) => travelStyle.preference,
     { cascade: true },
   )
-  environments: UserPreferenceEnvironment[];
-
+  travelStyles: UserPreferenceTravelStyle[];
   // 4. 식도락 성향 (복수 선택)
   @OneToMany(
     () => UserPreferenceFoodPersonality,
@@ -61,13 +59,7 @@ export class UserPreference extends BaseEntity {
   )
   mainInterests: UserPreferenceMainInterest[];
 
-  // 6. 선호 대륙 (복수 선택)
-  @OneToMany(() => UserPreferenceContinent, (continent) => continent.preference, {
-    cascade: true,
-  })
-  continents: UserPreferenceContinent[];
-
-  // 7. 예산 수준 (복수 선택)
+  // 6. 예산 수준 (복수 선택)
   @OneToMany(() => UserPreferenceBudget, (budget) => budget.preference, {
     cascade: true,
   })
@@ -81,10 +73,9 @@ export class UserPreference extends BaseEntity {
     preference.userId = userId;
     preference.weatherPreferences = [];
     preference.travelRanges = [];
-    preference.environments = [];
+    preference.travelStyles = [];
     preference.foodPersonalities = [];
     preference.mainInterests = [];
-    preference.continents = [];
     preference.budgets = [];
     return preference;
   }

@@ -25,10 +25,9 @@ import { Notification } from './domain/notification/entity/Notification.entity';
 import { UserPreference } from './domain/preference/entity/UserPreference.entity';
 import { UserPreferenceWeather } from './domain/preference/entity/UserPreferenceWeather.entity';
 import { UserPreferenceTravelRange } from './domain/preference/entity/UserPreferenceTravelRange.entity';
-import { UserPreferenceEnvironment } from './domain/preference/entity/UserPreferenceEnvironment.entity';
+import { UserPreferenceTravelStyle } from './domain/preference/entity/UserPreferenceTravelStyle.entity';
 import { UserPreferenceFoodPersonality } from './domain/preference/entity/UserPreferenceFoodPersonality.entity';
 import { UserPreferenceMainInterest } from './domain/preference/entity/UserPreferenceMainInterest.entity';
-import { UserPreferenceContinent } from './domain/preference/entity/UserPreferenceContinent.entity';
 import { UserPreferenceBudget } from './domain/preference/entity/UserPreferenceBudget.entity';
 import { RegionCategory } from './domain/country/entity/RegionCategory.entity';
 import { RegionEnvironment } from './domain/country/entity/RegionEnvironment.entity';
@@ -70,10 +69,9 @@ import { RegionTravelStyle } from './domain/country/entity/RegionTravelStyle.ent
           UserPreference,
           UserPreferenceWeather,
           UserPreferenceTravelRange,
-          UserPreferenceEnvironment,
+          UserPreferenceTravelStyle,
           UserPreferenceFoodPersonality,
           UserPreferenceMainInterest,
-          UserPreferenceContinent,
           UserPreferenceBudget,
           // Region mapping entities
           RegionCategory,
