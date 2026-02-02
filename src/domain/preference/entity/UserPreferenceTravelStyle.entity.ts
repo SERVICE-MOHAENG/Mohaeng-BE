@@ -9,9 +9,9 @@ import { Environment } from './Environment.enum';
  * - 사용자 선호 환경 매핑 테이블
  * - UserPreference와 N:1 관계
  */
-@Entity('user_preference_environment')
-export class UserPreferenceEnvironment extends BaseEntity {
-  @ManyToOne(() => UserPreference, (preference) => preference.environments, {
+@Entity('user_preference_travel_style')
+export class UserPreferenceTravelStyle extends BaseEntity {
+  @ManyToOne(() => UserPreference, (preference) => preference.travelStyles, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'user_preference_id' })
@@ -34,8 +34,8 @@ export class UserPreferenceEnvironment extends BaseEntity {
   static create(
     userPreferenceId: string,
     environment: Environment,
-  ): UserPreferenceEnvironment {
-    const entity = new UserPreferenceEnvironment();
+  ): UserPreferenceTravelStyle {
+    const entity = new UserPreferenceTravelStyle();
     entity.userPreferenceId = userPreferenceId;
     entity.environment = environment;
     return entity;

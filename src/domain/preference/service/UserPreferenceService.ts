@@ -3,7 +3,7 @@ import { UserPreferenceRepository } from '../persistence/UserPreferenceRepositor
 import { UserPreference } from '../entity/UserPreference.entity';
 import { UserPreferenceWeather } from '../entity/UserPreferenceWeather.entity';
 import { UserPreferenceTravelRange } from '../entity/UserPreferenceTravelRange.entity';
-import { UserPreferenceEnvironment } from '../entity/UserPreferenceEnvironment.entity';
+import { UserPreferenceTravelStyle } from '../entity/UserPreferenceTravelStyle.entity';
 import { UserPreferenceFoodPersonality } from '../entity/UserPreferenceFoodPersonality.entity';
 import { UserPreferenceMainInterest } from '../entity/UserPreferenceMainInterest.entity';
 import { UserPreferenceBudget } from '../entity/UserPreferenceBudget.entity';
@@ -22,7 +22,7 @@ export interface CreateUserPreferenceDto {
   userId: string;
   weatherPreferences: WeatherPreference[];
   travelRanges: TravelRange[];
-  environments: Environment[];
+  travelStyles: Environment[];
   foodPersonalities: FoodPersonality[];
   mainInterests: MainInterest[];
   continents: Continent[];
@@ -72,8 +72,8 @@ export class UserPreferenceService {
       UserPreferenceTravelRange.create(saved.id, range),
     );
 
-    saved.environments = dto.environments.map((env) =>
-      UserPreferenceEnvironment.create(saved.id, env),
+    saved.travelStyles = dto.travelStyles.map((env) =>
+      UserPreferenceTravelStyle.create(saved.id, env),
     );
 
     saved.foodPersonalities = dto.foodPersonalities.map((food) =>

@@ -3,7 +3,7 @@ import { BaseEntity } from '../../../global/BaseEntity';
 import { User } from '../../user/entity/User.entity';
 import { UserPreferenceWeather } from './UserPreferenceWeather.entity';
 import { UserPreferenceTravelRange } from './UserPreferenceTravelRange.entity';
-import { UserPreferenceEnvironment } from './UserPreferenceEnvironment.entity';
+import { UserPreferenceTravelStyle } from './UserPreferenceTravelStyle.entity';
 import { UserPreferenceFoodPersonality } from './UserPreferenceFoodPersonality.entity';
 import { UserPreferenceMainInterest } from './UserPreferenceMainInterest.entity';
 import { UserPreferenceBudget } from './UserPreferenceBudget.entity';
@@ -38,12 +38,11 @@ export class UserPreference extends BaseEntity {
 
   // 3. 선호 환경 (복수 선택)
   @OneToMany(
-    () => UserPreferenceEnvironment,
-    (environment) => environment.preference,
+    () => UserPreferenceTravelStyle,
+    (travelStyle) => travelStyle.preference,
     { cascade: true },
   )
-  environments: UserPreferenceEnvironment[];
-
+  travelStyles: UserPreferenceTravelStyle[];
   // 4. 식도락 성향 (복수 선택)
   @OneToMany(
     () => UserPreferenceFoodPersonality,
@@ -74,7 +73,7 @@ export class UserPreference extends BaseEntity {
     preference.userId = userId;
     preference.weatherPreferences = [];
     preference.travelRanges = [];
-    preference.environments = [];
+    preference.travelStyles = [];
     preference.foodPersonalities = [];
     preference.mainInterests = [];
     preference.budgets = [];
