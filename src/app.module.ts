@@ -28,7 +28,6 @@ import { UserPreferenceTravelRange } from './domain/preference/entity/UserPrefer
 import { UserPreferenceEnvironment } from './domain/preference/entity/UserPreferenceEnvironment.entity';
 import { UserPreferenceFoodPersonality } from './domain/preference/entity/UserPreferenceFoodPersonality.entity';
 import { UserPreferenceMainInterest } from './domain/preference/entity/UserPreferenceMainInterest.entity';
-import { UserPreferenceContinent } from './domain/preference/entity/UserPreferenceContinent.entity';
 import { UserPreferenceBudget } from './domain/preference/entity/UserPreferenceBudget.entity';
 import { RegionCategory } from './domain/country/entity/RegionCategory.entity';
 import { RegionEnvironment } from './domain/country/entity/RegionEnvironment.entity';
@@ -73,7 +72,6 @@ import { RegionTravelStyle } from './domain/country/entity/RegionTravelStyle.ent
           UserPreferenceEnvironment,
           UserPreferenceFoodPersonality,
           UserPreferenceMainInterest,
-          UserPreferenceContinent,
           UserPreferenceBudget,
           // Region mapping entities
           RegionCategory,
