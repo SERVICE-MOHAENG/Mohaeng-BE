@@ -9,10 +9,9 @@ import { UserPreferenceMainInterest } from '../entity/UserPreferenceMainInterest
 import { UserPreferenceBudget } from '../entity/UserPreferenceBudget.entity';
 import { WeatherPreference } from '../entity/WeatherPreference.enum';
 import { TravelRange } from '../entity/TravelRange.enum';
-import { Environment } from '../entity/Environment.enum';
+import { TravelStyle } from '../entity/TravelStyle.enum';
 import { FoodPersonality } from '../entity/FoodPersonality.enum';
 import { MainInterest } from '../entity/MainInterest.enum';
-import { Continent } from '../entity/Continent.enum';
 import { BudgetLevel } from '../entity/BudgetLevel.enum';
 
 /**
@@ -22,10 +21,9 @@ export interface CreateUserPreferenceDto {
   userId: string;
   weatherPreferences: WeatherPreference[];
   travelRanges: TravelRange[];
-  travelStyles: Environment[];
+  travelStyles: TravelStyle[];
   foodPersonalities: FoodPersonality[];
   mainInterests: MainInterest[];
-  continents: Continent[];
   budgets: BudgetLevel[];
 }
 
@@ -72,8 +70,8 @@ export class UserPreferenceService {
       UserPreferenceTravelRange.create(saved.id, range),
     );
 
-    saved.travelStyles = dto.travelStyles.map((env) =>
-      UserPreferenceTravelStyle.create(saved.id, env),
+    saved.travelStyles = dto.travelStyles.map((style) =>
+      UserPreferenceTravelStyle.create(saved.id, style),
     );
 
     saved.foodPersonalities = dto.foodPersonalities.map((food) =>
