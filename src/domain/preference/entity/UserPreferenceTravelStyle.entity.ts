@@ -1,12 +1,12 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../../global/BaseEntity';
 import { UserPreference } from './UserPreference.entity';
-import { Environment } from './Environment.enum';
+import { TravelStyle } from './TravelStyle.enum';
 
 /**
- * UserPreferenceEnvironment Entity
+ * UserPreferenceTravelStyle Entity
  * @description
- * - 사용자 선호 환경 매핑 테이블
+ * - 사용자 선호 여행 스타일 매핑 테이블
  * - UserPreference와 N:1 관계
  */
 @Entity('user_preference_travel_style')
@@ -22,22 +22,22 @@ export class UserPreferenceTravelStyle extends BaseEntity {
 
   @Column({
     type: 'enum',
-    enum: Environment,
-    name: 'environment',
+    enum: TravelStyle,
+    name: 'travel_style',
     nullable: false,
   })
-  environment: Environment;
+  travelStyle: TravelStyle;
 
   /**
    * 팩토리 메서드
    */
   static create(
     userPreferenceId: string,
-    environment: Environment,
+    travelStyle: TravelStyle,
   ): UserPreferenceTravelStyle {
     const entity = new UserPreferenceTravelStyle();
     entity.userPreferenceId = userPreferenceId;
-    entity.environment = environment;
+    entity.travelStyle = travelStyle;
     return entity;
   }
 }
