@@ -6,7 +6,6 @@ import { UserPreferenceTravelRange } from './UserPreferenceTravelRange.entity';
 import { UserPreferenceEnvironment } from './UserPreferenceEnvironment.entity';
 import { UserPreferenceFoodPersonality } from './UserPreferenceFoodPersonality.entity';
 import { UserPreferenceMainInterest } from './UserPreferenceMainInterest.entity';
-import { UserPreferenceContinent } from './UserPreferenceContinent.entity';
 import { UserPreferenceBudget } from './UserPreferenceBudget.entity';
 
 /**
@@ -61,13 +60,7 @@ export class UserPreference extends BaseEntity {
   )
   mainInterests: UserPreferenceMainInterest[];
 
-  // 6. 선호 대륙 (복수 선택)
-  @OneToMany(() => UserPreferenceContinent, (continent) => continent.preference, {
-    cascade: true,
-  })
-  continents: UserPreferenceContinent[];
-
-  // 7. 예산 수준 (복수 선택)
+  // 6. 예산 수준 (복수 선택)
   @OneToMany(() => UserPreferenceBudget, (budget) => budget.preference, {
     cascade: true,
   })
@@ -84,7 +77,6 @@ export class UserPreference extends BaseEntity {
     preference.environments = [];
     preference.foodPersonalities = [];
     preference.mainInterests = [];
-    preference.continents = [];
     preference.budgets = [];
     return preference;
   }
