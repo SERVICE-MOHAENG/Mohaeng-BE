@@ -7,6 +7,7 @@ import { CourseHashTag } from './CourseHashTag.entity';
 import { CourseLike } from './CourseLike.entity';
 import { CourseBookmark } from './CourseBookmark.entity';
 import { CourseCountry } from './CourseCountry.entity';
+import { CourseRegion } from './CourseRegion.entity';
 
 /**
  * TravelCourse Entity
@@ -119,6 +120,15 @@ export class TravelCourse extends BaseEntity {
     },
   )
   courseCountries: CourseCountry[];
+
+  @OneToMany(
+    () => CourseRegion,
+    (courseRegion) => courseRegion.travelCourse,
+    {
+      cascade: true,
+    },
+  )
+  courseRegions: CourseRegion[];
 
   @OneToMany(() => CoursePlace, (coursePlace) => coursePlace.travelCourse)
   coursePlaces: CoursePlace[];
