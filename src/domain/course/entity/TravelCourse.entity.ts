@@ -91,6 +91,22 @@ export class TravelCourse extends BaseEntity {
   })
   bookmarkCount: number;
 
+  @Column({
+    type: 'date',
+    name: 'travel_start_day',
+    nullable: false,
+    comment: '여행 시작일',
+  })
+  travelStartDay: Date;
+
+  @Column({
+    type: 'date',
+    name: 'travel_finish_day',
+    nullable: false,
+    comment: '여행 종료일',
+  })
+  travelFinishDay: Date;
+
   @ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
@@ -124,6 +140,8 @@ export class TravelCourse extends BaseEntity {
     user: User,
     nights: number,
     days: number,
+    travelStartDay: Date,
+    travelFinishDay: Date,
     description?: string,
     imageUrl?: string,
     isPublic: boolean = true,
@@ -134,6 +152,8 @@ export class TravelCourse extends BaseEntity {
     course.user = user;
     course.nights = nights;
     course.days = days;
+    course.travelStartDay = travelStartDay;
+    course.travelFinishDay = travelFinishDay;
     course.description = description || null;
     course.imageUrl = imageUrl || null;
     course.isPublic = isPublic;
