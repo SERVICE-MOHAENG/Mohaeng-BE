@@ -15,6 +15,11 @@ import { CourseHashTag } from './domain/course/entity/CourseHashTag.entity';
 import { CourseLike } from './domain/course/entity/CourseLike.entity';
 import { CourseBookmark } from './domain/course/entity/CourseBookmark.entity';
 import { CourseCountry } from './domain/course/entity/CourseCountry.entity';
+import { CourseRegion } from './domain/course/entity/CourseRegion.entity';
+import { RoadmapSurvey } from './domain/course/entity/RoadmapSurvey.entity';
+import { RoadmapSurveyDestination } from './domain/course/entity/RoadmapSurveyDestination.entity';
+import { RoadmapSurveyCompanion } from './domain/course/entity/RoadmapSurveyCompanion.entity';
+import { RoadmapSurveyTheme } from './domain/course/entity/RoadmapSurveyTheme.entity';
 import { TravelBlog } from './domain/blog/entity/TravelBlog.entity';
 import { BlogLike } from './domain/blog/entity/BlogLike.entity';
 import { Country } from './domain/country/entity/Country.entity';
@@ -57,6 +62,12 @@ import { RegionTravelStyle } from './domain/country/entity/RegionTravelStyle.ent
           CourseLike,
           CourseBookmark,
           CourseCountry,
+          CourseRegion,
+          // Roadmap Survey entities
+          RoadmapSurvey,
+          RoadmapSurveyDestination,
+          RoadmapSurveyCompanion,
+          RoadmapSurveyTheme,
           TravelBlog,
           BlogLike,
           Country,
