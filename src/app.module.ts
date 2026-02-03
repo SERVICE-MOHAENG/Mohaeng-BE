@@ -30,7 +30,6 @@ import { UserPreferenceFoodPersonality } from './domain/preference/entity/UserPr
 import { UserPreferenceMainInterest } from './domain/preference/entity/UserPreferenceMainInterest.entity';
 import { UserPreferenceBudget } from './domain/preference/entity/UserPreferenceBudget.entity';
 import { RegionCategory } from './domain/country/entity/RegionCategory.entity';
-import { RegionEnvironment } from './domain/country/entity/RegionEnvironment.entity';
 import { RegionFoodPersonality } from './domain/country/entity/RegionFoodPersonality.entity';
 import { RegionMainInterest } from './domain/country/entity/RegionMainInterest.entity';
 import { RegionTravelStyle } from './domain/country/entity/RegionTravelStyle.entity';
@@ -75,7 +74,6 @@ import { RegionTravelStyle } from './domain/country/entity/RegionTravelStyle.ent
           UserPreferenceBudget,
           // Region mapping entities
           RegionCategory,
-          RegionEnvironment,
           RegionFoodPersonality,
           RegionMainInterest,
           RegionTravelStyle,
