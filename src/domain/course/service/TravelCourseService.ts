@@ -311,7 +311,10 @@ export class TravelCourseService {
       userName: course.user.name,
       countries: course.courseCountries?.map((cc) => cc.country.name) || [],
       hashTags: course.hashTags?.map((ht) => ht.tagName) || [],
-      places: course.courseDays?.flatMap((cd) => cd.coursePlaces || []).map((cp) => CoursePlaceResponse.fromEntity(cp)) || [],
+      places: [...(course.courseDays || [])]
+        .sort((a, b) => a.dayNumber - b.dayNumber)
+        .flatMap((cd) => [...(cd.coursePlaces || [])].sort((a, b) => a.visitOrder - b.visitOrder))
+        .map((cp) => CoursePlaceResponse.fromEntity(cp)),
       isPublic: course.isPublic,
       createdAt: course.createdAt,
       updatedAt: course.updatedAt,
