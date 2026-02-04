@@ -53,6 +53,7 @@ export class CourseLikeRepository {
         'travelCourse.courseDays.coursePlaces',
         'travelCourse.hashTags',
       ],
+      relationLoadStrategy: 'query',
       skip: (safePage - 1) * safeLimit,
       take: safeLimit,
       order: { createdAt: 'DESC' },
