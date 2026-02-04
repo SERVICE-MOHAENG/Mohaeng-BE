@@ -17,11 +17,11 @@ export class CreateRoadmapSurveyTables1769400000000
         pax_count INT NOT NULL COMMENT '인원수',
         budget ENUM('LOW', 'MID', 'HIGH', 'LUXURY') NOT NULL COMMENT '예산 범위',
         user_note TEXT NULL COMMENT '사용자 자연어 요구사항',
-        is_dense BOOLEAN NOT NULL COMMENT '일정 스타일: true=빡빡하게, false=널널하게',
-        is_planned BOOLEAN NOT NULL COMMENT '계획 스타일: true=계획형, false=즉흥형',
-        is_tourist_spots BOOLEAN NOT NULL COMMENT '목적지 스타일: true=관광지 위주, false=로컬 위주',
-        is_active BOOLEAN NOT NULL COMMENT '활동 스타일: true=활동 중심, false=휴식 중심',
-        is_efficiency BOOLEAN NOT NULL COMMENT '우선순위 스타일: true=효율 우선, false=감성 우선',
+        pace_preference ENUM('DENSE', 'RELAXED') NOT NULL COMMENT '일정 밀도 선호',
+        planning_preference ENUM('PLANNED', 'SPONTANEOUS') NOT NULL COMMENT '계획 성향',
+        destination_preference ENUM('TOURIST_SPOTS', 'LOCAL_EXPERIENCE') NOT NULL COMMENT '여행지 선호',
+        activity_preference ENUM('ACTIVE', 'REST_FOCUSED') NOT NULL COMMENT '활동 선호',
+        priority_preference ENUM('EFFICIENCY', 'EMOTIONAL') NOT NULL COMMENT '우선 가치 선호',
         CONSTRAINT fk_roadmap_survey_user FOREIGN KEY (user_id) REFERENCES user_table(id) ON DELETE CASCADE,
         CONSTRAINT fk_roadmap_survey_travel_course FOREIGN KEY (travel_course_id) REFERENCES travel_course_table(id) ON DELETE SET NULL
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4

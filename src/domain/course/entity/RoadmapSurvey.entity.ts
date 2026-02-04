@@ -13,6 +13,11 @@ import { RoadmapSurveyDestination } from './RoadmapSurveyDestination.entity';
 import { RoadmapSurveyCompanion } from './RoadmapSurveyCompanion.entity';
 import { RoadmapSurveyTheme } from './RoadmapSurveyTheme.entity';
 import { SurveyBudget } from './SurveyBudget.enum';
+import { PacePreference } from './PacePreference.enum';
+import { PlanningPreference } from './PlanningPreference.enum';
+import { DestinationPreference } from './DestinationPreference.enum';
+import { ActivityPreference } from './ActivityPreference.enum';
+import { PriorityPreference } from './PriorityPreference.enum';
 
 /**
  * RoadmapSurvey Entity
@@ -62,46 +67,50 @@ export class RoadmapSurvey extends BaseEntity {
   })
   userNote: string | null;
 
-  // 스타일 양자택일 5개 (true: 왼쪽 선택, false: 오른쪽 선택)
   @Column({
-    type: 'boolean',
-    name: 'is_dense',
+    type: 'enum',
+    enum: PacePreference,
+    name: 'pace_preference',
     nullable: false,
-    comment: '일정 스타일: true=빡빡하게, false=널널하게',
+    comment: '일정 밀도 선호: DENSE=빡빡하게, RELAXED=널널하게',
   })
-  isDense: boolean;
+  pacePreference: PacePreference;
 
   @Column({
-    type: 'boolean',
-    name: 'is_planned',
+    type: 'enum',
+    enum: PlanningPreference,
+    name: 'planning_preference',
     nullable: false,
-    comment: '계획 스타일: true=계획형, false=즉흥형',
+    comment: '계획 성향: PLANNED=계획형, SPONTANEOUS=즉흥형',
   })
-  isPlanned: boolean;
+  planningPreference: PlanningPreference;
 
   @Column({
-    type: 'boolean',
-    name: 'is_tourist_spots',
+    type: 'enum',
+    enum: DestinationPreference,
+    name: 'destination_preference',
     nullable: false,
-    comment: '목적지 스타일: true=관광지 위주, false=로컬 위주',
+    comment: '여행지 선호: TOURIST_SPOTS=관광지 위주, LOCAL_EXPERIENCE=로컬 위주',
   })
-  isTouristSpots: boolean;
+  destinationPreference: DestinationPreference;
 
   @Column({
-    type: 'boolean',
-    name: 'is_active',
+    type: 'enum',
+    enum: ActivityPreference,
+    name: 'activity_preference',
     nullable: false,
-    comment: '활동 스타일: true=활동 중심, false=휴식 중심',
+    comment: '활동 선호: ACTIVE=활동 중심, REST_FOCUSED=휴식 중심',
   })
-  isActive: boolean;
+  activityPreference: ActivityPreference;
 
   @Column({
-    type: 'boolean',
-    name: 'is_efficiency',
+    type: 'enum',
+    enum: PriorityPreference,
+    name: 'priority_preference',
     nullable: false,
-    comment: '우선순위 스타일: true=효율 우선, false=감성 우선',
+    comment: '우선 가치: EFFICIENCY=효율 우선, EMOTIONAL=감성 우선',
   })
-  isEfficiency: boolean;
+  priorityPreference: PriorityPreference;
 
   @OneToMany(() => RoadmapSurveyDestination, (destination) => destination.survey, {
     cascade: true,
@@ -125,22 +134,22 @@ export class RoadmapSurvey extends BaseEntity {
     userId: string,
     paxCount: number,
     budget: SurveyBudget,
-    isDense: boolean,
-    isPlanned: boolean,
-    isTouristSpots: boolean,
-    isActive: boolean,
-    isEfficiency: boolean,
+    pacePreference: PacePreference,
+    planningPreference: PlanningPreference,
+    destinationPreference: DestinationPreference,
+    activityPreference: ActivityPreference,
+    priorityPreference: PriorityPreference,
     userNote?: string,
   ): RoadmapSurvey {
     const survey = new RoadmapSurvey();
     survey.userId = userId;
     survey.paxCount = paxCount;
     survey.budget = budget;
-    survey.isDense = isDense;
-    survey.isPlanned = isPlanned;
-    survey.isTouristSpots = isTouristSpots;
-    survey.isActive = isActive;
-    survey.isEfficiency = isEfficiency;
+    survey.pacePreference = pacePreference;
+    survey.planningPreference = planningPreference;
+    survey.destinationPreference = destinationPreference;
+    survey.activityPreference = activityPreference;
+    survey.priorityPreference = priorityPreference;
     survey.userNote = userNote || null;
     survey.travelCourseId = null;
     survey.destinations = [];
