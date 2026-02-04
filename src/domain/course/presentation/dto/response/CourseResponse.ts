@@ -83,7 +83,7 @@ export class CourseResponse {
     response.userName = course.user.name;
     response.countries = course.courseCountries?.map((cc) => cc.country.name) || [];
     response.hashTags = course.hashTags?.map((ht) => ht.tagName) || [];
-    response.places = course.coursePlaces?.map((cp) => CoursePlaceResponse.fromEntity(cp)) || [];
+    response.places = course.courseDays?.flatMap((cd) => cd.coursePlaces || []).map((cp) => CoursePlaceResponse.fromEntity(cp)) || [];
     response.isPublic = course.isPublic;
     response.createdAt = course.createdAt;
     response.updatedAt = course.updatedAt;
