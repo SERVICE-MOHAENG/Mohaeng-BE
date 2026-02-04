@@ -5,6 +5,7 @@ import { CourseBookmarkRepository } from '../persistence/CourseBookmarkRepositor
 import { TravelCourse } from '../entity/TravelCourse.entity';
 import { CourseNotFoundException } from '../exception/CourseNotFoundException';
 import { CourseAccessDeniedException } from '../exception/CourseAccessDeniedException';
+import { InvalidDateRangeException } from '../exception/InvalidDateRangeException';
 import { User } from '../../user/entity/User.entity';
 import { Country } from '../../country/entity/Country.entity';
 import { UserRepository } from '../../user/persistence/UserRepository';
@@ -93,6 +94,10 @@ export class TravelCourseService {
     const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new UserNotFoundException();
+    }
+
+    if (new Date(request.travelStartDay) > new Date(request.travelFinishDay)) {
+      throw new InvalidDateRangeException();
     }
 
     const course = TravelCourse.create(
