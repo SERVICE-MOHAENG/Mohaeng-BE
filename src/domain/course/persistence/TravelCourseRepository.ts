@@ -99,6 +99,9 @@ export class TravelCourseRepository {
       .leftJoinAndSelect('course.user', 'user')
       .leftJoinAndSelect('course.courseCountries', 'courseCountries')
       .leftJoinAndSelect('courseCountries.country', 'country')
+      .leftJoinAndSelect('course.courseDays', 'courseDays')
+      .leftJoinAndSelect('courseDays.coursePlaces', 'coursePlaces')
+      .leftJoinAndSelect('coursePlaces.place', 'place')
       .leftJoinAndSelect('course.hashTags', 'hashTags')
       .where('course.isPublic = :isPublic', { isPublic: true });
 
