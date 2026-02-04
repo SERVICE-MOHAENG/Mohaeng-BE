@@ -16,6 +16,7 @@ import { CourseLike } from './domain/course/entity/CourseLike.entity';
 import { CourseBookmark } from './domain/course/entity/CourseBookmark.entity';
 import { CourseCountry } from './domain/course/entity/CourseCountry.entity';
 import { CourseRegion } from './domain/course/entity/CourseRegion.entity';
+import { CourseDay } from './domain/course/entity/CourseDay.entity';
 import { RoadmapSurvey } from './domain/course/entity/RoadmapSurvey.entity';
 import { RoadmapSurveyDestination } from './domain/course/entity/RoadmapSurveyDestination.entity';
 import { RoadmapSurveyCompanion } from './domain/course/entity/RoadmapSurveyCompanion.entity';
@@ -63,6 +64,7 @@ import { RegionTravelStyle } from './domain/country/entity/RegionTravelStyle.ent
           CourseBookmark,
           CourseCountry,
           CourseRegion,
+          CourseDay,
           // Roadmap Survey entities
           RoadmapSurvey,
           RoadmapSurveyDestination,
