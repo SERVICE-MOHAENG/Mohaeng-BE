@@ -2,12 +2,12 @@ import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { BaseEntity } from '../../../global/BaseEntity';
 import { User } from '../../user/entity/User.entity';
 import { Country } from '../../country/entity/Country.entity';
-import { CoursePlace } from './CoursePlace.entity';
 import { CourseHashTag } from './CourseHashTag.entity';
 import { CourseLike } from './CourseLike.entity';
 import { CourseBookmark } from './CourseBookmark.entity';
 import { CourseCountry } from './CourseCountry.entity';
 import { CourseRegion } from './CourseRegion.entity';
+import { CourseDay } from './CourseDay.entity';
 
 /**
  * TravelCourse Entity
@@ -130,8 +130,10 @@ export class TravelCourse extends BaseEntity {
   )
   courseRegions: CourseRegion[];
 
-  @OneToMany(() => CoursePlace, (coursePlace) => coursePlace.travelCourse)
-  coursePlaces: CoursePlace[];
+  @OneToMany(() => CourseDay, (courseDay) => courseDay.travelCourse, {
+    cascade: true,
+  })
+  courseDays: CourseDay[];
 
   @OneToMany(() => CourseHashTag, (hashTag) => hashTag.travelCourse)
   hashTags: CourseHashTag[];
