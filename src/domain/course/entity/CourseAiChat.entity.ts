@@ -16,7 +16,7 @@ export class CourseAiChat extends BaseEntity {
     enum: ChatRole,
     name: 'role',
     nullable: false,
-    comment: '메시지 발신자 (USER: 사용자, ASSISTANT: AI)',
+    comment: '메시지 발신자 (USER: 사용자, AI: AI, SYSTEM: 시스템)',
   })
   role: ChatRole;
 
