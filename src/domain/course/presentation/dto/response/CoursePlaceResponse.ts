@@ -60,7 +60,7 @@ export class CoursePlaceResponse {
     const response = new CoursePlaceResponse();
     response.id = coursePlace.id;
     response.visitOrder = coursePlace.visitOrder;
-    response.dayNumber = coursePlace.dayNumber;
+    response.dayNumber = coursePlace.courseDay?.dayNumber ?? 0;
     response.memo = coursePlace.memo;
 
     const place = coursePlace.place;

@@ -5,6 +5,7 @@ import { CourseBookmarkRepository } from '../persistence/CourseBookmarkRepositor
 import { TravelCourse } from '../entity/TravelCourse.entity';
 import { CourseNotFoundException } from '../exception/CourseNotFoundException';
 import { CourseAccessDeniedException } from '../exception/CourseAccessDeniedException';
+import { InvalidDateRangeException } from '../exception/InvalidDateRangeException';
 import { User } from '../../user/entity/User.entity';
 import { Country } from '../../country/entity/Country.entity';
 import { UserRepository } from '../../user/persistence/UserRepository';
@@ -95,11 +96,17 @@ export class TravelCourseService {
       throw new UserNotFoundException();
     }
 
+    if (new Date(request.travelStartDay) > new Date(request.travelFinishDay)) {
+      throw new InvalidDateRangeException();
+    }
+
     const course = TravelCourse.create(
       request.title,
       user,
       request.nights,
       request.days,
+      request.travelStartDay,
+      request.travelFinishDay,
       request.description,
       undefined,
       request.isPublic ?? false,
@@ -118,6 +125,8 @@ export class TravelCourseService {
     user: User,
     nights: number,
     days: number,
+    travelStartDay: Date,
+    travelFinishDay: Date,
     description?: string,
     imageUrl?: string,
     isPublic: boolean = true,
@@ -128,6 +137,8 @@ export class TravelCourseService {
       user,
       nights,
       days,
+      travelStartDay,
+      travelFinishDay,
       description,
       imageUrl,
       isPublic,
@@ -300,7 +311,10 @@ export class TravelCourseService {
       userName: course.user.name,
       countries: course.courseCountries?.map((cc) => cc.country.name) || [],
       hashTags: course.hashTags?.map((ht) => ht.tagName) || [],
-      places: course.coursePlaces?.map((cp) => CoursePlaceResponse.fromEntity(cp)) || [],
+      places: [...(course.courseDays || [])]
+        .sort((a, b) => a.dayNumber - b.dayNumber)
+        .flatMap((cd) => [...(cd.coursePlaces || [])].sort((a, b) => a.visitOrder - b.visitOrder))
+        .map((cp) => CoursePlaceResponse.fromEntity(cp)),
       isPublic: course.isPublic,
       createdAt: course.createdAt,
       updatedAt: course.updatedAt,

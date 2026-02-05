@@ -22,10 +22,12 @@ export class TravelCourseRepository {
         'user',
         'courseCountries',
         'courseCountries.country',
-        'coursePlaces',
-        'coursePlaces.place',
+        'courseDays',
+        'courseDays.coursePlaces',
+        'courseDays.coursePlaces.place',
         'hashTags',
       ],
+      relationLoadStrategy: 'query',
     });
   }
 
@@ -40,10 +42,12 @@ export class TravelCourseRepository {
         'user',
         'courseCountries',
         'courseCountries.country',
-        'coursePlaces',
-        'coursePlaces.place',
+        'courseDays',
+        'courseDays.coursePlaces',
+        'courseDays.coursePlaces.place',
         'hashTags',
       ],
+      relationLoadStrategy: 'query',
       skip: (page - 1) * limit,
       take: limit,
       order: { createdAt: 'DESC' },
@@ -60,10 +64,12 @@ export class TravelCourseRepository {
         'user',
         'courseCountries',
         'courseCountries.country',
-        'coursePlaces',
-        'coursePlaces.place',
+        'courseDays',
+        'courseDays.coursePlaces',
+        'courseDays.coursePlaces.place',
         'hashTags',
       ],
+      relationLoadStrategy: 'query',
       skip: (page - 1) * limit,
       take: limit,
       order: { createdAt: 'DESC' },
@@ -91,28 +97,45 @@ export class TravelCourseRepository {
     page: number = 1,
     limit: number = 10,
   ): Promise<[TravelCourse[], number]> {
+    // 1단계: 필터링/페이지네이션으로 코스 ID만 조회
     const queryBuilder = this.repository
       .createQueryBuilder('course')
-      .leftJoinAndSelect('course.user', 'user')
-      .leftJoinAndSelect('course.courseCountries', 'courseCountries')
-      .leftJoinAndSelect('courseCountries.country', 'country')
-      .leftJoinAndSelect('course.hashTags', 'hashTags')
+      .select('course.id')
       .where('course.isPublic = :isPublic', { isPublic: true });
 
-    // 국가 코드로 필터링
     if (countryCode) {
-      queryBuilder.andWhere('country.code = :countryCode', { countryCode });
+      queryBuilder
+        .leftJoin('course.courseCountries', 'courseCountries')
+        .leftJoin('courseCountries.country', 'country')
+        .andWhere('country.code = :countryCode', { countryCode });
     }
 
-    // 1:N 조인으로 인한 중복 제거
-    queryBuilder.distinct(true);
-
-    // 좋아요순 정렬
     queryBuilder.orderBy('course.likeCount', 'DESC');
-
-    // 페이지네이션
     queryBuilder.skip((page - 1) * limit).take(limit);
 
-    return queryBuilder.getManyAndCount();
+    const [courseIdEntities, total] = await queryBuilder.getManyAndCount();
+    const courseIds = courseIdEntities.map((c) => c.id);
+
+    if (courseIds.length === 0) {
+      return [[], total];
+    }
+
+    // 2단계: ID 기반으로 relation 별도 로딩
+    const courses = await this.repository.find({
+      where: courseIds.map((id) => ({ id })),
+      relations: [
+        'user',
+        'courseCountries',
+        'courseCountries.country',
+        'courseDays',
+        'courseDays.coursePlaces',
+        'courseDays.coursePlaces.place',
+        'hashTags',
+      ],
+      relationLoadStrategy: 'query',
+      order: { likeCount: 'DESC' },
+    });
+
+    return [courses, total];
   }
 }

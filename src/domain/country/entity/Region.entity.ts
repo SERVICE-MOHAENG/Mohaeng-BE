@@ -2,7 +2,6 @@ import { Entity, Column, ManyToOne, JoinColumn, OneToMany, Check } from 'typeorm
 import { Max, Min } from 'class-validator';
 import { BaseEntity } from '../../../global/BaseEntity';
 import { Country } from './Country.entity';
-import { RegionEnvironment } from './RegionEnvironment.entity';
 import { RegionFoodPersonality } from './RegionFoodPersonality.entity';
 import { RegionMainInterest } from './RegionMainInterest.entity';
 import { RegionCategory } from './RegionCategory.entity';
@@ -116,12 +115,6 @@ export class Region extends BaseEntity {
   @JoinColumn({ name: 'country_id' })
   country: Country;
 
-  // 설문 3번: 선호 환경 매칭용
-  @OneToMany(() => RegionEnvironment, (environment) => environment.region, {
-    cascade: true,
-  })
-  environments: RegionEnvironment[];
-
   // 설문 5번: 식도락 성향 매칭용
   @OneToMany(
     () => RegionFoodPersonality,
@@ -172,7 +165,6 @@ export class Region extends BaseEntity {
     region.regionDescription = regionDescription ?? null;
     region.popularityScore = 0;
     region.recommendationScore = 0;
-    region.environments = [];
     region.foodPersonalities = [];
     region.mainInterests = [];
     region.categories = [];

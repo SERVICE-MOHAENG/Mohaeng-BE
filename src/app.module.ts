@@ -15,6 +15,12 @@ import { CourseHashTag } from './domain/course/entity/CourseHashTag.entity';
 import { CourseLike } from './domain/course/entity/CourseLike.entity';
 import { CourseBookmark } from './domain/course/entity/CourseBookmark.entity';
 import { CourseCountry } from './domain/course/entity/CourseCountry.entity';
+import { CourseRegion } from './domain/course/entity/CourseRegion.entity';
+import { CourseDay } from './domain/course/entity/CourseDay.entity';
+import { RoadmapSurvey } from './domain/course/entity/RoadmapSurvey.entity';
+import { RoadmapSurveyDestination } from './domain/course/entity/RoadmapSurveyDestination.entity';
+import { RoadmapSurveyCompanion } from './domain/course/entity/RoadmapSurveyCompanion.entity';
+import { RoadmapSurveyTheme } from './domain/course/entity/RoadmapSurveyTheme.entity';
 import { TravelBlog } from './domain/blog/entity/TravelBlog.entity';
 import { BlogLike } from './domain/blog/entity/BlogLike.entity';
 import { Country } from './domain/country/entity/Country.entity';
@@ -30,7 +36,6 @@ import { UserPreferenceFoodPersonality } from './domain/preference/entity/UserPr
 import { UserPreferenceMainInterest } from './domain/preference/entity/UserPreferenceMainInterest.entity';
 import { UserPreferenceBudget } from './domain/preference/entity/UserPreferenceBudget.entity';
 import { RegionCategory } from './domain/country/entity/RegionCategory.entity';
-import { RegionEnvironment } from './domain/country/entity/RegionEnvironment.entity';
 import { RegionFoodPersonality } from './domain/country/entity/RegionFoodPersonality.entity';
 import { RegionMainInterest } from './domain/country/entity/RegionMainInterest.entity';
 import { RegionTravelStyle } from './domain/country/entity/RegionTravelStyle.entity';
@@ -58,6 +63,13 @@ import { RegionTravelStyle } from './domain/country/entity/RegionTravelStyle.ent
           CourseLike,
           CourseBookmark,
           CourseCountry,
+          CourseRegion,
+          CourseDay,
+          // Roadmap Survey entities
+          RoadmapSurvey,
+          RoadmapSurveyDestination,
+          RoadmapSurveyCompanion,
+          RoadmapSurveyTheme,
           TravelBlog,
           BlogLike,
           Country,
@@ -75,7 +87,6 @@ import { RegionTravelStyle } from './domain/country/entity/RegionTravelStyle.ent
           UserPreferenceBudget,
           // Region mapping entities
           RegionCategory,
-          RegionEnvironment,
           RegionFoodPersonality,
           RegionMainInterest,
           RegionTravelStyle,

@@ -2,11 +2,12 @@ import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { BaseEntity } from '../../../global/BaseEntity';
 import { User } from '../../user/entity/User.entity';
 import { Country } from '../../country/entity/Country.entity';
-import { CoursePlace } from './CoursePlace.entity';
 import { CourseHashTag } from './CourseHashTag.entity';
 import { CourseLike } from './CourseLike.entity';
 import { CourseBookmark } from './CourseBookmark.entity';
 import { CourseCountry } from './CourseCountry.entity';
+import { CourseRegion } from './CourseRegion.entity';
+import { CourseDay } from './CourseDay.entity';
 
 /**
  * TravelCourse Entity
@@ -91,6 +92,22 @@ export class TravelCourse extends BaseEntity {
   })
   bookmarkCount: number;
 
+  @Column({
+    type: 'date',
+    name: 'travel_start_day',
+    nullable: false,
+    comment: '여행 시작일',
+  })
+  travelStartDay: Date;
+
+  @Column({
+    type: 'date',
+    name: 'travel_finish_day',
+    nullable: false,
+    comment: '여행 종료일',
+  })
+  travelFinishDay: Date;
+
   @ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
@@ -104,8 +121,19 @@ export class TravelCourse extends BaseEntity {
   )
   courseCountries: CourseCountry[];
 
-  @OneToMany(() => CoursePlace, (coursePlace) => coursePlace.travelCourse)
-  coursePlaces: CoursePlace[];
+  @OneToMany(
+    () => CourseRegion,
+    (courseRegion) => courseRegion.travelCourse,
+    {
+      cascade: true,
+    },
+  )
+  courseRegions: CourseRegion[];
+
+  @OneToMany(() => CourseDay, (courseDay) => courseDay.travelCourse, {
+    cascade: true,
+  })
+  courseDays: CourseDay[];
 
   @OneToMany(() => CourseHashTag, (hashTag) => hashTag.travelCourse)
   hashTags: CourseHashTag[];
@@ -124,6 +152,8 @@ export class TravelCourse extends BaseEntity {
     user: User,
     nights: number,
     days: number,
+    travelStartDay: Date,
+    travelFinishDay: Date,
     description?: string,
     imageUrl?: string,
     isPublic: boolean = true,
@@ -134,6 +164,8 @@ export class TravelCourse extends BaseEntity {
     course.user = user;
     course.nights = nights;
     course.days = days;
+    course.travelStartDay = travelStartDay;
+    course.travelFinishDay = travelFinishDay;
     course.description = description || null;
     course.imageUrl = imageUrl || null;
     course.isPublic = isPublic;

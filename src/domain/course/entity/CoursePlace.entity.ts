@@ -1,6 +1,6 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../../global/BaseEntity';
-import { TravelCourse } from './TravelCourse.entity';
+import { CourseDay } from './CourseDay.entity';
 import { Place } from '../../place/entity/Place.entity';
 
 /**
@@ -20,15 +20,6 @@ export class CoursePlace extends BaseEntity {
   visitOrder: number;
 
   @Column({
-    type: 'int',
-    name: 'day_number',
-    nullable: false,
-    default: 1,
-    comment: '여행 일차',
-  })
-  dayNumber: number;
-
-  @Column({
     type: 'text',
     name: 'memo',
     nullable: true,
@@ -36,12 +27,12 @@ export class CoursePlace extends BaseEntity {
   })
   memo: string | null;
 
-  @ManyToOne(() => TravelCourse, (course) => course.coursePlaces, {
+  @ManyToOne(() => CourseDay, (courseDay) => courseDay.coursePlaces, {
     nullable: false,
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'travel_course_id' })
-  travelCourse: TravelCourse;
+  @JoinColumn({ name: 'course_day_id' })
+  courseDay: CourseDay;
 
   @ManyToOne(() => Place, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'place_id' })
@@ -51,17 +42,15 @@ export class CoursePlace extends BaseEntity {
    * 코스 장소 생성 팩토리 메서드
    */
   static create(
-    travelCourse: TravelCourse,
+    courseDay: CourseDay,
     place: Place,
     visitOrder: number,
-    dayNumber: number = 1,
     memo?: string,
   ): CoursePlace {
     const coursePlace = new CoursePlace();
-    coursePlace.travelCourse = travelCourse;
+    coursePlace.courseDay = courseDay;
     coursePlace.place = place;
     coursePlace.visitOrder = visitOrder;
-    coursePlace.dayNumber = dayNumber;
     coursePlace.memo = memo || null;
     return coursePlace;
   }
