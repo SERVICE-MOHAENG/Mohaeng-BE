@@ -8,6 +8,7 @@ import { CourseBookmark } from './CourseBookmark.entity';
 import { CourseCountry } from './CourseCountry.entity';
 import { CourseRegion } from './CourseRegion.entity';
 import { CourseDay } from './CourseDay.entity';
+import { CourseAiChat } from './CourseAiChat.entity';
 
 /**
  * TravelCourse Entity
@@ -143,6 +144,9 @@ export class TravelCourse extends BaseEntity {
 
   @OneToMany(() => CourseBookmark, (bookmark) => bookmark.travelCourse)
   bookmarks: CourseBookmark[];
+
+  @OneToMany(() => CourseAiChat, (aiChat) => aiChat.travelCourse)
+  aiChats: CourseAiChat[];
 
   /**
    * 여행 코스 생성 팩토리 메서드
