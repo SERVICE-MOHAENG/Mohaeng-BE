@@ -32,8 +32,8 @@ export class User extends BaseEntity {
   passwordHash: string | null;
 
   @Column({
-    type: 'varchar',
-    length: 50,
+    type: 'enum',
+    enum: Provider,
     name: 'provider',
     nullable: false,
     default: Provider.LOCAL,
