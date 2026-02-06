@@ -42,8 +42,8 @@ export class Country extends BaseEntity {
   imageUrl: string | null;
 
   @Column({
-    type: 'varchar',
-    length: 50,
+    type: 'enum',
+    enum: Continent,
     name: 'continent',
     nullable: false,
     comment: '소속 대륙',
