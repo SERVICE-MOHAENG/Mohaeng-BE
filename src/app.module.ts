@@ -39,6 +39,8 @@ import { RegionCategory } from './domain/country/entity/RegionCategory.entity';
 import { RegionFoodPersonality } from './domain/country/entity/RegionFoodPersonality.entity';
 import { RegionMainInterest } from './domain/country/entity/RegionMainInterest.entity';
 import { RegionTravelStyle } from './domain/country/entity/RegionTravelStyle.entity';
+import { RegionWeather } from './domain/country/entity/RegionWeather.entity';
+import { RegionBudget } from './domain/country/entity/RegionBudget.entity';
 
 @Module({
   imports: [
@@ -90,6 +92,8 @@ import { RegionTravelStyle } from './domain/country/entity/RegionTravelStyle.ent
           RegionFoodPersonality,
           RegionMainInterest,
           RegionTravelStyle,
+          RegionWeather,
+          RegionBudget,
         ],
         synchronize:
           configService.get('SYNC_AUTO_DDL') === 'true' &&

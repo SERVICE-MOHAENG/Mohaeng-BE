@@ -6,6 +6,8 @@ import { RegionFoodPersonality } from './RegionFoodPersonality.entity';
 import { RegionMainInterest } from './RegionMainInterest.entity';
 import { RegionCategory } from './RegionCategory.entity';
 import { RegionTravelStyle } from './RegionTravelStyle.entity';
+import { RegionWeather } from './RegionWeather.entity';
+import { RegionBudget } from './RegionBudget.entity';
 import { TravelRange } from '../../preference/entity/TravelRange.enum';
 import { BudgetLevel } from '../../preference/entity/BudgetLevel.enum';
 
@@ -56,8 +58,8 @@ export class Region extends BaseEntity {
   imageUrl: string | null;
 
   @Column({
-    type: 'varchar',
-    length: 50,
+    type: 'enum',
+    enum: TravelRange,
     name: 'travel_range',
     nullable: false,
     comment: '한국에서 이동 거리 (설문 2번과 매칭)',
@@ -65,8 +67,8 @@ export class Region extends BaseEntity {
   travelRange: TravelRange;
 
   @Column({
-    type: 'varchar',
-    length: 50,
+    type: 'enum',
+    enum: BudgetLevel,
     name: 'average_budget_level',
     nullable: false,
     default: BudgetLevel.BALANCED,
@@ -141,6 +143,18 @@ export class Region extends BaseEntity {
   })
   travelStyles: RegionTravelStyle[];
 
+  // 설문 1번: 날씨/계절 매칭용
+  @OneToMany(() => RegionWeather, (weather) => weather.region, {
+    cascade: true,
+  })
+  weathers: RegionWeather[];
+
+  // 예산 규모 매칭용
+  @OneToMany(() => RegionBudget, (budget) => budget.region, {
+    cascade: true,
+  })
+  budgets: RegionBudget[];
+
   /**
    * 지역 생성 팩토리 메서드
    */
@@ -169,6 +183,8 @@ export class Region extends BaseEntity {
     region.mainInterests = [];
     region.categories = [];
     region.travelStyles = [];
+    region.weathers = [];
+    region.budgets = [];
     return region;
   }
 
