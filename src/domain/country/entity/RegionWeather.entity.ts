@@ -8,7 +8,7 @@ import { WeatherPreference } from '../../preference/entity/WeatherPreference.enu
  * @description
  * - 지역별 날씨/계절 태그를 저장하는 테이블
  * - Region과 1:N 관계 (하나의 Region은 여러 WeatherPreference를 가질 수 있음)
- * - WeatherPreference는 Enum 값으로 varchar 컬럼에 저장됨
+ * - WeatherPreference는 Enum 타입 컬럼(region_weather)에 저장됨
  * - 설문 1번: 날씨와 계절감과 매칭
  */
 @Entity('region_weather_table')

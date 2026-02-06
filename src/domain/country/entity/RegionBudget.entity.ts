@@ -8,7 +8,7 @@ import { BudgetLevel } from '../../preference/entity/BudgetLevel.enum';
  * @description
  * - 지역별 예산 수준 태그를 저장하는 테이블
  * - Region과 1:N 관계 (하나의 Region은 여러 BudgetLevel을 가질 수 있음)
- * - BudgetLevel은 Enum 값으로 varchar 컬럼에 저장됨
+ * - BudgetLevel은 Enum 타입 컬럼(region_budget)에 저장됨
  * - 설문 예산 규모와 매칭
  */
 @Entity('region_budget_table')
