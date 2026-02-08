@@ -15,9 +15,9 @@ export class PlaceRepository {
     private readonly repository: Repository<Place>,
   ) {}
 
-  async findById(id: string): Promise<Place | null> {
+  async findById(placeId: string): Promise<Place | null> {
     return this.repository.findOne({
-      where: { id },
+      where: { placeId },
       relations: ['region', 'region.country'],
     });
   }
@@ -35,7 +35,7 @@ export class PlaceRepository {
       relations: ['region', 'region.country'],
       skip: (page - 1) * limit,
       take: limit,
-      order: { createdAt: 'DESC' },
+      order: { name: 'ASC' },
     });
   }
 
@@ -43,7 +43,7 @@ export class PlaceRepository {
     return this.repository.save(place);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.repository.delete({ id });
+  async delete(placeId: string): Promise<void> {
+    await this.repository.delete({ placeId });
   }
 }

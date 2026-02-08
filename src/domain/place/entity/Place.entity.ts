@@ -1,18 +1,33 @@
-import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { BaseEntity } from '../../../global/BaseEntity';
+import {
+  Entity,
+  PrimaryColumn,
+  Column,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Region } from '../../country/entity/Region.entity';
 
 /**
  * Place Entity
  * @description
  * - 장소 정보 엔티티
- * - 여행지, 관광지 등의 장소 정보를 관리
+ * - 구글 Places API 기반 장소 정보 관리
+ * - updated_at 기준 30일마다 API 호출하여 정보 갱신
  */
 @Entity('place_table')
-export class Place extends BaseEntity {
+export class Place {
+  @PrimaryColumn({
+    type: 'varchar',
+    length: 255,
+    name: 'place_id',
+    comment: '구글 디비에서 식별하는 장소 아이디',
+  })
+  placeId: string;
+
   @Column({
     type: 'varchar',
-    length: 200,
+    length: 255,
     name: 'place_name',
     nullable: false,
   })
@@ -20,7 +35,7 @@ export class Place extends BaseEntity {
 
   @Column({
     type: 'text',
-    name: 'place_description',
+    name: 'description',
     nullable: true,
   })
   description: string | null;
@@ -28,83 +43,68 @@ export class Place extends BaseEntity {
   @Column({
     type: 'varchar',
     length: 500,
-    name: 'place_image_url',
-    nullable: true,
+    name: 'address',
+    nullable: false,
   })
-  imageUrl: string | null;
+  address: string;
 
   @Column({
     type: 'decimal',
-    precision: 10,
-    scale: 7,
     name: 'latitude',
-    nullable: true,
+    nullable: false,
   })
-  latitude: number | null;
+  latitude: number;
 
   @Column({
     type: 'decimal',
-    precision: 10,
-    scale: 7,
     name: 'longitude',
-    nullable: true,
+    nullable: false,
   })
-  longitude: number | null;
+  longitude: number;
 
   @Column({
     type: 'varchar',
     length: 500,
-    name: 'address',
-    nullable: true,
+    name: 'place_url',
+    nullable: false,
+    comment: '사용자가 클릭해서 들어가는 url',
   })
-  address: string | null;
+  placeUrl: string;
 
-  @Column({
-    type: 'varchar',
-    length: 255,
-    name: 'opening_hours',
-    nullable: true,
-    comment: '영업시간',
+  @UpdateDateColumn({
+    type: 'timestamp',
+    name: 'updated_at',
+    nullable: false,
+    comment: '30일 마다 다시 조회해야함',
   })
-  openingHours: string | null;
+  updatedAt: Date;
 
-  @Column({
-    type: 'varchar',
-    length: 50,
-    name: 'category',
-    nullable: true,
-    comment: '장소 카테고리 (음식점, 관광지, 숙박 등)',
-  })
-  category: string | null;
-
-  @ManyToOne(() => Region, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => Region, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'region_id' })
-  region: Region | null;
+  region: Region;
 
   /**
    * 장소 생성 팩토리 메서드
    */
   static create(
+    placeId: string,
     name: string,
+    address: string,
+    latitude: number,
+    longitude: number,
+    placeUrl: string,
+    region: Region,
     description?: string,
-    imageUrl?: string,
-    latitude?: number,
-    longitude?: number,
-    address?: string,
-    openingHours?: string,
-    category?: string,
-    region?: Region,
   ): Place {
     const place = new Place();
+    place.placeId = placeId;
     place.name = name;
     place.description = description || null;
-    place.imageUrl = imageUrl || null;
-    place.latitude = latitude ?? null;
-    place.longitude = longitude ?? null;
-    place.address = address || null;
-    place.openingHours = openingHours || null;
-    place.category = category || null;
-    place.region = region || null;
+    place.address = address;
+    place.latitude = latitude;
+    place.longitude = longitude;
+    place.placeUrl = placeUrl;
+    place.region = region;
     return place;
   }
 }
