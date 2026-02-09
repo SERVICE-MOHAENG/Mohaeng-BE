@@ -1,0 +1,12 @@
+/**
+ * Itinerary Error Code
+ * @description
+ * - 여행 일정 생성 도메인 에러 코드
+ * - 형식: HE_05XXYY (XX: 카테고리, YY: 에러 순번)
+ */
+export enum ItineraryErrorCode {
+  JOB_NOT_FOUND = 'HE_050101',
+  JOB_ALREADY_PROCESSING = 'HE_050102',
+  SURVEY_NOT_FOUND = 'HE_050201',
+  INVALID_CALLBACK_SECRET = 'HE_050301',
+}
