@@ -22,7 +22,9 @@ import { ServiceSecretGuard } from '../guard/ServiceSecretGuard';
 import { ItineraryService } from '../service/ItineraryService';
 import { ItineraryCallbackService } from '../service/ItineraryCallbackService';
 import { CreateItineraryRequest } from './dto/request/CreateItineraryRequest';
+import { CreateSurveyRequest } from './dto/request/CreateSurveyRequest';
 import { CreateItineraryResponse } from './dto/response/CreateItineraryResponse';
+import { CreateSurveyResponse } from './dto/response/CreateSurveyResponse';
 import { ItineraryJobStatusResponse } from './dto/response/ItineraryJobStatusResponse';
 import { ItineraryResultResponse } from './dto/response/ItineraryResultResponse';
 
@@ -34,6 +36,22 @@ export class ItineraryController {
     private readonly itineraryService: ItineraryService,
     private readonly itineraryCallbackService: ItineraryCallbackService,
   ) {}
+
+  /**
+   * 로드맵 설문 저장
+   */
+  @Post('surveys')
+  @ApiOperation({ summary: '로드맵 생성 설문 저장' })
+  @ApiResponse({ status: 201, type: CreateSurveyResponse })
+  @UserApiBearerAuth()
+  @HttpCode(HttpStatus.CREATED)
+  async createSurvey(
+    @UserId() userId: string,
+    @Body() request: CreateSurveyRequest,
+  ) {
+    const result = await this.itineraryService.createSurvey(userId, request);
+    return { survey: result };
+  }
 
   /**
    * 일정 생성 요청

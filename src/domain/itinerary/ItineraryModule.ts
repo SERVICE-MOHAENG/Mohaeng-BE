@@ -13,6 +13,7 @@ import { Place } from '../place/entity/Place.entity';
 import { CourseSurveyDestination } from '../course/entity/CourseSurveyDestination.entity';
 import { CourseSurveyCompanion } from '../course/entity/CourseSurveyCompanion.entity';
 import { CourseSurveyTheme } from '../course/entity/CourseSurveyTheme.entity';
+import { Region } from '../country/entity/Region.entity';
 import { ItineraryJobRepository } from './persistence/ItineraryJobRepository';
 import { ItineraryService } from './service/ItineraryService';
 import { ItineraryCallbackService } from './service/ItineraryCallbackService';
@@ -39,6 +40,7 @@ import { UserModule } from '../user/UserModule';
       CourseHashTag,
       CourseRegion,
       Place,
+      Region,
       CourseSurveyDestination,
       CourseSurveyCompanion,
       CourseSurveyTheme,

@@ -38,6 +38,12 @@ export class RoadmapSurvey {
   @Column({ type: 'text', name: 'user_note', nullable: true })
   userNote: string | null;
 
+  @Column({ type: 'date', name: 'travel_start_day', nullable: true })
+  travelStartDay: Date | null;
+
+  @Column({ type: 'date', name: 'travel_end_day', nullable: true })
+  travelEndDay: Date | null;
+
   @Column({ type: 'timestamp', name: 'created_at', nullable: false })
   createdAt: Date;
 
