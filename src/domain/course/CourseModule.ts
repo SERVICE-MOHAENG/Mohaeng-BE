@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TravelCourse } from './entity/TravelCourse.entity';
 import { CoursePlace } from './entity/CoursePlace.entity';
+import { CourseDay } from './entity/CourseDay.entity';
 import { CourseHashTag } from './entity/CourseHashTag.entity';
 import { CourseLike } from './entity/CourseLike.entity';
 import { CourseBookmark } from './entity/CourseBookmark.entity';
@@ -25,6 +26,7 @@ import { UserModule } from '../user/UserModule';
     TypeOrmModule.forFeature([
       TravelCourse,
       CoursePlace,
+      CourseDay,
       CourseHashTag,
       CourseLike,
       CourseBookmark,
