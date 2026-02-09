@@ -117,18 +117,24 @@ export class ItineraryProcessor extends WorkerHost {
       (d) => new Date(d.endDate).getTime(),
     );
 
-    const globalStartDate =
+    const calculatedStartDate =
       startDates.length > 0
         ? this.formatDate(new Date(Math.min(...startDates)))
         : '';
-    const globalEndDate =
+    const calculatedEndDate =
       endDates.length > 0
         ? this.formatDate(new Date(Math.max(...endDates)))
         : '';
+    const surveyStartDate = survey.travelStartDay
+      ? this.formatDate(new Date(survey.travelStartDay))
+      : '';
+    const surveyEndDate = survey.travelEndDay
+      ? this.formatDate(new Date(survey.travelEndDay))
+      : '';
 
     return {
-      start_date: globalStartDate,
-      end_date: globalEndDate,
+      start_date: surveyStartDate || calculatedStartDate,
+      end_date: surveyEndDate || calculatedEndDate,
       regions: destinations.map((d) => ({
         region: d.regionName,
         start_date: this.formatDate(new Date(d.startDay)),
