@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bullmq';
 import { LoggerModule } from './global/logger/Logger.module';
 import { GlobalModule } from './global/GlobalModule';
 import { AuthModule } from './domain/auth/AuthModule';
@@ -8,13 +9,23 @@ import { UserModule } from './domain/user/UserModule';
 import { CourseModule } from './domain/course/CourseModule';
 import { BlogModule } from './domain/blog/BlogModule';
 import { VisitedCountryModule } from './domain/visited-country/VisitedCountryModule';
+import { ItineraryModule } from './domain/itinerary/ItineraryModule';
+import { PlaceModule } from './domain/place/PlaceModule';
+import { NotificationModule } from './domain/notification/NotificationModule';
+import { CountryModule } from './domain/country/CountryModule';
 import { User } from './domain/user/entity/User.entity';
 import { TravelCourse } from './domain/course/entity/TravelCourse.entity';
 import { CoursePlace } from './domain/course/entity/CoursePlace.entity';
+import { CourseDay } from './domain/course/entity/CourseDay.entity';
 import { CourseHashTag } from './domain/course/entity/CourseHashTag.entity';
 import { CourseLike } from './domain/course/entity/CourseLike.entity';
 import { CourseBookmark } from './domain/course/entity/CourseBookmark.entity';
 import { CourseCountry } from './domain/course/entity/CourseCountry.entity';
+import { CourseRegion } from './domain/course/entity/CourseRegion.entity';
+import { RoadmapSurvey } from './domain/course/entity/RoadmapSurvey.entity';
+import { CourseSurveyDestination } from './domain/course/entity/CourseSurveyDestination.entity';
+import { CourseSurveyCompanion } from './domain/course/entity/CourseSurveyCompanion.entity';
+import { CourseSurveyTheme } from './domain/course/entity/CourseSurveyTheme.entity';
 import { TravelBlog } from './domain/blog/entity/TravelBlog.entity';
 import { BlogLike } from './domain/blog/entity/BlogLike.entity';
 import { Country } from './domain/country/entity/Country.entity';
@@ -22,6 +33,7 @@ import { Region } from './domain/country/entity/Region.entity';
 import { Place } from './domain/place/entity/Place.entity';
 import { UserVisitedCountry } from './domain/visited-country/entity/UserVisitedCountry.entity';
 import { Notification } from './domain/notification/entity/Notification.entity';
+import { ItineraryJob } from './domain/itinerary/entity/ItineraryJob.entity';
 import { UserPreference } from './domain/preference/entity/UserPreference.entity';
 import { UserPreferenceWeather } from './domain/preference/entity/UserPreferenceWeather.entity';
 import { UserPreferenceTravelRange } from './domain/preference/entity/UserPreferenceTravelRange.entity';
@@ -55,10 +67,17 @@ import { RegionTravelStyle } from './domain/country/entity/RegionTravelStyle.ent
           User,
           TravelCourse,
           CoursePlace,
+          CourseDay,
           CourseHashTag,
           CourseLike,
           CourseBookmark,
           CourseCountry,
+          CourseRegion,
+          RoadmapSurvey,
+          CourseSurveyDestination,
+          CourseSurveyCompanion,
+          CourseSurveyTheme,
+          ItineraryJob,
           TravelBlog,
           BlogLike,
           Country,
@@ -90,13 +109,28 @@ import { RegionTravelStyle } from './domain/country/entity/RegionTravelStyle.ent
         charset: 'utf8mb4',
       }),
     }),
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.get<string>('REDIS_HOST') || 'localhost',
+          port: Number(configService.get<number>('REDIS_PORT') || 6379),
+          password: configService.get<string>('REDIS_PASSWORD') || undefined,
+          db: Number(configService.get<number>('REDIS_DB') || 0),
+        },
+      }),
+    }),
     LoggerModule,
     GlobalModule,
     AuthModule,
     UserModule,
     CourseModule,
     BlogModule,
+    CountryModule,
+    PlaceModule,
+    NotificationModule,
     VisitedCountryModule,
+    ItineraryModule,
   ],
   controllers: [],
   providers: [],
