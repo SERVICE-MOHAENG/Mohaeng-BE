@@ -9,7 +9,7 @@ import {
 import { BaseEntity } from '../../../global/BaseEntity';
 import { User } from '../../user/entity/User.entity';
 import { TravelCourse } from './TravelCourse.entity';
-import { RoadmapSurveyDestination } from './RoadmapSurveyDestination.entity';
+import { CourseSurveyDestination } from './CourseSurveyDestination.entity';
 import { RoadmapSurveyCompanion } from './RoadmapSurveyCompanion.entity';
 import { RoadmapSurveyTheme } from './RoadmapSurveyTheme.entity';
 import { SurveyBudget } from './SurveyBudget.enum';
@@ -112,10 +112,10 @@ export class RoadmapSurvey extends BaseEntity {
   })
   priorityPreference: PriorityPreference;
 
-  @OneToMany(() => RoadmapSurveyDestination, (destination) => destination.survey, {
+  @OneToMany(() => CourseSurveyDestination, (destination) => destination.survey, {
     cascade: true,
   })
-  destinations: RoadmapSurveyDestination[];
+  destinations: CourseSurveyDestination[];
 
   @OneToMany(() => RoadmapSurveyCompanion, (companion) => companion.survey, {
     cascade: true,

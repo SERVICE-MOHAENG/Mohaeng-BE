@@ -1,27 +1,34 @@
-import { Entity, Column, ManyToOne, JoinColumn, Unique } from 'typeorm';
-import { BaseEntity } from '../../../global/BaseEntity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { RoadmapSurvey } from './RoadmapSurvey.entity';
 import { Region } from '../../country/entity/Region.entity';
 
 /**
- * RoadmapSurveyDestination Entity
+ * CourseSurveyDestination Entity
  * @description
- * - 로드맵 설문 목적지 매핑 테이블
+ * - 코스 설문 목적지 매핑 테이블
  * - RoadmapSurvey와 Region의 N:M 관계
  * - 도시별 여행 날짜 포함
  */
-@Entity('roadmap_survey_destination_table')
-@Unique(['survey', 'region'])
-export class RoadmapSurveyDestination extends BaseEntity {
+@Entity('course_survey_destination_table')
+export class CourseSurveyDestination {
+  @PrimaryGeneratedColumn('uuid', { name: 'destination_id' })
+  destinationId: string;
+
   @ManyToOne(() => RoadmapSurvey, (survey) => survey.destinations, {
     nullable: false,
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'survey_id' })
+  @JoinColumn({ name: 'course_survey_id' })
   survey: RoadmapSurvey;
 
-  @Column({ type: 'varchar', length: 36, name: 'survey_id' })
-  surveyId: string;
+  @Column({ type: 'varchar', length: 36, name: 'course_survey_id' })
+  courseSurveyId: string;
 
   @ManyToOne(() => Region, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'region_id' })
@@ -31,12 +38,20 @@ export class RoadmapSurveyDestination extends BaseEntity {
   regionId: string;
 
   @Column({
+    type: 'varchar',
+    length: 100,
+    name: 'region_name',
+    nullable: false,
+  })
+  regionName: string;
+
+  @Column({
     type: 'date',
-    name: 'start_date',
+    name: 'start_day',
     nullable: false,
     comment: '해당 도시 여행 시작일',
   })
-  startDate: Date;
+  startDay: Date;
 
   @Column({
     type: 'date',
@@ -50,15 +65,17 @@ export class RoadmapSurveyDestination extends BaseEntity {
    * 팩토리 메서드
    */
   static create(
-    surveyId: string,
+    courseSurveyId: string,
     regionId: string,
-    startDate: Date,
+    regionName: string,
+    startDay: Date,
     endDate: Date,
-  ): RoadmapSurveyDestination {
-    const destination = new RoadmapSurveyDestination();
-    destination.surveyId = surveyId;
+  ): CourseSurveyDestination {
+    const destination = new CourseSurveyDestination();
+    destination.courseSurveyId = courseSurveyId;
     destination.regionId = regionId;
-    destination.startDate = startDate;
+    destination.regionName = regionName;
+    destination.startDay = startDay;
     destination.endDate = endDate;
     return destination;
   }
