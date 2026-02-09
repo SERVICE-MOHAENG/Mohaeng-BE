@@ -16,8 +16,8 @@ export class PlaceService {
   /**
    * ID로 장소 조회
    */
-  async findById(id: string): Promise<Place> {
-    const place = await this.placeRepository.findById(id);
+  async findById(placeId: string): Promise<Place> {
+    const place = await this.placeRepository.findById(placeId);
     if (!place) {
       throw new PlaceNotFoundException();
     }
@@ -42,26 +42,24 @@ export class PlaceService {
    * 장소 생성
    */
   async create(
+    placeId: string,
     name: string,
+    address: string,
+    latitude: number,
+    longitude: number,
+    placeUrl: string,
+    region: Region,
     description?: string,
-    imageUrl?: string,
-    latitude?: number,
-    longitude?: number,
-    address?: string,
-    openingHours?: string,
-    category?: string,
-    region?: Region,
   ): Promise<Place> {
     const place = Place.create(
+      placeId,
       name,
-      description,
-      imageUrl,
+      address,
       latitude,
       longitude,
-      address,
-      openingHours,
-      category,
+      placeUrl,
       region,
+      description,
     );
     return this.placeRepository.save(place);
   }
@@ -69,8 +67,8 @@ export class PlaceService {
   /**
    * 장소 삭제
    */
-  async delete(id: string): Promise<void> {
-    const place = await this.findById(id);
-    await this.placeRepository.delete(place.id);
+  async delete(placeId: string): Promise<void> {
+    const place = await this.findById(placeId);
+    await this.placeRepository.delete(place.placeId);
   }
 }

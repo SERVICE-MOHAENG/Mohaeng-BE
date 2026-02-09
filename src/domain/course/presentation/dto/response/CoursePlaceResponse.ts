@@ -28,9 +28,6 @@ export class CoursePlaceResponse {
   @ApiProperty({ description: '장소 설명', nullable: true })
   placeDescription: string | null;
 
-  @ApiProperty({ description: '장소 이미지 URL', nullable: true })
-  placeImageUrl: string | null;
-
   @ApiProperty({ description: '위도', nullable: true })
   latitude: number | null;
 
@@ -40,17 +37,8 @@ export class CoursePlaceResponse {
   @ApiProperty({ description: '주소', nullable: true })
   address: string | null;
 
-  @ApiProperty({ description: '영업시간', nullable: true })
-  openingHours: string | null;
-
-  @ApiProperty({ description: '장소 카테고리', nullable: true })
-  category: string | null;
-
-  @ApiProperty({ description: '생성일시' })
-  createdAt: Date;
-
-  @ApiProperty({ description: '수정일시' })
-  updatedAt: Date;
+  @ApiProperty({ description: '장소 URL', nullable: true })
+  placeUrl: string | null;
 
   /**
    * Entity -> DTO 변환
@@ -60,22 +48,17 @@ export class CoursePlaceResponse {
     const response = new CoursePlaceResponse();
     response.id = coursePlace.id;
     response.visitOrder = coursePlace.visitOrder;
-    response.dayNumber = coursePlace.dayNumber;
+    response.dayNumber = coursePlace.courseDay?.dayNumber ?? 1;
     response.memo = coursePlace.memo;
 
     const place = coursePlace.place;
-    response.placeId = place?.id ?? null;
+    response.placeId = place?.placeId ?? null;
     response.placeName = place?.name ?? null;
     response.placeDescription = place?.description ?? null;
-    response.placeImageUrl = place?.imageUrl ?? null;
     response.latitude = place?.latitude ?? null;
     response.longitude = place?.longitude ?? null;
     response.address = place?.address ?? null;
-    response.openingHours = place?.openingHours ?? null;
-    response.category = place?.category ?? null;
-
-    response.createdAt = coursePlace.createdAt;
-    response.updatedAt = coursePlace.updatedAt;
+    response.placeUrl = place?.placeUrl ?? null;
     return response;
   }
 }

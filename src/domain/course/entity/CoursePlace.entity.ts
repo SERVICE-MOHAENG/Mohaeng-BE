@@ -1,6 +1,5 @@
-import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { BaseEntity } from '../../../global/BaseEntity';
-import { TravelCourse } from './TravelCourse.entity';
+import { Entity, Column, ManyToOne, JoinColumn, PrimaryGeneratedColumn } from 'typeorm';
+import { CourseDay } from './CourseDay.entity';
 import { Place } from '../../place/entity/Place.entity';
 
 /**
@@ -9,8 +8,11 @@ import { Place } from '../../place/entity/Place.entity';
  * - 여행 코스의 장소 정보 엔티티
  * - 여행 코스에 포함된 장소와 방문 순서 관리
  */
-@Entity('course_place_table')
-export class CoursePlace extends BaseEntity {
+@Entity('course_place')
+export class CoursePlace {
+  @PrimaryGeneratedColumn('uuid', { name: 'course_place_id' })
+  id: string;
+
   @Column({
     type: 'int',
     name: 'visit_order',
@@ -20,15 +22,6 @@ export class CoursePlace extends BaseEntity {
   visitOrder: number;
 
   @Column({
-    type: 'int',
-    name: 'day_number',
-    nullable: false,
-    default: 1,
-    comment: '여행 일차',
-  })
-  dayNumber: number;
-
-  @Column({
     type: 'text',
     name: 'memo',
     nullable: true,
@@ -36,33 +29,49 @@ export class CoursePlace extends BaseEntity {
   })
   memo: string | null;
 
-  @ManyToOne(() => TravelCourse, (course) => course.coursePlaces, {
-    nullable: false,
-    onDelete: 'CASCADE',
+  @Column({
+    type: 'varchar',
+    length: 5,
+    name: 'visit_time',
+    nullable: true,
+    comment: '방문 시각 (HH:MM)',
   })
-  @JoinColumn({ name: 'travel_course_id' })
-  travelCourse: TravelCourse;
+  visitTime: string | null;
+
+  @Column({
+    type: 'text',
+    name: 'description',
+    nullable: true,
+    comment: '장소 한줄 설명',
+  })
+  description: string | null;
+
+  @ManyToOne(() => CourseDay, { nullable: false, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'date_id' })
+  courseDay: CourseDay;
 
   @ManyToOne(() => Place, { nullable: false, onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'place_id' })
+  @JoinColumn({ name: 'place_id2', referencedColumnName: 'placeId' })
   place: Place;
 
   /**
    * 코스 장소 생성 팩토리 메서드
    */
   static create(
-    travelCourse: TravelCourse,
+    courseDay: CourseDay,
     place: Place,
     visitOrder: number,
-    dayNumber: number = 1,
     memo?: string,
+    visitTime?: string,
+    description?: string,
   ): CoursePlace {
     const coursePlace = new CoursePlace();
-    coursePlace.travelCourse = travelCourse;
+    coursePlace.courseDay = courseDay;
     coursePlace.place = place;
     coursePlace.visitOrder = visitOrder;
-    coursePlace.dayNumber = dayNumber;
     coursePlace.memo = memo || null;
+    coursePlace.visitTime = visitTime || null;
+    coursePlace.description = description || null;
     return coursePlace;
   }
 }
