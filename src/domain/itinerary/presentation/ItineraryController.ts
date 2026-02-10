@@ -83,8 +83,11 @@ export class ItineraryController {
   @ApiParam({ name: 'jobId', description: '작업 ID' })
   @ApiResponse({ status: 200, type: ItineraryJobStatusResponse })
   @UserApiBearerAuth()
-  async getStatus(@Param('jobId') jobId: string) {
-    const result = await this.itineraryService.getJobStatus(jobId);
+  async getStatus(
+    @UserId() userId: string,
+    @Param('jobId') jobId: string,
+  ) {
+    const result = await this.itineraryService.getJobStatus(userId, jobId);
     return { status: result };
   }
 
@@ -96,8 +99,11 @@ export class ItineraryController {
   @ApiParam({ name: 'jobId', description: '작업 ID' })
   @ApiResponse({ status: 200, type: ItineraryResultResponse })
   @UserApiBearerAuth()
-  async getResult(@Param('jobId') jobId: string) {
-    const result = await this.itineraryService.getJobResult(jobId);
+  async getResult(
+    @UserId() userId: string,
+    @Param('jobId') jobId: string,
+  ) {
+    const result = await this.itineraryService.getJobResult(userId, jobId);
     return { result };
   }
 

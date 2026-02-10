@@ -20,6 +20,23 @@ export class ItineraryJobRepository {
     return this.repository.findOne({ where: { id } });
   }
 
+  async findByIdAndUserId(
+    id: string,
+    userId: string,
+  ): Promise<ItineraryJob | null> {
+    return this.repository.findOne({ where: { id, userId } });
+  }
+
+  async findByIdAndUserIdWithRelations(
+    id: string,
+    userId: string,
+  ): Promise<ItineraryJob | null> {
+    return this.repository.findOne({
+      where: { id, userId },
+      relations: ['survey', 'survey.destinations', 'survey.companions', 'survey.themes', 'travelCourse'],
+    });
+  }
+
   async findByIdWithRelations(id: string): Promise<ItineraryJob | null> {
     return this.repository.findOne({
       where: { id },
