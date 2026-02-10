@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ItineraryJob } from '../../../entity/ItineraryJob.entity';
 import { ItineraryStatus } from '../../../entity/ItineraryStatus.enum';
+import { CourseResponse } from '../../../../course/presentation/dto/response/CourseResponse';
+import { TravelCourse } from '../../../../course/entity/TravelCourse.entity';
 
 export class ItineraryResultResponse {
   @ApiProperty({ description: '작업 상태', enum: ItineraryStatus })
@@ -27,7 +29,13 @@ export class ItineraryResultResponse {
   @ApiProperty({ description: '완료 시각', nullable: true })
   completedAt: Date | null;
 
-  static from(job: ItineraryJob): ItineraryResultResponse {
+  @ApiProperty({ description: '생성된 코스 상세', nullable: true, type: CourseResponse })
+  course: CourseResponse | null;
+
+  static from(
+    job: ItineraryJob,
+    course?: TravelCourse | null,
+  ): ItineraryResultResponse {
     const response = new ItineraryResultResponse();
     response.status = job.status;
     response.courseId = job.travelCourseId;
@@ -37,6 +45,7 @@ export class ItineraryResultResponse {
     response.errorMessage = job.errorMessage;
     response.createdAt = job.createdAt;
     response.completedAt = job.completedAt;
+    response.course = course ? CourseResponse.fromEntity(course) : null;
     return response;
   }
 }

@@ -6,6 +6,7 @@ import { Queue } from 'bullmq';
 import { ItineraryJobRepository } from '../persistence/ItineraryJobRepository';
 import { ItineraryJob } from '../entity/ItineraryJob.entity';
 import { CourseSurvey } from '../../course/entity/CourseSurvey.entity';
+import { TravelCourse } from '../../course/entity/TravelCourse.entity';
 import { CourseSurveyDestination } from '../../course/entity/CourseSurveyDestination.entity';
 import { CourseSurveyCompanion } from '../../course/entity/CourseSurveyCompanion.entity';
 import { CourseSurveyTheme } from '../../course/entity/CourseSurveyTheme.entity';
@@ -33,6 +34,8 @@ export class ItineraryService {
     private readonly itineraryJobRepository: ItineraryJobRepository,
     @InjectRepository(CourseSurvey)
     private readonly surveyRepository: Repository<CourseSurvey>,
+    @InjectRepository(TravelCourse)
+    private readonly travelCourseRepository: Repository<TravelCourse>,
     @InjectRepository(Region)
     private readonly regionRepository: Repository<Region>,
     @InjectQueue('itinerary-generation')
@@ -227,11 +230,28 @@ export class ItineraryService {
    * 작업 결과 조회 (전체 데이터)
    */
   async getJobResult(jobId: string): Promise<ItineraryResultResponse> {
-    const job = await this.itineraryJobRepository.findById(jobId);
+    const job = await this.itineraryJobRepository.findByIdWithRelations(jobId);
     if (!job) {
       throw new ItineraryJobNotFoundException();
     }
-    return ItineraryResultResponse.from(job);
+
+    let course: TravelCourse | null = null;
+    if (job.travelCourseId) {
+      course = await this.travelCourseRepository.findOne({
+        where: { id: job.travelCourseId },
+        relations: [
+          'user',
+          'courseCountries',
+          'courseCountries.country',
+          'courseDays',
+          'courseDays.coursePlaces',
+          'courseDays.coursePlaces.place',
+          'hashTags',
+        ],
+      });
+    }
+
+    return ItineraryResultResponse.from(job, course);
   }
 
   private parseDateOnly(value: string): Date {
