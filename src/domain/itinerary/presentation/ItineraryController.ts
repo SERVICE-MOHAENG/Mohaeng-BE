@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Body,
+  BadRequestException,
   HttpCode,
   HttpStatus,
   UseGuards,
@@ -12,6 +13,7 @@ import {
 import {
   ApiTags,
   ApiOperation,
+  ApiBody,
   ApiParam,
   ApiResponse,
 } from '@nestjs/swagger';
@@ -23,6 +25,7 @@ import { ItineraryService } from '../service/ItineraryService';
 import { ItineraryCallbackService } from '../service/ItineraryCallbackService';
 import { CreateItineraryRequest } from './dto/request/CreateItineraryRequest';
 import { CreateSurveyRequest } from './dto/request/CreateSurveyRequest';
+import { ItineraryCallbackRequest } from './dto/request/ItineraryCallbackRequest';
 import { CreateItineraryResponse } from './dto/response/CreateItineraryResponse';
 import { CreateSurveyResponse } from './dto/response/CreateSurveyResponse';
 import { ItineraryJobStatusResponse } from './dto/response/ItineraryJobStatusResponse';
@@ -104,12 +107,24 @@ export class ItineraryController {
   @Post(':jobId/result')
   @ApiOperation({ summary: 'Python LLM 서버 콜백 (내부 전용)' })
   @ApiParam({ name: 'jobId', description: '작업 ID' })
+  @ApiBody({ type: ItineraryCallbackRequest })
   @UseGuards(ServiceSecretGuard)
   @HttpCode(HttpStatus.OK)
   async handleCallback(
     @Param('jobId') jobId: string,
-    @Body() body: { status: string; data?: unknown; error?: { code: string; message: string } },
+    @Body() body: ItineraryCallbackRequest,
   ) {
+    if (body.status === 'SUCCESS' && !body.data) {
+      throw new BadRequestException(
+        'SUCCESS 콜백에는 data가 필수입니다',
+      );
+    }
+    if (body.status === 'FAILED' && !body.error) {
+      throw new BadRequestException(
+        'FAILED 콜백에는 error가 필수입니다',
+      );
+    }
+
     if (body.status === 'SUCCESS' && body.data) {
       await this.itineraryCallbackService.handleSuccess(
         jobId,
