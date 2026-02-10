@@ -19,7 +19,7 @@ export class CoursePlaceResponse {
   @ApiProperty({ description: '장소 방문 메모', nullable: true })
   memo: string | null;
 
-  @ApiProperty({ description: '장소 ID', nullable: true })
+  @ApiProperty({ description: '장소 ID (구글 Place ID)', nullable: true })
   placeId: string | null;
 
   @ApiProperty({ description: '장소 이름', nullable: true })
@@ -27,9 +27,6 @@ export class CoursePlaceResponse {
 
   @ApiProperty({ description: '장소 설명', nullable: true })
   placeDescription: string | null;
-
-  @ApiProperty({ description: '장소 이미지 URL', nullable: true })
-  placeImageUrl: string | null;
 
   @ApiProperty({ description: '위도', nullable: true })
   latitude: number | null;
@@ -40,11 +37,8 @@ export class CoursePlaceResponse {
   @ApiProperty({ description: '주소', nullable: true })
   address: string | null;
 
-  @ApiProperty({ description: '영업시간', nullable: true })
-  openingHours: string | null;
-
-  @ApiProperty({ description: '장소 카테고리', nullable: true })
-  category: string | null;
+  @ApiProperty({ description: '장소 URL (구글 맵)', nullable: true })
+  placeUrl: string | null;
 
   @ApiProperty({ description: '생성일시' })
   createdAt: Date;
@@ -64,15 +58,13 @@ export class CoursePlaceResponse {
     response.memo = coursePlace.memo;
 
     const place = coursePlace.place;
-    response.placeId = place?.id ?? null;
+    response.placeId = place?.placeId ?? null;
     response.placeName = place?.name ?? null;
     response.placeDescription = place?.description ?? null;
-    response.placeImageUrl = place?.imageUrl ?? null;
     response.latitude = place?.latitude ?? null;
     response.longitude = place?.longitude ?? null;
     response.address = place?.address ?? null;
-    response.openingHours = place?.openingHours ?? null;
-    response.category = place?.category ?? null;
+    response.placeUrl = place?.placeUrl ?? null;
 
     response.createdAt = coursePlace.createdAt;
     response.updatedAt = coursePlace.updatedAt;
