@@ -1,34 +1,37 @@
-import { Entity, ManyToOne, JoinColumn, Unique } from 'typeorm';
-import { BaseEntity } from '../../../global/BaseEntity';
+import { Entity, Column, ManyToOne, JoinColumn, PrimaryGeneratedColumn } from 'typeorm';
 import { TravelCourse } from './TravelCourse.entity';
 import { Region } from '../../country/entity/Region.entity';
 
 /**
  * CourseRegion Entity
  * @description
- * - 여행 코스와 지역의 다대다 매핑 엔티티
+ * - 여행 코스의 지역 및 기간 정보
  */
-@Entity('course_region_table')
-@Unique(['travelCourse', 'region'])
-export class CourseRegion extends BaseEntity {
-  @ManyToOne(() => TravelCourse, (course) => course.courseRegions, {
-    nullable: false,
-    onDelete: 'CASCADE',
-  })
+@Entity('travel_course_region')
+export class CourseRegion {
+  @PrimaryGeneratedColumn('uuid', { name: 'course_region_id' })
+  id: string;
+
+  @ManyToOne(() => TravelCourse, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'course_id' })
   travelCourse: TravelCourse;
+
+  @Column({ type: 'varchar', length: 36, name: 'course_id' })
+  travelCourseId: string;
 
   @ManyToOne(() => Region, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'region_id' })
   region: Region;
 
-  /**
-   * 코스-지역 매핑 생성 팩토리 메서드
-   */
-  static create(travelCourse: TravelCourse, region: Region): CourseRegion {
-    const mapping = new CourseRegion();
-    mapping.travelCourse = travelCourse;
-    mapping.region = region;
-    return mapping;
-  }
+  @Column({ type: 'varchar', length: 36, name: 'region_id' })
+  regionId: string;
+
+  @Column({ type: 'varchar', length: 100, name: 'region_name', nullable: false })
+  regionName: string;
+
+  @Column({ type: 'date', name: 'start_date', nullable: false })
+  startDate: Date;
+
+  @Column({ type: 'date', name: 'end_date', nullable: false })
+  endDate: Date;
 }

@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bullmq';
 import { LoggerModule } from './global/logger/Logger.module';
 import { GlobalModule } from './global/GlobalModule';
 import { AuthModule } from './domain/auth/AuthModule';
@@ -8,19 +10,23 @@ import { UserModule } from './domain/user/UserModule';
 import { CourseModule } from './domain/course/CourseModule';
 import { BlogModule } from './domain/blog/BlogModule';
 import { VisitedCountryModule } from './domain/visited-country/VisitedCountryModule';
+import { ItineraryModule } from './domain/itinerary/ItineraryModule';
+import { PlaceModule } from './domain/place/PlaceModule';
+import { NotificationModule } from './domain/notification/NotificationModule';
+import { CountryModule } from './domain/country/CountryModule';
 import { User } from './domain/user/entity/User.entity';
 import { TravelCourse } from './domain/course/entity/TravelCourse.entity';
 import { CoursePlace } from './domain/course/entity/CoursePlace.entity';
+import { CourseDay } from './domain/course/entity/CourseDay.entity';
 import { CourseHashTag } from './domain/course/entity/CourseHashTag.entity';
 import { CourseLike } from './domain/course/entity/CourseLike.entity';
 import { CourseBookmark } from './domain/course/entity/CourseBookmark.entity';
 import { CourseCountry } from './domain/course/entity/CourseCountry.entity';
 import { CourseRegion } from './domain/course/entity/CourseRegion.entity';
-import { CourseDay } from './domain/course/entity/CourseDay.entity';
-import { RoadmapSurvey } from './domain/course/entity/RoadmapSurvey.entity';
+import { CourseSurvey } from './domain/course/entity/CourseSurvey.entity';
 import { CourseSurveyDestination } from './domain/course/entity/CourseSurveyDestination.entity';
-import { RoadmapSurveyCompanion } from './domain/course/entity/RoadmapSurveyCompanion.entity';
-import { RoadmapSurveyTheme } from './domain/course/entity/RoadmapSurveyTheme.entity';
+import { CourseSurveyCompanion } from './domain/course/entity/CourseSurveyCompanion.entity';
+import { CourseSurveyTheme } from './domain/course/entity/CourseSurveyTheme.entity';
 import { TravelBlog } from './domain/blog/entity/TravelBlog.entity';
 import { BlogLike } from './domain/blog/entity/BlogLike.entity';
 import { Country } from './domain/country/entity/Country.entity';
@@ -28,19 +34,20 @@ import { Region } from './domain/country/entity/Region.entity';
 import { Place } from './domain/place/entity/Place.entity';
 import { UserVisitedCountry } from './domain/visited-country/entity/UserVisitedCountry.entity';
 import { Notification } from './domain/notification/entity/Notification.entity';
+import { ItineraryJob } from './domain/itinerary/entity/ItineraryJob.entity';
 import { UserPreference } from './domain/preference/entity/UserPreference.entity';
 import { UserPreferenceWeather } from './domain/preference/entity/UserPreferenceWeather.entity';
 import { UserPreferenceTravelRange } from './domain/preference/entity/UserPreferenceTravelRange.entity';
-import { UserPreferenceTravelStyle } from './domain/preference/entity/UserPreferenceTravelStyle.entity';
+import { UserPreferenceEnvironment } from './domain/preference/entity/UserPreferenceEnvironment.entity';
 import { UserPreferenceFoodPersonality } from './domain/preference/entity/UserPreferenceFoodPersonality.entity';
 import { UserPreferenceMainInterest } from './domain/preference/entity/UserPreferenceMainInterest.entity';
+import { UserPreferenceContinent } from './domain/preference/entity/UserPreferenceContinent.entity';
 import { UserPreferenceBudget } from './domain/preference/entity/UserPreferenceBudget.entity';
 import { RegionCategory } from './domain/country/entity/RegionCategory.entity';
+import { RegionEnvironment } from './domain/country/entity/RegionEnvironment.entity';
 import { RegionFoodPersonality } from './domain/country/entity/RegionFoodPersonality.entity';
 import { RegionMainInterest } from './domain/country/entity/RegionMainInterest.entity';
 import { RegionTravelStyle } from './domain/country/entity/RegionTravelStyle.entity';
-import { RegionWeather } from './domain/country/entity/RegionWeather.entity';
-import { RegionBudget } from './domain/country/entity/RegionBudget.entity';
 
 @Module({
   imports: [
@@ -48,6 +55,7 @@ import { RegionBudget } from './domain/country/entity/RegionBudget.entity';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
@@ -61,17 +69,17 @@ import { RegionBudget } from './domain/country/entity/RegionBudget.entity';
           User,
           TravelCourse,
           CoursePlace,
+          CourseDay,
           CourseHashTag,
           CourseLike,
           CourseBookmark,
           CourseCountry,
           CourseRegion,
-          CourseDay,
-          // Roadmap Survey entities
-          RoadmapSurvey,
+          CourseSurvey,
           CourseSurveyDestination,
-          RoadmapSurveyCompanion,
-          RoadmapSurveyTheme,
+          CourseSurveyCompanion,
+          CourseSurveyTheme,
+          ItineraryJob,
           TravelBlog,
           BlogLike,
           Country,
@@ -83,17 +91,17 @@ import { RegionBudget } from './domain/country/entity/RegionBudget.entity';
           UserPreference,
           UserPreferenceWeather,
           UserPreferenceTravelRange,
-          UserPreferenceTravelStyle,
+          UserPreferenceEnvironment,
           UserPreferenceFoodPersonality,
           UserPreferenceMainInterest,
+          UserPreferenceContinent,
           UserPreferenceBudget,
           // Region mapping entities
           RegionCategory,
+          RegionEnvironment,
           RegionFoodPersonality,
           RegionMainInterest,
           RegionTravelStyle,
-          RegionWeather,
-          RegionBudget,
         ],
         synchronize:
           configService.get('SYNC_AUTO_DDL') === 'true' &&
@@ -103,13 +111,28 @@ import { RegionBudget } from './domain/country/entity/RegionBudget.entity';
         charset: 'utf8mb4',
       }),
     }),
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.get<string>('REDIS_HOST') || 'localhost',
+          port: Number(configService.get<number>('REDIS_PORT') || 6379),
+          password: configService.get<string>('REDIS_PASSWORD') || undefined,
+          db: Number(configService.get<number>('REDIS_DB') || 0),
+        },
+      }),
+    }),
     LoggerModule,
     GlobalModule,
     AuthModule,
     UserModule,
     CourseModule,
     BlogModule,
+    CountryModule,
+    PlaceModule,
+    NotificationModule,
     VisitedCountryModule,
+    ItineraryModule,
   ],
   controllers: [],
   providers: [],

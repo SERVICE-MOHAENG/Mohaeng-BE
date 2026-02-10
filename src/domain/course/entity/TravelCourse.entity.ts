@@ -1,14 +1,12 @@
-import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
-import { BaseEntity } from '../../../global/BaseEntity';
+import { Entity, Column, ManyToOne, JoinColumn, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { User } from '../../user/entity/User.entity';
 import { Country } from '../../country/entity/Country.entity';
 import { CourseHashTag } from './CourseHashTag.entity';
 import { CourseLike } from './CourseLike.entity';
 import { CourseBookmark } from './CourseBookmark.entity';
 import { CourseCountry } from './CourseCountry.entity';
-import { CourseRegion } from './CourseRegion.entity';
 import { CourseDay } from './CourseDay.entity';
-import { CourseAiChat } from './CourseAiChat.entity';
+import { CourseRegion } from './CourseRegion.entity';
 
 /**
  * TravelCourse Entity
@@ -16,11 +14,20 @@ import { CourseAiChat } from './CourseAiChat.entity';
  * - 여행 코스 정보 엔티티
  * - 사용자가 생성한 여행 경로 및 일정 관리
  */
-@Entity('travel_course_table')
-export class TravelCourse extends BaseEntity {
+@Entity('travel_course')
+export class TravelCourse {
+  @PrimaryGeneratedColumn('uuid', { name: 'course_id' })
+  id: string;
+
+  @Column({ type: 'timestamp', name: 'created_at', nullable: false })
+  createdAt: Date;
+
+  @Column({ type: 'timestamp', name: 'updated_at', nullable: false })
+  updatedAt: Date;
+
   @Column({
     type: 'varchar',
-    length: 255,
+    length: 200,
     name: 'title',
     nullable: false,
   })
@@ -67,6 +74,29 @@ export class TravelCourse extends BaseEntity {
   days: number;
 
   @Column({
+    type: 'int',
+    name: 'people_count',
+    nullable: false,
+    default: 1,
+    comment: '총 여행 인원 수',
+  })
+  peopleCount: number;
+
+  @Column({
+    type: 'date',
+    name: 'travel_start_day',
+    nullable: false,
+  })
+  travelStartDay: Date;
+
+  @Column({
+    type: 'date',
+    name: 'travel_finish_day',
+    nullable: false,
+  })
+  travelFinishDay: Date;
+
+  @Column({
     type: 'boolean',
     name: 'is_public',
     nullable: false,
@@ -93,22 +123,6 @@ export class TravelCourse extends BaseEntity {
   })
   bookmarkCount: number;
 
-  @Column({
-    type: 'date',
-    name: 'travel_start_day',
-    nullable: false,
-    comment: '여행 시작일',
-  })
-  travelStartDay: Date;
-
-  @Column({
-    type: 'date',
-    name: 'travel_finish_day',
-    nullable: false,
-    comment: '여행 종료일',
-  })
-  travelFinishDay: Date;
-
   @ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
@@ -122,18 +136,10 @@ export class TravelCourse extends BaseEntity {
   )
   courseCountries: CourseCountry[];
 
-  @OneToMany(
-    () => CourseRegion,
-    (courseRegion) => courseRegion.travelCourse,
-    {
-      cascade: true,
-    },
-  )
+  @OneToMany(() => CourseRegion, (courseRegion) => courseRegion.travelCourse)
   courseRegions: CourseRegion[];
 
-  @OneToMany(() => CourseDay, (courseDay) => courseDay.travelCourse, {
-    cascade: true,
-  })
+  @OneToMany(() => CourseDay, (courseDay) => courseDay.travelCourse)
   courseDays: CourseDay[];
 
   @OneToMany(() => CourseHashTag, (hashTag) => hashTag.travelCourse)
@@ -145,9 +151,6 @@ export class TravelCourse extends BaseEntity {
   @OneToMany(() => CourseBookmark, (bookmark) => bookmark.travelCourse)
   bookmarks: CourseBookmark[];
 
-  @OneToMany(() => CourseAiChat, (aiChat) => aiChat.travelCourse)
-  aiChats: CourseAiChat[];
-
   /**
    * 여행 코스 생성 팩토리 메서드
    */
@@ -156,8 +159,6 @@ export class TravelCourse extends BaseEntity {
     user: User,
     nights: number,
     days: number,
-    travelStartDay: Date,
-    travelFinishDay: Date,
     description?: string,
     imageUrl?: string,
     isPublic: boolean = true,
@@ -168,14 +169,18 @@ export class TravelCourse extends BaseEntity {
     course.user = user;
     course.nights = nights;
     course.days = days;
-    course.travelStartDay = travelStartDay;
-    course.travelFinishDay = travelFinishDay;
+    course.peopleCount = 1;
     course.description = description || null;
     course.imageUrl = imageUrl || null;
     course.isPublic = isPublic;
     course.viewCount = 0;
     course.likeCount = 0;
     course.bookmarkCount = 0;
+    const now = new Date();
+    course.createdAt = now;
+    course.updatedAt = now;
+    course.travelStartDay = now;
+    course.travelFinishDay = now;
     course.courseCountries = (countries || []).map((country) =>
       CourseCountry.create(course, country),
     );

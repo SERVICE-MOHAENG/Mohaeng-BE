@@ -1,59 +1,38 @@
-import { Entity, Column, ManyToOne, JoinColumn, OneToMany, Unique } from 'typeorm';
-import { BaseEntity } from '../../../global/BaseEntity';
+import { Entity, Column, ManyToOne, JoinColumn, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 import { TravelCourse } from './TravelCourse.entity';
 import { CoursePlace } from './CoursePlace.entity';
 
 /**
  * CourseDay Entity
  * @description
- * - 여행 코스 일차 엔티티
- * - TravelCourse와 N:1 관계
- * - CoursePlace와 1:N 관계
+ * - 여행 코스 날짜 정보
  */
-@Entity('course_day_table')
-@Unique(['travelCourse', 'dayNumber'])
-export class CourseDay extends BaseEntity {
-  @ManyToOne(() => TravelCourse, (course) => course.courseDays, {
-    nullable: false,
-    onDelete: 'CASCADE',
-  })
+@Entity('course_date')
+export class CourseDay {
+  @PrimaryGeneratedColumn('uuid', { name: 'date_id' })
+  id: string;
+
+  @ManyToOne(() => TravelCourse, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'course_id' })
   travelCourse: TravelCourse;
 
-  @Column({
-    type: 'int',
-    name: 'day_number',
-    nullable: false,
-    comment: '몇 일차',
-  })
+  @Column({ type: 'varchar', length: 36, name: 'course_id' })
+  travelCourseId: string;
+
+  @Column({ type: 'int', name: 'day_number', nullable: false })
   dayNumber: number;
 
-  @Column({
-    type: 'date',
-    name: 'date',
-    nullable: false,
-    comment: '해당 일차 날짜',
-  })
+  @Column({ type: 'date', name: 'date', nullable: false })
   date: Date;
 
-  @OneToMany(() => CoursePlace, (coursePlace) => coursePlace.courseDay, {
-    cascade: true,
-  })
+  @OneToMany(() => CoursePlace, (coursePlace) => coursePlace.courseDay)
   coursePlaces: CoursePlace[];
 
-  /**
-   * 팩토리 메서드
-   */
-  static create(
-    travelCourse: TravelCourse,
-    dayNumber: number,
-    date: Date,
-  ): CourseDay {
+  static create(travelCourse: TravelCourse, dayNumber: number, date: Date): CourseDay {
     const courseDay = new CourseDay();
     courseDay.travelCourse = travelCourse;
     courseDay.dayNumber = dayNumber;
     courseDay.date = date;
-    courseDay.coursePlaces = [];
     return courseDay;
   }
 }

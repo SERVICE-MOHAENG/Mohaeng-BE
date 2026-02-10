@@ -13,7 +13,11 @@
       "Bash(npm run migration:generate:*)",
       "mcp__filesystem__list_directory",
       "Bash(npm run migration:create:*)",
-      "mcp__filesystem__read_text_file"
+      "mcp__filesystem__read_text_file",
+      "Bash(gh pr list:*)",
+      "Bash(brew list:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(git checkout:*)"
     ]
   }
 }

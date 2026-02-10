@@ -1,21 +1,13 @@
-import {
-  Entity,
-  PrimaryColumn,
-  Column,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, PrimaryColumn } from 'typeorm';
 import { Region } from '../../country/entity/Region.entity';
 
 /**
  * Place Entity
  * @description
  * - 장소 정보 엔티티
- * - 구글 Places API 기반 장소 정보 관리
- * - updated_at 기준 30일마다 API 호출하여 정보 갱신
+ * - 여행지, 관광지 등의 장소 정보를 관리
  */
-@Entity('place_table')
+@Entity('place')
 export class Place {
   @PrimaryColumn({
     type: 'varchar',
@@ -41,6 +33,24 @@ export class Place {
   description: string | null;
 
   @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 7,
+    name: 'latitude',
+    nullable: false,
+  })
+  latitude: number;
+
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 7,
+    name: 'longitude',
+    nullable: false,
+  })
+  longitude: number;
+
+  @Column({
     type: 'varchar',
     length: 500,
     name: 'address',
@@ -49,18 +59,12 @@ export class Place {
   address: string;
 
   @Column({
-    type: 'decimal',
-    name: 'latitude',
+    type: 'timestamp',
+    name: 'updated_at',
     nullable: false,
+    comment: '30일 마다 다시 조회해야함',
   })
-  latitude: number;
-
-  @Column({
-    type: 'decimal',
-    name: 'longitude',
-    nullable: false,
-  })
-  longitude: number;
+  updatedAt: Date;
 
   @Column({
     type: 'varchar',
@@ -70,14 +74,6 @@ export class Place {
     comment: '사용자가 클릭해서 들어가는 url',
   })
   placeUrl: string;
-
-  @UpdateDateColumn({
-    type: 'timestamp',
-    name: 'updated_at',
-    nullable: false,
-    comment: '30일 마다 다시 조회해야함',
-  })
-  updatedAt: Date;
 
   @ManyToOne(() => Region, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'region_id' })
@@ -99,12 +95,13 @@ export class Place {
     const place = new Place();
     place.placeId = placeId;
     place.name = name;
-    place.description = description || null;
     place.address = address;
     place.latitude = latitude;
     place.longitude = longitude;
     place.placeUrl = placeUrl;
     place.region = region;
+    place.description = description || null;
+    place.updatedAt = new Date();
     return place;
   }
 }

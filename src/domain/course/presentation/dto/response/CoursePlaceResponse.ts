@@ -19,7 +19,7 @@ export class CoursePlaceResponse {
   @ApiProperty({ description: '장소 방문 메모', nullable: true })
   memo: string | null;
 
-  @ApiProperty({ description: '장소 ID (구글 Place ID)', nullable: true })
+  @ApiProperty({ description: '장소 ID', nullable: true })
   placeId: string | null;
 
   @ApiProperty({ description: '장소 이름', nullable: true })
@@ -37,14 +37,8 @@ export class CoursePlaceResponse {
   @ApiProperty({ description: '주소', nullable: true })
   address: string | null;
 
-  @ApiProperty({ description: '장소 URL (구글 맵)', nullable: true })
+  @ApiProperty({ description: '장소 URL', nullable: true })
   placeUrl: string | null;
-
-  @ApiProperty({ description: '생성일시' })
-  createdAt: Date;
-
-  @ApiProperty({ description: '수정일시' })
-  updatedAt: Date;
 
   /**
    * Entity -> DTO 변환
@@ -54,7 +48,7 @@ export class CoursePlaceResponse {
     const response = new CoursePlaceResponse();
     response.id = coursePlace.id;
     response.visitOrder = coursePlace.visitOrder;
-    response.dayNumber = coursePlace.courseDay?.dayNumber ?? 0;
+    response.dayNumber = coursePlace.courseDay?.dayNumber ?? 1;
     response.memo = coursePlace.memo;
 
     const place = coursePlace.place;
@@ -65,9 +59,6 @@ export class CoursePlaceResponse {
     response.longitude = place?.longitude ?? null;
     response.address = place?.address ?? null;
     response.placeUrl = place?.placeUrl ?? null;
-
-    response.createdAt = coursePlace.createdAt;
-    response.updatedAt = coursePlace.updatedAt;
     return response;
   }
 }

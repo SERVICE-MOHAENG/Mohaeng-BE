@@ -35,7 +35,7 @@ export class PlaceRepository {
       relations: ['region', 'region.country'],
       skip: (page - 1) * limit,
       take: limit,
-      order: { name: 'ASC' },
+      order: { updatedAt: 'DESC' },
     });
   }
 

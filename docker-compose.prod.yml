@@ -1,0 +1,9 @@
+services:
+  app:
+    image: ${DOCKER_IMAGE}
+    container_name: mohaeng-server-core
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
