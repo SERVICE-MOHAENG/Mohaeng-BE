@@ -218,8 +218,14 @@ export class ItineraryService {
   /**
    * 작업 상태 조회 (polling용)
    */
-  async getJobStatus(jobId: string): Promise<ItineraryJobStatusResponse> {
-    const job = await this.itineraryJobRepository.findById(jobId);
+  async getJobStatus(
+    userId: string,
+    jobId: string,
+  ): Promise<ItineraryJobStatusResponse> {
+    const job = await this.itineraryJobRepository.findByIdAndUserId(
+      jobId,
+      userId,
+    );
     if (!job) {
       throw new ItineraryJobNotFoundException();
     }
@@ -229,8 +235,15 @@ export class ItineraryService {
   /**
    * 작업 결과 조회 (전체 데이터)
    */
-  async getJobResult(jobId: string): Promise<ItineraryResultResponse> {
-    const job = await this.itineraryJobRepository.findByIdWithRelations(jobId);
+  async getJobResult(
+    userId: string,
+    jobId: string,
+  ): Promise<ItineraryResultResponse> {
+    const job =
+      await this.itineraryJobRepository.findByIdAndUserIdWithRelations(
+        jobId,
+        userId,
+      );
     if (!job) {
       throw new ItineraryJobNotFoundException();
     }
@@ -240,9 +253,8 @@ export class ItineraryService {
       course = await this.travelCourseRepository.findOne({
         where: { id: job.travelCourseId },
         relations: [
-          'user',
-          'courseCountries',
-          'courseCountries.country',
+          'courseRegions',
+          'courseRegions.region',
           'courseDays',
           'courseDays.coursePlaces',
           'courseDays.coursePlaces.place',

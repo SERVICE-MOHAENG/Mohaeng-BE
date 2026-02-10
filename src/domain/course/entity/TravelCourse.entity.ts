@@ -6,6 +6,7 @@ import { CourseLike } from './CourseLike.entity';
 import { CourseBookmark } from './CourseBookmark.entity';
 import { CourseCountry } from './CourseCountry.entity';
 import { CourseDay } from './CourseDay.entity';
+import { CourseRegion } from './CourseRegion.entity';
 
 /**
  * TravelCourse Entity
@@ -134,6 +135,9 @@ export class TravelCourse {
     },
   )
   courseCountries: CourseCountry[];
+
+  @OneToMany(() => CourseRegion, (courseRegion) => courseRegion.travelCourse)
+  courseRegions: CourseRegion[];
 
   @OneToMany(() => CourseDay, (courseDay) => courseDay.travelCourse)
   courseDays: CourseDay[];
