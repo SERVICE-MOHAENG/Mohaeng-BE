@@ -3,17 +3,15 @@ import { UserPreferenceRepository } from '../persistence/UserPreferenceRepositor
 import { UserPreference } from '../entity/UserPreference.entity';
 import { UserPreferenceWeather } from '../entity/UserPreferenceWeather.entity';
 import { UserPreferenceTravelRange } from '../entity/UserPreferenceTravelRange.entity';
-import { UserPreferenceEnvironment } from '../entity/UserPreferenceEnvironment.entity';
+import { UserPreferenceTravelStyle } from '../entity/UserPreferenceTravelStyle.entity';
 import { UserPreferenceFoodPersonality } from '../entity/UserPreferenceFoodPersonality.entity';
 import { UserPreferenceMainInterest } from '../entity/UserPreferenceMainInterest.entity';
-import { UserPreferenceContinent } from '../entity/UserPreferenceContinent.entity';
 import { UserPreferenceBudget } from '../entity/UserPreferenceBudget.entity';
 import { WeatherPreference } from '../entity/WeatherPreference.enum';
 import { TravelRange } from '../entity/TravelRange.enum';
-import { Environment } from '../entity/Environment.enum';
+import { TravelStyle } from '../entity/TravelStyle.enum';
 import { FoodPersonality } from '../entity/FoodPersonality.enum';
 import { MainInterest } from '../entity/MainInterest.enum';
-import { Continent } from '../entity/Continent.enum';
 import { BudgetLevel } from '../entity/BudgetLevel.enum';
 
 /**
@@ -23,10 +21,9 @@ export interface CreateUserPreferenceDto {
   userId: string;
   weatherPreferences: WeatherPreference[];
   travelRanges: TravelRange[];
-  environments: Environment[];
+  travelStyles: TravelStyle[];
   foodPersonalities: FoodPersonality[];
   mainInterests: MainInterest[];
-  continents: Continent[];
   budgets: BudgetLevel[];
 }
 
@@ -73,8 +70,8 @@ export class UserPreferenceService {
       UserPreferenceTravelRange.create(saved.id, range),
     );
 
-    saved.environments = dto.environments.map((env) =>
-      UserPreferenceEnvironment.create(saved.id, env),
+    saved.travelStyles = dto.travelStyles.map((style) =>
+      UserPreferenceTravelStyle.create(saved.id, style),
     );
 
     saved.foodPersonalities = dto.foodPersonalities.map((food) =>
@@ -83,10 +80,6 @@ export class UserPreferenceService {
 
     saved.mainInterests = dto.mainInterests.map((interest) =>
       UserPreferenceMainInterest.create(saved.id, interest),
-    );
-
-    saved.continents = dto.continents.map((continent) =>
-      UserPreferenceContinent.create(saved.id, continent),
     );
 
     saved.budgets = dto.budgets.map((budget) =>

@@ -19,7 +19,7 @@ export class CoursePlaceResponse {
   @ApiProperty({ description: '장소 방문 메모', nullable: true })
   memo: string | null;
 
-  @ApiProperty({ description: '장소 ID', nullable: true })
+  @ApiProperty({ description: '장소 ID (구글 Place ID)', nullable: true })
   placeId: string | null;
 
   @ApiProperty({ description: '장소 이름', nullable: true })

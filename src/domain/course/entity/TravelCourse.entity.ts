@@ -123,6 +123,22 @@ export class TravelCourse {
   })
   bookmarkCount: number;
 
+  @Column({
+    type: 'date',
+    name: 'travel_start_day',
+    nullable: false,
+    comment: '여행 시작일',
+  })
+  travelStartDay: Date;
+
+  @Column({
+    type: 'date',
+    name: 'travel_finish_day',
+    nullable: false,
+    comment: '여행 종료일',
+  })
+  travelFinishDay: Date;
+
   @ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
@@ -151,6 +167,9 @@ export class TravelCourse {
   @OneToMany(() => CourseBookmark, (bookmark) => bookmark.travelCourse)
   bookmarks: CourseBookmark[];
 
+  @OneToMany(() => CourseAiChat, (aiChat) => aiChat.travelCourse)
+  aiChats: CourseAiChat[];
+
   /**
    * 여행 코스 생성 팩토리 메서드
    */
@@ -159,6 +178,8 @@ export class TravelCourse {
     user: User,
     nights: number,
     days: number,
+    travelStartDay: Date,
+    travelFinishDay: Date,
     description?: string,
     imageUrl?: string,
     isPublic: boolean = true,

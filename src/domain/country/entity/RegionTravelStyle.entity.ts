@@ -8,7 +8,7 @@ import { TravelStyle } from '../../preference/entity/TravelStyle.enum';
  * @description
  * - 지역별 여행 스타일 태그를 저장하는 테이블
  * - Region과 1:N 관계 (하나의 Region은 여러 TravelStyle을 가질 수 있음)
- * - TravelStyle은 Enum 값으로 varchar 컬럼에 저장됨
+ * - TravelStyle은 Enum 값으로 저장됨
  */
 @Entity('region_travel_style_table')
 @Unique(['region', 'travelStyle'])
@@ -21,8 +21,8 @@ export class RegionTravelStyle extends BaseEntity {
   region: Region;
 
   @Column({
-    type: 'varchar',
-    length: 50,
+    type: 'enum',
+    enum: TravelStyle,
     name: 'travel_style',
     nullable: false,
     comment: '여행 스타일',

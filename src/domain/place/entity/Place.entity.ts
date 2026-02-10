@@ -5,7 +5,8 @@ import { Region } from '../../country/entity/Region.entity';
  * Place Entity
  * @description
  * - 장소 정보 엔티티
- * - 여행지, 관광지 등의 장소 정보를 관리
+ * - 구글 Places API 기반 장소 정보 관리
+ * - updated_at 기준 30일마다 API 호출하여 정보 갱신
  */
 @Entity('place')
 export class Place {
@@ -34,8 +35,6 @@ export class Place {
 
   @Column({
     type: 'decimal',
-    precision: 10,
-    scale: 7,
     name: 'latitude',
     nullable: false,
   })
@@ -43,8 +42,6 @@ export class Place {
 
   @Column({
     type: 'decimal',
-    precision: 10,
-    scale: 7,
     name: 'longitude',
     nullable: false,
   })

@@ -50,7 +50,7 @@ export class RegionService {
     name: string,
     countryId: string,
     travelRange: TravelRange,
-    averageBudgetLevel: BudgetLevel = BudgetLevel.MEDIUM,
+    averageBudgetLevel: BudgetLevel = BudgetLevel.BALANCED,
     latitude?: number,
     longitude?: number,
     imageUrl?: string,

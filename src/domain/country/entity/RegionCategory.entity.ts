@@ -8,7 +8,7 @@ import { PreferredCategory } from '../../preference/entity/PreferredCategory.enu
  * @description
  * - 지역별 카테고리 태그를 저장하는 테이블
  * - Region과 1:N 관계 (하나의 Region은 여러 Category를 가질 수 있음)
- * - PreferredCategory는 Enum 값으로 varchar 컬럼에 저장됨
+ * - PreferredCategory는 Enum 값으로 저장됨
  */
 @Entity('region_category_table')
 @Unique(['region', 'category'])
@@ -21,8 +21,8 @@ export class RegionCategory extends BaseEntity {
   region: Region;
 
   @Column({
-    type: 'varchar',
-    length: 50,
+    type: 'enum',
+    enum: PreferredCategory,
     name: 'category',
     nullable: false,
     comment: '카테고리',
