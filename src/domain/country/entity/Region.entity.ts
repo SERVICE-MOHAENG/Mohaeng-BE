@@ -2,11 +2,12 @@ import { Entity, Column, ManyToOne, JoinColumn, OneToMany, Check } from 'typeorm
 import { Max, Min } from 'class-validator';
 import { BaseEntity } from '../../../global/BaseEntity';
 import { Country } from './Country.entity';
-import { RegionEnvironment } from './RegionEnvironment.entity';
 import { RegionFoodPersonality } from './RegionFoodPersonality.entity';
 import { RegionMainInterest } from './RegionMainInterest.entity';
 import { RegionCategory } from './RegionCategory.entity';
 import { RegionTravelStyle } from './RegionTravelStyle.entity';
+import { RegionWeather } from './RegionWeather.entity';
+import { RegionBudget } from './RegionBudget.entity';
 import { TravelRange } from '../../preference/entity/TravelRange.enum';
 import { BudgetLevel } from '../../preference/entity/BudgetLevel.enum';
 
@@ -57,8 +58,8 @@ export class Region extends BaseEntity {
   imageUrl: string | null;
 
   @Column({
-    type: 'varchar',
-    length: 50,
+    type: 'enum',
+    enum: TravelRange,
     name: 'travel_range',
     nullable: false,
     comment: '한국에서 이동 거리 (설문 2번과 매칭)',
@@ -66,11 +67,11 @@ export class Region extends BaseEntity {
   travelRange: TravelRange;
 
   @Column({
-    type: 'varchar',
-    length: 50,
+    type: 'enum',
+    enum: BudgetLevel,
     name: 'average_budget_level',
     nullable: false,
-    default: BudgetLevel.MEDIUM,
+    default: BudgetLevel.BALANCED,
     comment: '평균 여행 예산 수준',
   })
   averageBudgetLevel: BudgetLevel;
@@ -116,12 +117,6 @@ export class Region extends BaseEntity {
   @JoinColumn({ name: 'country_id' })
   country: Country;
 
-  // 설문 3번: 선호 환경 매칭용
-  @OneToMany(() => RegionEnvironment, (environment) => environment.region, {
-    cascade: true,
-  })
-  environments: RegionEnvironment[];
-
   // 설문 5번: 식도락 성향 매칭용
   @OneToMany(
     () => RegionFoodPersonality,
@@ -148,6 +143,18 @@ export class Region extends BaseEntity {
   })
   travelStyles: RegionTravelStyle[];
 
+  // 설문 1번: 날씨/계절 매칭용
+  @OneToMany(() => RegionWeather, (weather) => weather.region, {
+    cascade: true,
+  })
+  weathers: RegionWeather[];
+
+  // 예산 규모 매칭용
+  @OneToMany(() => RegionBudget, (budget) => budget.region, {
+    cascade: true,
+  })
+  budgets: RegionBudget[];
+
   /**
    * 지역 생성 팩토리 메서드
    */
@@ -155,7 +162,7 @@ export class Region extends BaseEntity {
     name: string,
     country: Country,
     travelRange: TravelRange,
-    averageBudgetLevel: BudgetLevel = BudgetLevel.MEDIUM,
+    averageBudgetLevel: BudgetLevel = BudgetLevel.BALANCED,
     latitude?: number,
     longitude?: number,
     imageUrl?: string,
@@ -172,11 +179,12 @@ export class Region extends BaseEntity {
     region.regionDescription = regionDescription ?? null;
     region.popularityScore = 0;
     region.recommendationScore = 0;
-    region.environments = [];
     region.foodPersonalities = [];
     region.mainInterests = [];
     region.categories = [];
     region.travelStyles = [];
+    region.weathers = [];
+    region.budgets = [];
     return region;
   }
 

@@ -7,6 +7,7 @@ import {
   Min,
   MaxLength,
   IsBoolean,
+  IsDateString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -57,6 +58,22 @@ export class CreateCourseRequest {
   @IsInt()
   @Min(1)
   days: number;
+
+  @ApiProperty({
+    description: '여행 시작일 (YYYY-MM-DD)',
+    example: '2026-03-01',
+  })
+  @IsNotEmpty()
+  @IsDateString()
+  travelStartDay: Date;
+
+  @ApiProperty({
+    description: '여행 종료일 (YYYY-MM-DD)',
+    example: '2026-03-04',
+  })
+  @IsNotEmpty()
+  @IsDateString()
+  travelFinishDay: Date;
 
   @ApiProperty({
     description: '공개 여부',

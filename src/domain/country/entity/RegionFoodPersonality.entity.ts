@@ -8,7 +8,7 @@ import { FoodPersonality } from '../../preference/entity/FoodPersonality.enum';
  * @description
  * - 지역별 식도락 성향 태그를 저장하는 테이블
  * - Region과 1:N 관계 (하나의 Region은 여러 FoodPersonality를 가질 수 있음)
- * - FoodPersonality는 Enum 값으로 varchar 컬럼에 저장됨
+ * - FoodPersonality는 Enum 값으로 저장됨
  * - 설문 5번: 식도락 성향과 매칭
  */
 @Entity('region_food_personality_table')
@@ -22,8 +22,8 @@ export class RegionFoodPersonality extends BaseEntity {
   region: Region;
 
   @Column({
-    type: 'varchar',
-    length: 50,
+    type: 'enum',
+    enum: FoodPersonality,
     name: 'food_personality',
     nullable: false,
     comment: '식도락 성향',
