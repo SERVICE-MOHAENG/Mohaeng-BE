@@ -22,7 +22,7 @@ import { CourseLike } from './domain/course/entity/CourseLike.entity';
 import { CourseBookmark } from './domain/course/entity/CourseBookmark.entity';
 import { CourseCountry } from './domain/course/entity/CourseCountry.entity';
 import { CourseRegion } from './domain/course/entity/CourseRegion.entity';
-import { RoadmapSurvey } from './domain/course/entity/RoadmapSurvey.entity';
+import { CourseSurvey } from './domain/course/entity/CourseSurvey.entity';
 import { CourseSurveyDestination } from './domain/course/entity/CourseSurveyDestination.entity';
 import { CourseSurveyCompanion } from './domain/course/entity/CourseSurveyCompanion.entity';
 import { CourseSurveyTheme } from './domain/course/entity/CourseSurveyTheme.entity';
@@ -73,7 +73,7 @@ import { RegionTravelStyle } from './domain/country/entity/RegionTravelStyle.ent
           CourseBookmark,
           CourseCountry,
           CourseRegion,
-          RoadmapSurvey,
+          CourseSurvey,
           CourseSurveyDestination,
           CourseSurveyCompanion,
           CourseSurveyTheme,

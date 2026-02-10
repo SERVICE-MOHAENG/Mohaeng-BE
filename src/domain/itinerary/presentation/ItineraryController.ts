@@ -38,13 +38,13 @@ export class ItineraryController {
   ) {}
 
   /**
-   * 로드맵 설문 저장
+   * 로드맵 설문 저장 및 일정 생성 요청 시작
    */
   @Post('surveys')
-  @ApiOperation({ summary: '로드맵 생성 설문 저장' })
-  @ApiResponse({ status: 201, type: CreateSurveyResponse })
+  @ApiOperation({ summary: '로드맵 설문 저장 후 비동기 생성 시작' })
+  @ApiResponse({ status: 202, type: CreateSurveyResponse })
   @UserApiBearerAuth()
-  @HttpCode(HttpStatus.CREATED)
+  @HttpCode(HttpStatus.ACCEPTED)
   async createSurvey(
     @UserId() userId: string,
     @Body() request: CreateSurveyRequest,

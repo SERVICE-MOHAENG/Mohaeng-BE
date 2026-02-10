@@ -10,7 +10,7 @@ import { CoursePlace } from '../../course/entity/CoursePlace.entity';
 import { CourseHashTag } from '../../course/entity/CourseHashTag.entity';
 import { CourseRegion } from '../../course/entity/CourseRegion.entity';
 import { Place } from '../../place/entity/Place.entity';
-import { RoadmapSurvey } from '../../course/entity/RoadmapSurvey.entity';
+import { CourseSurvey } from '../../course/entity/CourseSurvey.entity';
 import { CourseSurveyDestination } from '../../course/entity/CourseSurveyDestination.entity';
 import { Region } from '../../country/entity/Region.entity';
 import { User } from '../../user/entity/User.entity';
@@ -69,8 +69,8 @@ export class ItineraryCallbackService {
     private readonly dataSource: DataSource,
     @InjectRepository(Place)
     private readonly placeRepository: Repository<Place>,
-    @InjectRepository(RoadmapSurvey)
-    private readonly surveyRepository: Repository<RoadmapSurvey>,
+    @InjectRepository(CourseSurvey)
+    private readonly surveyRepository: Repository<CourseSurvey>,
   ) {}
 
   /**
@@ -78,7 +78,7 @@ export class ItineraryCallbackService {
    * @description
    * - 트랜잭션 내에서 Place upsert, TravelCourse 생성
    * - ItineraryJob SUCCESS 업데이트
-   * - RoadmapSurvey.travelCourseId 업데이트
+   * - CourseSurvey.travelCourseId 업데이트
    */
   async handleSuccess(
     jobId: string,
@@ -212,10 +212,10 @@ export class ItineraryCallbackService {
       );
       await manager.save(ItineraryJob, job);
 
-      // 7. RoadmapSurvey.travelCourseId 업데이트
+      // 7. CourseSurvey.travelCourseId 업데이트
       if (survey) {
         survey.travelCourseId = savedCourse.id;
-        await manager.save(RoadmapSurvey, survey);
+        await manager.save(CourseSurvey, survey);
       }
     });
 

@@ -5,7 +5,7 @@ import { In, Repository } from 'typeorm';
 import { Queue } from 'bullmq';
 import { ItineraryJobRepository } from '../persistence/ItineraryJobRepository';
 import { ItineraryJob } from '../entity/ItineraryJob.entity';
-import { RoadmapSurvey } from '../../course/entity/RoadmapSurvey.entity';
+import { CourseSurvey } from '../../course/entity/CourseSurvey.entity';
 import { CourseSurveyDestination } from '../../course/entity/CourseSurveyDestination.entity';
 import { CourseSurveyCompanion } from '../../course/entity/CourseSurveyCompanion.entity';
 import { CourseSurveyTheme } from '../../course/entity/CourseSurveyTheme.entity';
@@ -31,8 +31,8 @@ import { SurveyNotFoundException } from '../exception/SurveyNotFoundException';
 export class ItineraryService {
   constructor(
     private readonly itineraryJobRepository: ItineraryJobRepository,
-    @InjectRepository(RoadmapSurvey)
-    private readonly surveyRepository: Repository<RoadmapSurvey>,
+    @InjectRepository(CourseSurvey)
+    private readonly surveyRepository: Repository<CourseSurvey>,
     @InjectRepository(Region)
     private readonly regionRepository: Repository<Region>,
     @InjectQueue('itinerary-generation')
@@ -49,15 +49,29 @@ export class ItineraryService {
     userId: string,
     request: CreateSurveyRequest,
   ): Promise<CreateSurveyResponse> {
-    const roadmapStart = new Date(request.start_date);
-    const roadmapEnd = new Date(request.end_date);
+    const roadmapStart = this.parseDateOnly(request.start_date);
+    const roadmapEnd = this.parseDateOnly(request.end_date);
     if (roadmapStart > roadmapEnd) {
       throw new BadRequestException('start_date는 end_date보다 늦을 수 없습니다');
     }
 
+    const regionNames = request.regions.map((r) => r.region);
+    const uniqueRegionNames = new Set(regionNames);
+    if (uniqueRegionNames.size !== regionNames.length) {
+      throw new BadRequestException('regions에는 중복 지역을 넣을 수 없습니다');
+    }
+
+    const ranges = request.regions
+      .map((region) => ({
+        region: region.region,
+        start: this.parseDateOnly(region.start_date),
+        end: this.parseDateOnly(region.end_date),
+      }))
+      .sort((a, b) => a.start.getTime() - b.start.getTime());
+
     for (const region of request.regions) {
-      const regionStart = new Date(region.start_date);
-      const regionEnd = new Date(region.end_date);
+      const regionStart = this.parseDateOnly(region.start_date);
+      const regionEnd = this.parseDateOnly(region.end_date);
       if (regionStart > regionEnd) {
         throw new BadRequestException(
           `지역 ${region.region}의 start_date는 end_date보다 늦을 수 없습니다`,
@@ -70,13 +84,41 @@ export class ItineraryService {
       }
     }
 
-    const regionNames = [...new Set(request.regions.map((r) => r.region))];
+    if (ranges[0]?.start.getTime() !== roadmapStart.getTime()) {
+      throw new BadRequestException(
+        '지역 일정은 전체 여행 시작일과 동일한 날짜부터 시작해야 합니다',
+      );
+    }
+    if (ranges[ranges.length - 1]?.end.getTime() !== roadmapEnd.getTime()) {
+      throw new BadRequestException(
+        '지역 일정은 전체 여행 종료일과 동일한 날짜에 끝나야 합니다',
+      );
+    }
+    for (let i = 1; i < ranges.length; i += 1) {
+      const prev = ranges[i - 1];
+      const curr = ranges[i];
+      const nextOfPrev = this.addDays(prev.end, 1);
+      if (curr.start.getTime() < nextOfPrev.getTime()) {
+        throw new BadRequestException(
+          `지역 ${prev.region}과 ${curr.region} 일정이 겹치면 안 됩니다`,
+        );
+      }
+      if (curr.start.getTime() > nextOfPrev.getTime()) {
+        throw new BadRequestException(
+          `지역 ${prev.region}과 ${curr.region} 사이에 빈 날짜가 있으면 안 됩니다`,
+        );
+      }
+    }
+
+    const regionNamesForLookup = [...uniqueRegionNames];
     const regions = await this.regionRepository.find({
-      where: { name: In(regionNames) },
+      where: { name: In(regionNamesForLookup) },
     });
 
     const regionMap = new Map(regions.map((region) => [region.name, region]));
-    const unknownRegions = regionNames.filter((name) => !regionMap.has(name));
+    const unknownRegions = regionNamesForLookup.filter(
+      (name) => !regionMap.has(name),
+    );
     if (unknownRegions.length > 0) {
       throw new BadRequestException(
         `존재하지 않는 지역입니다: ${unknownRegions.join(', ')}`,
@@ -86,7 +128,7 @@ export class ItineraryService {
     const userRef = new User();
     userRef.id = userId;
 
-    const survey = new RoadmapSurvey();
+    const survey = new CourseSurvey();
     survey.user = userRef;
     survey.userId = userId;
     survey.travelCourseId = null;
@@ -113,7 +155,7 @@ export class ItineraryService {
       return destination;
     });
 
-    survey.companions = [request.companion_type].map((companionType) => {
+    survey.companions = request.companion_type.map((companionType) => {
       const companion = new CourseSurveyCompanion();
       companion.companion = companionType;
       return companion;
@@ -126,7 +168,8 @@ export class ItineraryService {
     });
 
     const savedSurvey = await this.surveyRepository.save(survey);
-    return CreateSurveyResponse.from(savedSurvey.id);
+    const job = await this.createItinerary(userId, savedSurvey.id);
+    return CreateSurveyResponse.from(savedSurvey.id, job.jobId, job.status);
   }
 
   /**
@@ -189,5 +232,13 @@ export class ItineraryService {
       throw new ItineraryJobNotFoundException();
     }
     return ItineraryResultResponse.from(job);
+  }
+
+  private parseDateOnly(value: string): Date {
+    return new Date(`${value}T00:00:00.000Z`);
+  }
+
+  private addDays(date: Date, days: number): Date {
+    return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
   }
 }

@@ -7,7 +7,7 @@ import { Repository } from 'typeorm';
 import { Job } from 'bullmq';
 import { firstValueFrom } from 'rxjs';
 import { ItineraryJobRepository } from '../persistence/ItineraryJobRepository';
-import { RoadmapSurvey } from '../../course/entity/RoadmapSurvey.entity';
+import { CourseSurvey } from '../../course/entity/CourseSurvey.entity';
 
 interface ItineraryJobData {
   jobId: string;
@@ -28,8 +28,8 @@ export class ItineraryProcessor extends WorkerHost {
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
     private readonly itineraryJobRepository: ItineraryJobRepository,
-    @InjectRepository(RoadmapSurvey)
-    private readonly surveyRepository: Repository<RoadmapSurvey>,
+    @InjectRepository(CourseSurvey)
+    private readonly surveyRepository: Repository<CourseSurvey>,
   ) {
     super();
   }
@@ -49,14 +49,14 @@ export class ItineraryProcessor extends WorkerHost {
     itineraryJob.incrementAttempt();
     await this.itineraryJobRepository.save(itineraryJob);
 
-    // 2. RoadmapSurvey 로드 (with relations)
+    // 2. CourseSurvey 로드 (with relations)
     const survey = await this.surveyRepository.findOne({
       where: { id: surveyId },
       relations: ['destinations', 'companions', 'themes'],
     });
 
     if (!survey) {
-      this.logger.error(`RoadmapSurvey not found: ${surveyId}`);
+      this.logger.error(`CourseSurvey not found: ${surveyId}`);
       itineraryJob.markFailed('SURVEY_NOT_FOUND', '설문을 찾을 수 없습니다');
       await this.itineraryJobRepository.save(itineraryJob);
       return;
@@ -106,7 +106,7 @@ export class ItineraryProcessor extends WorkerHost {
   /**
    * Survey 데이터 → Python API payload 변환
    */
-  private buildPythonPayload(survey: RoadmapSurvey) {
+  private buildPythonPayload(survey: CourseSurvey) {
     const destinations = survey.destinations || [];
 
     // 전체 여행 시작/종료일 계산
@@ -141,7 +141,8 @@ export class ItineraryProcessor extends WorkerHost {
         end_date: this.formatDate(new Date(d.endDate)),
       })),
       people_count: survey.paxCount,
-      companion_type: survey.companions?.[0]?.companion ?? 'SOLO',
+      companion_type:
+        (survey.companions || []).map((companion) => companion.companion),
       travel_themes: (survey.themes || []).map((t) => t.theme),
       pace_preference: survey.pacePreference,
       planning_preference: survey.planningPreference,

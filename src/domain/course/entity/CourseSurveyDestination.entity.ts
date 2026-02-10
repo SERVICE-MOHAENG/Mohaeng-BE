@@ -1,5 +1,5 @@
 import { Entity, Column, ManyToOne, JoinColumn, PrimaryGeneratedColumn } from 'typeorm';
-import { RoadmapSurvey } from './RoadmapSurvey.entity';
+import { CourseSurvey } from './CourseSurvey.entity';
 import { Region } from '../../country/entity/Region.entity';
 
 /**
@@ -12,12 +12,12 @@ export class CourseSurveyDestination {
   @PrimaryGeneratedColumn('uuid', { name: 'destination_id' })
   id: string;
 
-  @ManyToOne(() => RoadmapSurvey, (survey) => survey.destinations, {
+  @ManyToOne(() => CourseSurvey, (survey) => survey.destinations, {
     nullable: false,
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'course_survey_id' })
-  survey: RoadmapSurvey;
+  survey: CourseSurvey;
 
   @Column({ type: 'varchar', length: 36, name: 'course_survey_id' })
   surveyId: string;

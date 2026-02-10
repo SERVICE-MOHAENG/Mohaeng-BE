@@ -6,12 +6,12 @@ import { CourseSurveyCompanion } from './CourseSurveyCompanion.entity';
 import { CourseSurveyTheme } from './CourseSurveyTheme.entity';
 
 /**
- * RoadmapSurvey Entity
+ * CourseSurvey Entity
  * @description
  * - 로드맵 설문 정보
  */
 @Entity('course_survey_table')
-export class RoadmapSurvey {
+export class CourseSurvey {
   @PrimaryGeneratedColumn('uuid', { name: 'course_survay_id' })
   id: string;
 

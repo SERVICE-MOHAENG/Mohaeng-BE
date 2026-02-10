@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 import { BaseEntity } from '../../../global/BaseEntity';
 import { User } from '../../user/entity/User.entity';
-import { RoadmapSurvey } from '../../course/entity/RoadmapSurvey.entity';
+import { CourseSurvey } from '../../course/entity/CourseSurvey.entity';
 import { TravelCourse } from '../../course/entity/TravelCourse.entity';
 import { ItineraryStatus } from './ItineraryStatus.enum';
 
@@ -16,7 +16,7 @@ import { ItineraryStatus } from './ItineraryStatus.enum';
  * @description
  * - 여행 일정 생성 작업 엔티티
  * - 비동기 LLM 생성 작업의 라이프사이클 추적
- * - RoadmapSurvey(입력) ↔ TravelCourse(출력) 브릿지
+ * - CourseSurvey(입력) ↔ TravelCourse(출력) 브릿지
  */
 @Entity('itinerary_job_table')
 export class ItineraryJob extends BaseEntity {
@@ -37,9 +37,9 @@ export class ItineraryJob extends BaseEntity {
   @Column({ type: 'varchar', length: 36, name: 'user_id' })
   userId: string;
 
-  @OneToOne(() => RoadmapSurvey, { nullable: false, onDelete: 'CASCADE' })
+  @OneToOne(() => CourseSurvey, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'survey_id' })
-  survey: RoadmapSurvey;
+  survey: CourseSurvey;
 
   @Column({ type: 'varchar', length: 36, name: 'survey_id', unique: true })
   surveyId: string;

@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
 import { HttpModule } from '@nestjs/axios';
 import { ItineraryJob } from './entity/ItineraryJob.entity';
-import { RoadmapSurvey } from '../course/entity/RoadmapSurvey.entity';
+import { CourseSurvey } from '../course/entity/CourseSurvey.entity';
 import { TravelCourse } from '../course/entity/TravelCourse.entity';
 import { CourseDay } from '../course/entity/CourseDay.entity';
 import { CoursePlace } from '../course/entity/CoursePlace.entity';
@@ -33,7 +33,7 @@ import { UserModule } from '../user/UserModule';
   imports: [
     TypeOrmModule.forFeature([
       ItineraryJob,
-      RoadmapSurvey,
+      CourseSurvey,
       TravelCourse,
       CourseDay,
       CoursePlace,

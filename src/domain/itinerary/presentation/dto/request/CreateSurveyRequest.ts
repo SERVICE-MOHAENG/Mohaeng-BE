@@ -7,10 +7,12 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Max,
   Min,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 class SurveyRegionRequest {
   @ApiProperty({ description: '지역명', example: 'SEOUL' })
@@ -46,12 +48,20 @@ export class CreateSurveyRequest {
   @ApiProperty({ description: '인원 수', example: 1 })
   @IsInt()
   @Min(1)
+  @Max(20)
   people_count: number;
 
-  @ApiProperty({ description: '동행자 유형', example: 'FAMILY' })
-  @IsString()
-  @IsNotEmpty()
-  companion_type: string;
+  @ApiProperty({
+    description: '동행자 유형 목록',
+    example: ['FAMILY', 'FRIEND'],
+    type: [String],
+  })
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
+  @ValidateIf((_, value) => value !== undefined && value !== null)
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
+  companion_type: string[];
 
   @ApiProperty({
     description: '여행 테마 목록',
