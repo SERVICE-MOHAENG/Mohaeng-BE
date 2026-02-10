@@ -1,8 +1,8 @@
-# Prod Deploy Runbook (Docker + GitHub Actions + EC2)
+# Prod Deploy Runbook (Docker Hub + GitHub Actions + EC2)
 
 ## 0) 현재 배포 구조
 1. GitHub Actions가 Docker 이미지를 빌드
-2. GHCR(`ghcr.io`)에 이미지를 push
+2. Docker Hub(`docker.io`)에 이미지를 push
 3. EC2가 해당 이미지를 pull
 4. `docker compose up -d`로 컨테이너 교체
 
@@ -46,21 +46,20 @@ Repository -> Settings -> Secrets and variables -> Actions
 
 필수:
 - `EC2_HOST`
-- `EC2_USER` (`deploy`)
+- `EC2_USER` (`ubuntu` 또는 `deploy`)
 - `EC2_PORT` (`22`)
-- `EC2_SSH_KEY` (deploy private key 전체)
+- `EC2_SSH_KEY` (EC2 접속용 private key 전체)
 - `APP_DIR` (`/var/www/mohaeng-server-core`)
-- `GHCR_USERNAME` (GitHub username)
-- `GHCR_TOKEN` (GHCR read 가능한 PAT)
+- `DOCKERHUB_USERNAME` (Docker Hub username)
+- `DOCKERHUB_TOKEN` (Docker Hub access token or password)
 
 선택:
 - `HEALTHCHECK_URL` (예: `http://127.0.0.1:8080/api/health`)
+- `DOCKERHUB_IMAGE` (예: `dongguli08/mohaeng`)
 
-## 4) GHCR 토큰 권한
-`GHCR_TOKEN`은 최소 아래 권한 필요:
-- `read:packages`
-
-(private repo/package면 필요 시 `repo` 권한도 포함)
+## 4) Docker Hub 토큰
+private repository면 EC2에서 pull 하려면 로그인 필요합니다.
+- 권장: Docker Hub Access Token 발급 후 `DOCKERHUB_TOKEN`으로 사용
 
 ## 5) 배포 실행
 - `main` push 또는 Actions에서 `Deploy Prod` 수동 실행
