@@ -26,13 +26,21 @@ jobs:
 
       - name: Set image variables
         id: image
+        env:
+          # Support both secret naming conventions.
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME || secrets.DOCKER_HUB_USERNAME }}
         run: |
           # Prefer explicit Docker Hub image (e.g. "dongguli08/mohaeng" or "docker.io/dongguli08/mohaeng").
-          # Fallback: "<repo_owner_lower>/mohaeng"
-          OWNER_LOWER="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          # Fallback: "<dockerhub_username>/mohaeng"
+          # Intentionally do NOT fallback to GitHub repo owner (e.g. "service-mohaeng"), to avoid pushing to the wrong Docker Hub namespace.
           IMAGE_NAME="${{ secrets.DOCKERHUB_IMAGE }}"
           if [ -z "$IMAGE_NAME" ]; then
-            IMAGE_NAME="docker.io/${OWNER_LOWER}/mohaeng"
+            if [ -n "${DOCKERHUB_USERNAME:-}" ]; then
+              IMAGE_NAME="docker.io/${DOCKERHUB_USERNAME}/mohaeng"
+            else
+              echo "Missing DOCKERHUB_IMAGE (or DOCKERHUB_USERNAME/DOCKER_HUB_USERNAME). Set DOCKERHUB_IMAGE to e.g. 'dongguli08/mohaeng'."
+              exit 1
+            fi
           fi
           # Normalize: ensure docker.io prefix so the deploy step can safely `docker login` and pull.
           case "$IMAGE_NAME" in
