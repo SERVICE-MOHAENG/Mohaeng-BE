@@ -73,6 +73,15 @@ export class TravelCourse {
   days: number;
 
   @Column({
+    type: 'int',
+    name: 'people_count',
+    nullable: false,
+    default: 1,
+    comment: '총 여행 인원 수',
+  })
+  peopleCount: number;
+
+  @Column({
     type: 'date',
     name: 'travel_start_day',
     nullable: false,
@@ -156,6 +165,7 @@ export class TravelCourse {
     course.user = user;
     course.nights = nights;
     course.days = days;
+    course.peopleCount = 1;
     course.description = description || null;
     course.imageUrl = imageUrl || null;
     course.isPublic = isPublic;

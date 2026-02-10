@@ -117,6 +117,7 @@ export class ItineraryCallbackService {
       course.description = data.summary;
       course.nights = data.nights;
       course.days = data.trip_days;
+      course.peopleCount = data.people_count;
       course.travelStartDay = new Date(data.start_date);
       course.travelFinishDay = new Date(data.end_date);
       course.user = userRef;
