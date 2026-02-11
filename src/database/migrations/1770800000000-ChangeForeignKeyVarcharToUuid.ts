@@ -19,6 +19,7 @@ export class ChangeForeignKeyVarcharToUuid1770800000000
     { table: 'roadmap_survey_theme_table', column: 'survey_id' },
     { table: 'itinerary_job_table', column: 'user_id' },
     { table: 'itinerary_job_table', column: 'survey_id' },
+    { table: 'itinerary_job_table', column: 'travel_course_id' },
     { table: 'user_preference', column: 'user_id' },
     { table: 'user_preference_budget', column: 'user_preference_id' },
     { table: 'user_preference_food_personality', column: 'user_preference_id' },
