@@ -116,11 +116,22 @@ jobs:
             IMAGE_TAG="${{ needs.build-and-push.outputs.image_tag }}"
             DOCKERHUB_USERNAME="${{ secrets.DOCKERHUB_USERNAME || secrets.DOCKER_HUB_USERNAME || secrets.GHCR_USERNAME }}"
             DOCKERHUB_TOKEN="${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_HUB_TOKEN || secrets.GHCR_TOKEN }}"
+            PROD_ENV_FILE="${{ secrets.PROD_ENV_FILE }}"
             HEALTHCHECK_URL="${{ secrets.HEALTHCHECK_URL }}"
 
             mkdir -p "$APP_DIR"
             cd "$APP_DIR"
             cp /tmp/docker-compose.prod.yml "$APP_DIR/docker-compose.prod.yml"
+
+            # Prefer writing the production .env from GitHub Secrets.
+            # If PROD_ENV_FILE is not set, keep an existing .env on the server (if present).
+            if [ -n "$PROD_ENV_FILE" ]; then
+              umask 077
+              printf "%s" "$PROD_ENV_FILE" > .env
+            elif [ ! -f .env ]; then
+              echo "Missing PROD_ENV_FILE secret and $APP_DIR/.env does not exist."
+              exit 1
+            fi
 
             echo "DOCKER_IMAGE=$IMAGE_NAME:$IMAGE_TAG" > .deploy.env
 
