@@ -34,14 +34,14 @@ export class ItineraryJob extends BaseEntity {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ type: 'varchar', length: 36, name: 'user_id' })
+  @Column({ type: 'uuid', name: 'user_id' })
   userId: string;
 
   @OneToOne(() => CourseSurvey, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'survey_id' })
   survey: CourseSurvey;
 
-  @Column({ type: 'varchar', length: 36, name: 'survey_id', unique: true })
+  @Column({ type: 'uuid', name: 'survey_id', unique: true })
   surveyId: string;
 
   @OneToOne(() => TravelCourse, { nullable: true, onDelete: 'SET NULL' })

@@ -21,7 +21,7 @@ export class UserPreference extends BaseEntity {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ type: 'varchar', length: 36, name: 'user_id', unique: true })
+  @Column({ type: 'uuid', name: 'user_id', unique: true })
   userId: string;
 
   // 1. 날씨/계절 선호도 (복수 선택)

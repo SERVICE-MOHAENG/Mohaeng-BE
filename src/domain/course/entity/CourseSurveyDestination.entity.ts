@@ -19,14 +19,14 @@ export class CourseSurveyDestination {
   @JoinColumn({ name: 'course_survey_id' })
   survey: CourseSurvey;
 
-  @Column({ type: 'varchar', length: 36, name: 'course_survey_id' })
+  @Column({ type: 'uuid', name: 'course_survey_id' })
   surveyId: string;
 
   @ManyToOne(() => Region, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'region_id' })
   region: Region;
 
-  @Column({ type: 'varchar', length: 36, name: 'region_id' })
+  @Column({ type: 'uuid', name: 'region_id' })
   regionId: string;
 
   @Column({ type: 'varchar', length: 100, name: 'region_name', nullable: false })

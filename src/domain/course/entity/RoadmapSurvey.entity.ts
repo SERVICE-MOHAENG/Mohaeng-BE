@@ -32,14 +32,14 @@ export class RoadmapSurvey extends BaseEntity {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ type: 'varchar', length: 36, name: 'user_id' })
+  @Column({ type: 'uuid', name: 'user_id' })
   userId: string;
 
   @OneToOne(() => TravelCourse, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'travel_course_id' })
   travelCourse: TravelCourse | null;
 
-  @Column({ type: 'varchar', length: 36, name: 'travel_course_id', nullable: true, unique: true })
+  @Column({ type: 'uuid', name: 'travel_course_id', nullable: true, unique: true })
   travelCourseId: string | null;
 
   @Column({

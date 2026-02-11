@@ -18,7 +18,7 @@ export class CourseSurveyTheme {
   @JoinColumn({ name: 'course_survay_id' })
   survey: CourseSurvey;
 
-  @Column({ type: 'varchar', length: 36, name: 'course_survay_id' })
+  @Column({ type: 'uuid', name: 'course_survay_id' })
   surveyId: string;
 
   @Column({ type: 'varchar', length: 50, name: 'theme_type', nullable: false })
