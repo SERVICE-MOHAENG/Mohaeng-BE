@@ -49,8 +49,7 @@ export class ItineraryJob extends BaseEntity {
   travelCourse: TravelCourse | null;
 
   @Column({
-    type: 'varchar',
-    length: 36,
+    type: 'uuid',
     name: 'travel_course_id',
     nullable: true,
   })
