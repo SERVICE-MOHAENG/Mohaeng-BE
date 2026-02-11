@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
 import { LoggerModule } from './global/logger/Logger.module';
 import { GlobalModule } from './global/GlobalModule';
@@ -58,14 +58,19 @@ import { RegionBudget } from './domain/country/entity/RegionBudget.entity';
     ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'mysql',
-        host: configService.get('DB_HOST'),
-        port: parseInt(configService.get('DB_PORT') || '3306'),
-        username: configService.get('DB_USERNAME'),
-        password: configService.get('DB_PASSWORD'),
-        database: configService.get('DB_DATABASE'),
-        entities: [
+      useFactory: (configService: ConfigService) => {
+        const dbTypeRaw = (configService.get('DB_TYPE') || 'mysql')
+          .toString()
+          .toLowerCase();
+        const dbType = (dbTypeRaw === 'postgres' || dbTypeRaw === 'postgresql'
+          ? 'postgres'
+          : 'mysql') as 'mysql' | 'postgres';
+
+        const port = parseInt(
+          configService.get('DB_PORT') || (dbType === 'postgres' ? '5432' : '3306'),
+        );
+
+        const entities = [
           User,
           TravelCourse,
           CoursePlace,
@@ -102,14 +107,35 @@ import { RegionBudget } from './domain/country/entity/RegionBudget.entity';
           RegionTravelStyle,
           RegionWeather,
           RegionBudget,
-        ],
-        synchronize:
-          configService.get('SYNC_AUTO_DDL') === 'true' &&
-          configService.get('NODE_ENV') !== 'production',
-        logging: configService.get('NODE_ENV') === 'development',
-        timezone: '+09:00',
-        charset: 'utf8mb4',
-      }),
+        ];
+
+        const common = {
+          host: configService.get('DB_HOST'),
+          port,
+          username: configService.get('DB_USERNAME'),
+          password: configService.get('DB_PASSWORD'),
+          database: configService.get('DB_DATABASE'),
+          entities,
+          synchronize:
+            configService.get('SYNC_AUTO_DDL') === 'true' &&
+            configService.get('NODE_ENV') !== 'production',
+          logging: configService.get('NODE_ENV') === 'development',
+        };
+
+        if (dbType === 'postgres') {
+          return {
+            type: 'postgres',
+            ...common,
+          } as TypeOrmModuleOptions;
+        }
+
+        return {
+          type: 'mysql',
+          ...common,
+          timezone: '+09:00',
+          charset: 'utf8mb4',
+        } as TypeOrmModuleOptions;
+      },
     }),
     BullModule.forRootAsync({
       inject: [ConfigService],
