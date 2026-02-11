@@ -156,7 +156,10 @@ jobs:
               exit 1
             fi
 
-            echo "DOCKER_IMAGE=$IMAGE_NAME:$IMAGE_TAG" > .deploy.env
+            # docker compose variable interpolation reads --env-file values.
+            # Merge runtime app env (.env) with deploy metadata (DOCKER_IMAGE).
+            cp .env .deploy.env
+            echo "DOCKER_IMAGE=$IMAGE_NAME:$IMAGE_TAG" >> .deploy.env
 
             # If the Docker Hub repo is private, login is required.
             if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ]; then
