@@ -16,9 +16,6 @@ concurrency:
 jobs:
   build_and_push:
     runs-on: ubuntu-latest
-    outputs:
-      image_name: ${{ steps.image.outputs.image_name }}
-      image_tag: ${{ steps.image.outputs.image_tag }}
 
     steps:
       - name: Checkout
@@ -114,15 +111,34 @@ jobs:
           script: |
             set -euo pipefail
             APP_DIR="${{ secrets.APP_DIR }}"
-            IMAGE_NAME="${{ needs.build_and_push.outputs.image_name }}"
-            IMAGE_TAG="${{ needs.build_and_push.outputs.image_tag }}"
+            IMAGE_NAME="${{ secrets.DOCKERHUB_IMAGE }}"
             DOCKERHUB_USERNAME="${{ secrets.DOCKERHUB_USERNAME || secrets.DOCKER_HUB_USERNAME || secrets.GHCR_USERNAME }}"
             DOCKERHUB_TOKEN="${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_HUB_TOKEN || secrets.GHCR_TOKEN }}"
+            IMAGE_TAG="${{ github.sha }}"
             PROD_ENV_FILE="${{ secrets.PROD_ENV_FILE }}"
             HEALTHCHECK_URL="${{ secrets.HEALTHCHECK_URL }}"
 
+            # Trim accidental whitespace/newlines in secrets.
+            DOCKERHUB_USERNAME="$(echo "$DOCKERHUB_USERNAME" | tr -d '[:space:]')"
+            IMAGE_NAME="$(echo "$IMAGE_NAME" | tr -d '[:space:]')"
+
+            if [ -z "$IMAGE_NAME" ]; then
+              if [ -n "$DOCKERHUB_USERNAME" ]; then
+                IMAGE_NAME="docker.io/${DOCKERHUB_USERNAME}/mohaeng"
+              else
+                echo "Missing DOCKERHUB_IMAGE (or DOCKERHUB_USERNAME/DOCKER_HUB_USERNAME)."
+                exit 1
+              fi
+            fi
+
+            case "$IMAGE_NAME" in
+              docker.io/*) ;;
+              */*) IMAGE_NAME="docker.io/$IMAGE_NAME" ;;
+              *) echo "Invalid DOCKERHUB_IMAGE: $IMAGE_NAME"; exit 1 ;;
+            esac
+
             if [ -z "$IMAGE_NAME" ] || [ -z "$IMAGE_TAG" ]; then
-              echo "IMAGE_NAME or IMAGE_TAG is empty. Check build_and_push job outputs."
+              echo "IMAGE_NAME or IMAGE_TAG is empty."
               exit 1
             fi
 
