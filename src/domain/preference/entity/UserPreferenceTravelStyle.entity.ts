@@ -17,7 +17,7 @@ export class UserPreferenceTravelStyle extends BaseEntity {
   @JoinColumn({ name: 'user_preference_id' })
   preference: UserPreference;
 
-  @Column({ type: 'varchar', length: 36, name: 'user_preference_id' })
+  @Column({ type: 'uuid', name: 'user_preference_id' })
   userPreferenceId: string;
 
   @Column({

@@ -16,7 +16,7 @@ export class CourseDay {
   @JoinColumn({ name: 'course_id' })
   travelCourse: TravelCourse;
 
-  @Column({ type: 'varchar', length: 36, name: 'course_id' })
+  @Column({ type: 'uuid', name: 'course_id' })
   travelCourseId: string;
 
   @Column({ type: 'int', name: 'day_number', nullable: false })

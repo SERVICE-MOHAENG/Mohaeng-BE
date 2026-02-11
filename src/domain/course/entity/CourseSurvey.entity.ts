@@ -19,14 +19,14 @@ export class CourseSurvey {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ type: 'varchar', length: 36, name: 'user_id' })
+  @Column({ type: 'uuid', name: 'user_id' })
   userId: string;
 
   @ManyToOne(() => TravelCourse, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'course_id' })
   travelCourse: TravelCourse | null;
 
-  @Column({ type: 'varchar', length: 36, name: 'course_id', nullable: true })
+  @Column({ type: 'uuid', name: 'course_id', nullable: true })
   travelCourseId: string | null;
 
   @Column({ type: 'int', name: 'pax_count', nullable: false })

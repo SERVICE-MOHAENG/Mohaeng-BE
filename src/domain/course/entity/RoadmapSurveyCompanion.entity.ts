@@ -19,7 +19,7 @@ export class RoadmapSurveyCompanion extends BaseEntity {
   @JoinColumn({ name: 'survey_id' })
   survey: RoadmapSurvey;
 
-  @Column({ type: 'varchar', length: 36, name: 'survey_id' })
+  @Column({ type: 'uuid', name: 'survey_id' })
   surveyId: string;
 
   @Column({
