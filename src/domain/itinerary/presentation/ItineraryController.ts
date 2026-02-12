@@ -30,7 +30,6 @@ import { ItineraryCallbackService } from '../service/ItineraryCallbackService';
 import { ItineraryModificationService } from '../service/ItineraryModificationService';
 import { ItineraryModificationCallbackService } from '../service/ItineraryModificationCallbackService';
 import { GlobalRedisService } from '../../../global/redis/GlobalRedisService';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CreateItineraryRequest } from './dto/request/CreateItineraryRequest';
 import { CreateSurveyRequest } from './dto/request/CreateSurveyRequest';
 import { ItineraryCallbackRequest } from './dto/request/ItineraryCallbackRequest';
