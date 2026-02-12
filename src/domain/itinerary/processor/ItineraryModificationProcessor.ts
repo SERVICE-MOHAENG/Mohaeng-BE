@@ -148,9 +148,9 @@ export class ItineraryModificationProcessor extends WorkerHost {
       summary: course.description || '',
       itinerary: sortedDays.map((day) => ({
         day_number: day.dayNumber,
-        daily_date: this.formatDate(day.dailyDate),
+        daily_date: this.formatDate(day.date),
         places: (day.coursePlaces || [])
-          .sort((a, b) => a.visitSequence - b.visitSequence)
+          .sort((a, b) => a.visitOrder - b.visitOrder)
           .map((coursePlace) => ({
             place_name: coursePlace.place.name,
             place_id: coursePlace.place.placeId,
@@ -159,7 +159,7 @@ export class ItineraryModificationProcessor extends WorkerHost {
             longitude: coursePlace.place.longitude,
             place_url: coursePlace.place.placeUrl,
             description: coursePlace.description || '',
-            visit_sequence: coursePlace.visitSequence,
+            visit_sequence: coursePlace.visitOrder,
             visit_time: coursePlace.visitTime || '09:00',
           })),
       })),

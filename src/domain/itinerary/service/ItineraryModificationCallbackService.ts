@@ -201,7 +201,13 @@ export class ItineraryModificationCallbackService {
       // 1. TravelCourse 로드
       const course = await manager.findOne(TravelCourse, {
         where: { id: job.travelCourseId! },
-        relations: ['courseDays', 'courseDays.coursePlaces', 'hashTags'],
+        relations: [
+          'courseDays',
+          'courseDays.coursePlaces',
+          'hashTags',
+          'courseRegions',
+          'courseRegions.region',
+        ],
       });
 
       if (!course) {
@@ -251,7 +257,11 @@ export class ItineraryModificationCallbackService {
             place.placeUrl = placeData.place_url;
             place.updatedAt = new Date();
           } else {
-            // 지역 정보는 기존 설문 기반으로 유지 (수정 시에는 지역 변경 불가)
+            // 새 Place 생성 - 날짜에 맞는 region 찾기
+            const region = this.resolveRegionForDate(
+              course.courseRegions || [],
+              dayData.daily_date,
+            );
             place = Place.create(
               placeData.place_id,
               placeData.place_name,
@@ -259,7 +269,7 @@ export class ItineraryModificationCallbackService {
               placeData.latitude,
               placeData.longitude,
               placeData.place_url,
-              null, // region은 나중에 설정 가능
+              region,
               placeData.description,
             );
           }
@@ -293,7 +303,7 @@ export class ItineraryModificationCallbackService {
       job.markSuccessWithIntent(
         IntentStatus.SUCCESS,
         message,
-        diffKeys ?? null,
+        diffKeys ?? undefined,
       );
       await manager.save(ItineraryJob, job);
     });
@@ -310,7 +320,7 @@ export class ItineraryModificationCallbackService {
     intentStatus: IntentStatus,
     diffKeys?: string[],
   ): Promise<void> {
-    job.markSuccessWithIntent(intentStatus, aiMessage, diffKeys ?? null);
+    job.markSuccessWithIntent(intentStatus, aiMessage, diffKeys);
     await this.itineraryJobRepository.save(job);
   }
 
@@ -362,5 +372,29 @@ export class ItineraryModificationCallbackService {
         this.logger.warn(`Unknown intent status: ${intentStatus}, defaulting to GENERAL_CHAT`);
         return IntentStatus.GENERAL_CHAT;
     }
+  }
+
+  /**
+   * 날짜에 해당하는 Region 찾기
+   */
+  private resolveRegionForDate(
+    courseRegions: any[],
+    dailyDate: string,
+  ): any {
+    if (courseRegions.length === 0) {
+      throw new Error(`No regions found for course`);
+    }
+
+    const date = new Date(dailyDate);
+    for (const courseRegion of courseRegions) {
+      const startDate = new Date(courseRegion.startDate);
+      const endDate = new Date(courseRegion.endDate);
+      if (date >= startDate && date <= endDate) {
+        return courseRegion.region;
+      }
+    }
+
+    // fallback: 첫 번째 region
+    return courseRegions[0].region;
   }
 }
