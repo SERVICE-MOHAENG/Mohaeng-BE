@@ -59,7 +59,7 @@ import { UserModule } from '../user/UserModule';
       },
     }),
     HttpModule.register({
-      timeout: 5000,
+      timeout: 60000,
     }),
   ],
   controllers: [ItineraryController],
