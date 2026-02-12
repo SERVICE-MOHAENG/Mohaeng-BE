@@ -1,8 +1,12 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { RegionRepository } from '../persistence/RegionRepository';
 import { CountryService } from './CountryService';
 import { Region } from '../entity/Region.entity';
+import { Place } from '../../place/entity/Place.entity';
 import { RegionNotFoundException } from '../exception/RegionNotFoundException';
+import { RegionHasPlacesException } from '../exception/RegionHasPlacesException';
 import { TravelRange } from '../../preference/entity/TravelRange.enum';
 import { BudgetLevel } from '../../preference/entity/BudgetLevel.enum';
 
@@ -16,6 +20,8 @@ export class RegionService {
   constructor(
     private readonly regionRepository: RegionRepository,
     private readonly countryService: CountryService,
+    @InjectRepository(Place)
+    private readonly placeRepository: Repository<Place>,
   ) {}
 
   /**
@@ -62,9 +68,22 @@ export class RegionService {
 
   /**
    * 지역 삭제
+   * @description
+   * - 삭제 전 연결된 Place 존재 여부 확인
+   * - Place가 있으면 RegionHasPlacesException 발생 (FK RESTRICT)
    */
   async delete(id: string): Promise<void> {
     const region = await this.findById(id);
+
+    // 연결된 Place 개수 확인
+    const placeCount = await this.placeRepository.count({
+      where: { region: { id: region.id } },
+    });
+
+    if (placeCount > 0) {
+      throw new RegionHasPlacesException(placeCount);
+    }
+
     await this.regionRepository.delete(region.id);
   }
 }
