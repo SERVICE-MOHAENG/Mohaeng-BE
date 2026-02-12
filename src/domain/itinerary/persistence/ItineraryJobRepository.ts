@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LessThan, Repository } from 'typeorm';
+import { In, LessThan, Repository } from 'typeorm';
 import { ItineraryJob } from '../entity/ItineraryJob.entity';
 import { ItineraryStatus } from '../entity/ItineraryStatus.enum';
 
@@ -46,6 +46,19 @@ export class ItineraryJobRepository {
 
   async findBySurveyId(surveyId: string): Promise<ItineraryJob | null> {
     return this.repository.findOne({ where: { surveyId } });
+  }
+
+  /**
+   * Survey의 진행 중인 작업 조회 (PENDING 또는 PROCESSING)
+   * @description 재시도 허용을 위해 진행 중인 작업만 체크
+   */
+  async findActiveBySurveyId(surveyId: string): Promise<ItineraryJob | null> {
+    return this.repository.findOne({
+      where: {
+        surveyId,
+        status: In([ItineraryStatus.PENDING, ItineraryStatus.PROCESSING]),
+      },
+    });
   }
 
   /**

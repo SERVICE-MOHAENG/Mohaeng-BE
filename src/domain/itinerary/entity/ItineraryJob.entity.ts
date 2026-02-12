@@ -2,7 +2,6 @@ import {
   Entity,
   Column,
   ManyToOne,
-  OneToOne,
   JoinColumn,
 } from 'typeorm';
 import { BaseEntity } from '../../../global/BaseEntity';
@@ -37,14 +36,14 @@ export class ItineraryJob extends BaseEntity {
   @Column({ type: 'uuid', name: 'user_id' })
   userId: string;
 
-  @OneToOne(() => CourseSurvey, { nullable: false, onDelete: 'CASCADE' })
+  @ManyToOne(() => CourseSurvey, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'survey_id' })
   survey: CourseSurvey;
 
-  @Column({ type: 'uuid', name: 'survey_id', unique: true })
+  @Column({ type: 'uuid', name: 'survey_id' })
   surveyId: string;
 
-  @OneToOne(() => TravelCourse, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => TravelCourse, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'travel_course_id' })
   travelCourse: TravelCourse | null;
 
