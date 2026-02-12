@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ItineraryJobRepository } from '../persistence/ItineraryJobRepository';
 import { ItineraryStatus } from '../entity/ItineraryStatus.enum';
+import { GlobalRedisService } from '../../../global/redis/GlobalRedisService';
 
 /**
  * ItineraryJobCleanupService
@@ -16,6 +17,7 @@ export class ItineraryJobCleanupService {
 
   constructor(
     private readonly itineraryJobRepository: ItineraryJobRepository,
+    private readonly redisService: GlobalRedisService,
   ) {}
 
   @Cron(CronExpression.EVERY_MINUTE)
@@ -52,6 +54,20 @@ export class ItineraryJobCleanupService {
       if (currentJob.status === ItineraryStatus.PROCESSING) {
         currentJob.markFailed('TIMEOUT', '일정 생성 시간이 초과되었습니다 (3분)');
         await this.itineraryJobRepository.save(currentJob);
+
+        // Redis Pub/Sub: 타임아웃 알림 발행
+        await this.redisService.publish(
+          `job:${currentJob.id}:status`,
+          JSON.stringify({
+            status: 'FAILED',
+            jobId: currentJob.id,
+            error: {
+              code: 'TIMEOUT',
+              message: '일정 생성 시간이 초과되었습니다 (3분)',
+            },
+          }),
+        );
+
         this.logger.warn(`Stale job 타임아웃 처리: jobId=${currentJob.id}`);
         processedCount++;
       }

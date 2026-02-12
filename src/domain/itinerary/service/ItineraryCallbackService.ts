@@ -16,6 +16,7 @@ import { Region } from '../../country/entity/Region.entity';
 import { User } from '../../user/entity/User.entity';
 import { ItineraryJobNotFoundException } from '../exception/ItineraryJobNotFoundException';
 import { NoDestinationForDateException } from '../exception/NoDestinationForDateException';
+import { GlobalRedisService } from '../../../global/redis/GlobalRedisService';
 
 interface CallbackPlaceData {
   place_name: string;
@@ -68,6 +69,7 @@ export class ItineraryCallbackService {
   constructor(
     private readonly itineraryJobRepository: ItineraryJobRepository,
     private readonly dataSource: DataSource,
+    private readonly redisService: GlobalRedisService,
     @InjectRepository(Place)
     private readonly placeRepository: Repository<Place>,
     @InjectRepository(CourseSurvey)
@@ -221,6 +223,15 @@ export class ItineraryCallbackService {
       }
     });
 
+    // Redis Pub/Sub: 성공 알림 발행
+    await this.redisService.publish(
+      `job:${jobId}:status`,
+      JSON.stringify({
+        status: 'SUCCESS',
+        jobId,
+      }),
+    );
+
     this.logger.log(`Job ${jobId} 성공 처리 완료`);
   }
 
@@ -249,6 +260,19 @@ export class ItineraryCallbackService {
 
     job.markFailed(error.code, error.message);
     await this.itineraryJobRepository.save(job);
+
+    // Redis Pub/Sub: 실패 알림 발행
+    await this.redisService.publish(
+      `job:${jobId}:status`,
+      JSON.stringify({
+        status: 'FAILED',
+        jobId,
+        error: {
+          code: error.code,
+          message: error.message,
+        },
+      }),
+    );
 
     this.logger.warn(`Job ${jobId} 실패 처리: ${error.code} - ${error.message}`);
   }

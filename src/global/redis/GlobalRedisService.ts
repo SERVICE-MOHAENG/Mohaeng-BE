@@ -165,4 +165,34 @@ export class GlobalRedisService implements OnModuleDestroy {
   getClient(): Redis {
     return this.client;
   }
+
+  /**
+   * 채널에 메시지를 발행합니다 (Pub/Sub)
+   */
+  async publish(channel: string, message: string): Promise<number> {
+    return await this.client.publish(channel, message);
+  }
+
+  /**
+   * 채널을 구독합니다 (Pub/Sub)
+   * @returns 구독 해제 함수
+   */
+  async subscribe(
+    channel: string,
+    callback: (message: string) => void,
+  ): Promise<() => void> {
+    const subscriber = this.client.duplicate();
+    await subscriber.subscribe(channel);
+
+    subscriber.on('message', (ch, msg) => {
+      if (ch === channel) {
+        callback(msg);
+      }
+    });
+
+    return () => {
+      subscriber.unsubscribe(channel);
+      subscriber.disconnect();
+    };
+  }
 }
