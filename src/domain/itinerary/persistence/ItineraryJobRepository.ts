@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, LessThan, Repository } from 'typeorm';
-import { ItineraryJob } from '../entity/ItineraryJob.entity';
+import { ItineraryJob, ItineraryJobType } from '../entity/ItineraryJob.entity';
 import { ItineraryStatus } from '../entity/ItineraryStatus.enum';
 
 /**
@@ -77,5 +77,21 @@ export class ItineraryJobRepository {
 
   async save(job: ItineraryJob): Promise<ItineraryJob> {
     return this.repository.save(job);
+  }
+
+  /**
+   * TravelCourse의 수정 작업 목록 조회
+   * @description MODIFICATION 타입 작업을 최신순으로 조회
+   */
+  async findModificationJobsByTravelCourseId(
+    travelCourseId: string,
+  ): Promise<ItineraryJob[]> {
+    return this.repository.find({
+      where: {
+        travelCourseId,
+        jobType: ItineraryJobType.MODIFICATION,
+      },
+      order: { createdAt: 'DESC' },
+    });
   }
 }
