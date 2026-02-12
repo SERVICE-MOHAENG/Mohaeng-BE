@@ -9,6 +9,7 @@ import { CourseDay } from '../course/entity/CourseDay.entity';
 import { CoursePlace } from '../course/entity/CoursePlace.entity';
 import { CourseHashTag } from '../course/entity/CourseHashTag.entity';
 import { CourseRegion } from '../course/entity/CourseRegion.entity';
+import { CourseAiChat } from '../course/entity/CourseAiChat.entity';
 import { Place } from '../place/entity/Place.entity';
 import { CourseSurveyDestination } from '../course/entity/CourseSurveyDestination.entity';
 import { CourseSurveyCompanion } from '../course/entity/CourseSurveyCompanion.entity';
@@ -17,8 +18,11 @@ import { Region } from '../country/entity/Region.entity';
 import { ItineraryJobRepository } from './persistence/ItineraryJobRepository';
 import { ItineraryService } from './service/ItineraryService';
 import { ItineraryCallbackService } from './service/ItineraryCallbackService';
+import { ItineraryModificationService } from './service/ItineraryModificationService';
+import { ItineraryModificationCallbackService } from './service/ItineraryModificationCallbackService';
 import { ItineraryJobCleanupService } from './service/ItineraryJobCleanupService';
 import { ItineraryProcessor } from './processor/ItineraryProcessor';
+import { ItineraryModificationProcessor } from './processor/ItineraryModificationProcessor';
 import { ItineraryController } from './presentation/ItineraryController';
 import { ServiceSecretGuard } from './guard/ServiceSecretGuard';
 import { UserModule } from '../user/UserModule';
@@ -39,6 +43,7 @@ import { UserModule } from '../user/UserModule';
       CoursePlace,
       CourseHashTag,
       CourseRegion,
+      CourseAiChat,
       Place,
       Region,
       CourseSurveyDestination,
@@ -58,6 +63,18 @@ import { UserModule } from '../user/UserModule';
         removeOnFail: 50,
       },
     }),
+    BullModule.registerQueue({
+      name: 'itinerary-modification',
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 5000,
+        },
+        removeOnComplete: 100,
+        removeOnFail: 50,
+      },
+    }),
     HttpModule.register({
       timeout: 60000,
     }),
@@ -67,8 +84,11 @@ import { UserModule } from '../user/UserModule';
     ItineraryJobRepository,
     ItineraryService,
     ItineraryCallbackService,
+    ItineraryModificationService,
+    ItineraryModificationCallbackService,
     ItineraryJobCleanupService,
     ItineraryProcessor,
+    ItineraryModificationProcessor,
     ServiceSecretGuard,
   ],
   exports: [ItineraryService],
