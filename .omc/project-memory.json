@@ -156,6 +156,169 @@
       ]
     }
   },
-  "hotPaths": [],
+  "hotPaths": [
+    {
+      "path": ".env",
+      "accessCount": 3,
+      "lastAccessed": 1770951822212,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/course/exception/CourseNotFoundException.ts",
+      "accessCount": 2,
+      "lastAccessed": 1770941280730,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/course/exception/CourseAccessDeniedException.ts",
+      "accessCount": 2,
+      "lastAccessed": 1770941283999,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/course/exception/InvalidDateRangeException.ts",
+      "accessCount": 2,
+      "lastAccessed": 1770941287493,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/course/exception/CourseLikeNotFoundException.ts",
+      "accessCount": 2,
+      "lastAccessed": 1770941290807,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/course/exception/CourseLikeAlreadyExistsException.ts",
+      "accessCount": 2,
+      "lastAccessed": 1770941294268,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/course/exception/CourseBookmarkAlreadyExistsException.ts",
+      "accessCount": 2,
+      "lastAccessed": 1770941297640,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/blog/exception/BlogNotFoundException.ts",
+      "accessCount": 2,
+      "lastAccessed": 1770941331427,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/blog/exception/BlogAccessDeniedException.ts",
+      "accessCount": 2,
+      "lastAccessed": 1770941334706,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/blog/exception/BlogLikeNotFoundException.ts",
+      "accessCount": 2,
+      "lastAccessed": 1770941338188,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/blog/exception/BlogLikeAlreadyExistsException.ts",
+      "accessCount": 2,
+      "lastAccessed": 1770941341752,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/country/exception/CountryNotFoundException.ts",
+      "accessCount": 2,
+      "lastAccessed": 1770941368202,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/country/exception/RegionNotFoundException.ts",
+      "accessCount": 2,
+      "lastAccessed": 1770941371586,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/country/exception/RegionHasPlacesException.ts",
+      "accessCount": 2,
+      "lastAccessed": 1770941375779,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/visited-country/exception/VisitedCountryNotFoundException.ts",
+      "accessCount": 2,
+      "lastAccessed": 1770941397674,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/visited-country/exception/VisitedCountryAccessDeniedException.ts",
+      "accessCount": 2,
+      "lastAccessed": 1770941400541,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/place/exception/PlaceNotFoundException.ts",
+      "accessCount": 2,
+      "lastAccessed": 1770941705790,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/notification/exception/NotificationNotFoundException.ts",
+      "accessCount": 2,
+      "lastAccessed": 1770941718441,
+      "type": "file"
+    },
+    {
+      "path": "docker-compose.prod.yml",
+      "accessCount": 2,
+      "lastAccessed": 1770952156049,
+      "type": "file"
+    },
+    {
+      "path": "infra/nginx/default.conf.template",
+      "accessCount": 2,
+      "lastAccessed": 1770952161309,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/course/exception/code/index.ts",
+      "accessCount": 1,
+      "lastAccessed": 1770941268315,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/blog/exception/code/index.ts",
+      "accessCount": 1,
+      "lastAccessed": 1770941327766,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/country/exception/code/index.ts",
+      "accessCount": 1,
+      "lastAccessed": 1770941364602,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/visited-country/exception/code/index.ts",
+      "accessCount": 1,
+      "lastAccessed": 1770941387860,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/place/exception/code/index.ts",
+      "accessCount": 1,
+      "lastAccessed": 1770941705697,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/notification/exception/code/index.ts",
+      "accessCount": 1,
+      "lastAccessed": 1770941714619,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/itinerary/processor/ItineraryProcessor.ts",
+      "accessCount": 1,
+      "lastAccessed": 1770951823064,
+      "type": "file"
+    }
+  ],
   "userDirectives": []
 }
