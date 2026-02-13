@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { ApiResponseDto } from '../../../global/dto/ApiResponseDto';
-import { ItineraryErrorCode } from './code/ItineraryErrorCode';
+import { ItineraryErrorCode, ItineraryErrorMessage } from './code';
 
 /**
  * ItineraryNotFoundException
@@ -11,7 +11,7 @@ export class ItineraryNotFoundException extends HttpException {
     super(
       ApiResponseDto.error(
         ItineraryErrorCode.ITINERARY_NOT_FOUND,
-        '로드맵을 찾을 수 없습니다',
+        ItineraryErrorMessage[ItineraryErrorCode.ITINERARY_NOT_FOUND],
       ),
       HttpStatus.NOT_FOUND,
     );

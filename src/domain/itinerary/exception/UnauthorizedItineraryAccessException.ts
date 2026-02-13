@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { ApiResponseDto } from '../../../global/dto/ApiResponseDto';
-import { ItineraryErrorCode } from './code/ItineraryErrorCode';
+import { ItineraryErrorCode, ItineraryErrorMessage } from './code';
 
 /**
  * UnauthorizedItineraryAccessException
@@ -11,7 +11,9 @@ export class UnauthorizedItineraryAccessException extends HttpException {
     super(
       ApiResponseDto.error(
         ItineraryErrorCode.UNAUTHORIZED_ITINERARY_ACCESS,
-        '이 로드맵에 접근할 권한이 없습니다',
+        ItineraryErrorMessage[
+          ItineraryErrorCode.UNAUTHORIZED_ITINERARY_ACCESS
+        ],
       ),
       HttpStatus.FORBIDDEN,
     );
