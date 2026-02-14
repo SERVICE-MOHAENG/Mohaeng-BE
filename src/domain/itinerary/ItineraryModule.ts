@@ -4,6 +4,9 @@ import { BullModule } from '@nestjs/bullmq';
 import { HttpModule } from '@nestjs/axios';
 import { ItineraryJob } from './entity/ItineraryJob.entity';
 import { CourseSurvey } from '../course/entity/CourseSurvey.entity';
+import { RoadmapSurvey } from '../course/entity/RoadmapSurvey.entity';
+import { RoadmapSurveyCompanion } from '../course/entity/RoadmapSurveyCompanion.entity';
+import { RoadmapSurveyTheme } from '../course/entity/RoadmapSurveyTheme.entity';
 import { TravelCourse } from '../course/entity/TravelCourse.entity';
 import { CourseDay } from '../course/entity/CourseDay.entity';
 import { CoursePlace } from '../course/entity/CoursePlace.entity';
@@ -38,6 +41,9 @@ import { UserModule } from '../user/UserModule';
     TypeOrmModule.forFeature([
       ItineraryJob,
       CourseSurvey,
+      RoadmapSurvey,
+      RoadmapSurveyCompanion,
+      RoadmapSurveyTheme,
       TravelCourse,
       CourseDay,
       CoursePlace,
