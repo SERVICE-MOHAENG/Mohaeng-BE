@@ -9,8 +9,6 @@ import {
   HttpStatus,
   UseGuards,
   UseInterceptors,
-  Sse,
-  MessageEvent,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,8 +17,6 @@ import {
   ApiParam,
   ApiResponse,
 } from '@nestjs/swagger';
-import { Observable, fromEvent } from 'rxjs';
-import { map, takeUntil, startWith } from 'rxjs/operators';
 import { ResponseInterceptor } from '../../../global/interceptors/ResponseInterceptor';
 import { UserApiBearerAuth } from '../../../global/decorators/UserApiBearerAuth';
 import { UserId } from '../../../global/decorators/UserId';
@@ -29,7 +25,6 @@ import { ItineraryService } from '../service/ItineraryService';
 import { ItineraryCallbackService } from '../service/ItineraryCallbackService';
 import { ItineraryModificationService } from '../service/ItineraryModificationService';
 import { ItineraryModificationCallbackService } from '../service/ItineraryModificationCallbackService';
-import { GlobalRedisService } from '../../../global/redis/GlobalRedisService';
 import { CreateItineraryRequest } from './dto/request/CreateItineraryRequest';
 import { CreateSurveyRequest } from './dto/request/CreateSurveyRequest';
 import { ItineraryCallbackRequest } from './dto/request/ItineraryCallbackRequest';
@@ -51,7 +46,6 @@ export class ItineraryController {
     private readonly itineraryCallbackService: ItineraryCallbackService,
     private readonly itineraryModificationService: ItineraryModificationService,
     private readonly itineraryModificationCallbackService: ItineraryModificationCallbackService,
-    private readonly redisService: GlobalRedisService,
   ) {}
 
   /**
@@ -90,69 +84,10 @@ export class ItineraryController {
   }
 
   /**
-   * SSE로 작업 상태 실시간 수신 (권장)
-   */
-  @Sse(':jobId/events')
-  @ApiOperation({ summary: 'SSE로 작업 상태 실시간 수신 (권장)' })
-  @ApiParam({ name: 'jobId', description: '작업 ID' })
-  @UserApiBearerAuth()
-  async subscribeToJobStatus(
-    @UserId() userId: string,
-    @Param('jobId') jobId: string,
-  ): Promise<Observable<MessageEvent>> {
-    // 권한 확인
-    const job = await this.itineraryService.getJobStatus(userId, jobId);
-    if (!job) {
-      throw new BadRequestException('작업을 찾을 수 없습니다');
-    }
-
-    // Redis 채널 구독
-    const channel = `job:${jobId}:status`;
-
-    return new Observable<MessageEvent>((subscriber) => {
-      let unsubscribe: (() => void) | null = null;
-
-      // 초기 상태 전송
-      subscriber.next({
-        data: { status: job.status, jobId },
-      } as MessageEvent);
-
-      // 이미 완료/실패 상태면 즉시 종료
-      if (job.status === 'SUCCESS' || job.status === 'FAILED') {
-        subscriber.complete();
-        return;
-      }
-
-      // Redis 구독 시작
-      this.redisService.subscribe(channel, (message) => {
-        const data = JSON.parse(message);
-        subscriber.next({ data } as MessageEvent);
-
-        // 완료/실패 시 연결 종료
-        if (data.status === 'SUCCESS' || data.status === 'FAILED') {
-          subscriber.complete();
-          if (unsubscribe) {
-            unsubscribe();
-          }
-        }
-      }).then((unsub) => {
-        unsubscribe = unsub;
-      });
-
-      // 클라이언트 연결 종료 시 정리
-      return () => {
-        if (unsubscribe) {
-          unsubscribe();
-        }
-      };
-    });
-  }
-
-  /**
-   * 작업 상태 polling (하위 호환성)
+   * 작업 상태 조회 (Polling)
    */
   @Get(':jobId/status')
-  @ApiOperation({ summary: '일정 생성 작업 상태 조회 (Polling, 하위 호환용)' })
+  @ApiOperation({ summary: '일정 생성 작업 상태 조회 (Polling)' })
   @ApiParam({ name: 'jobId', description: '작업 ID' })
   @ApiResponse({ status: 200, type: ItineraryJobStatusResponse })
   @UserApiBearerAuth()
