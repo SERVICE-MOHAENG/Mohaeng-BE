@@ -3,7 +3,7 @@ upstream api_upstream {
 }
 
 upstream ai_upstream {
-    server ai:8000;
+    server mohaeng-ai:8000;
 }
 
 server {
