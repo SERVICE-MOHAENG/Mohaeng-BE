@@ -12,7 +12,6 @@ import { CourseAiChat } from '../../course/entity/CourseAiChat.entity';
 import { ChatRole } from '../../course/entity/ChatRole.enum';
 import { Place } from '../../place/entity/Place.entity';
 import { ItineraryJobNotFoundException } from '../exception/ItineraryJobNotFoundException';
-import { GlobalRedisService } from '../../../global/redis/GlobalRedisService';
 
 interface CallbackPlaceData {
   place_name: string;
@@ -74,7 +73,6 @@ export class ItineraryModificationCallbackService {
   constructor(
     private readonly itineraryJobRepository: ItineraryJobRepository,
     private readonly dataSource: DataSource,
-    private readonly redisService: GlobalRedisService,
     @InjectRepository(Place)
     private readonly placeRepository: Repository<Place>,
     @InjectRepository(CourseAiChat)
@@ -130,16 +128,6 @@ export class ItineraryModificationCallbackService {
     // 대화 이력 저장 (USER + AI)
     await this.saveChatHistory(job.travelCourseId!, userMessage, data.message);
 
-    // Redis Pub/Sub: 성공 알림 발행
-    await this.redisService.publish(
-      `job:${jobId}:status`,
-      JSON.stringify({
-        status: 'SUCCESS',
-        jobId,
-        intentStatus: data.intent_status,
-      }),
-    );
-
     this.logger.log(
       `Job ${jobId} 성공 처리 완료 (intent: ${data.intent_status})`,
     );
@@ -170,19 +158,6 @@ export class ItineraryModificationCallbackService {
 
     job.markFailed(error.code, error.message);
     await this.itineraryJobRepository.save(job);
-
-    // Redis Pub/Sub: 실패 알림 발행
-    await this.redisService.publish(
-      `job:${jobId}:status`,
-      JSON.stringify({
-        status: 'FAILED',
-        jobId,
-        error: {
-          code: error.code,
-          message: error.message,
-        },
-      }),
-    );
 
     this.logger.warn(`Job ${jobId} 실패 처리: ${error.code} - ${error.message}`);
   }
