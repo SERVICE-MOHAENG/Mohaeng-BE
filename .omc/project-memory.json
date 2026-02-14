@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1770904220673,
+  "lastScanned": 1771045194156,
   "projectRoot": "/Users/donggun/Desktop/Mohaeng-server-core",
   "techStack": {
     "languages": [
@@ -89,7 +89,7 @@
       "path": "dist",
       "purpose": "Distribution/build output",
       "fileCount": 7,
-      "lastAccessed": 1770904220662,
+      "lastAccessed": 1771045194142,
       "keyFiles": [
         "app.module.d.ts",
         "app.module.js",
@@ -101,17 +101,25 @@
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
-      "fileCount": 1,
-      "lastAccessed": 1770904220662,
+      "fileCount": 2,
+      "lastAccessed": 1771045194143,
       "keyFiles": [
-        "DEPLOY_PROD_GITHUB_ACTIONS.md"
+        "DEPLOY_PROD_GITHUB_ACTIONS.md",
+        "reverse-proxy-docker.md"
       ]
+    },
+    "infra": {
+      "path": "infra",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1771045194146,
+      "keyFiles": []
     },
     "scripts": {
       "path": "scripts",
       "purpose": "Build/utility scripts",
       "fileCount": 1,
-      "lastAccessed": 1770904220665,
+      "lastAccessed": 1771045194146,
       "keyFiles": [
         "deploy-prod.sh"
       ]
@@ -120,7 +128,7 @@
       "path": "src",
       "purpose": "Source code",
       "fileCount": 2,
-      "lastAccessed": 1770904220665,
+      "lastAccessed": 1771045194147,
       "keyFiles": [
         "app.module.ts",
         "main.ts"
@@ -130,7 +138,7 @@
       "path": "test",
       "purpose": "Test files",
       "fileCount": 2,
-      "lastAccessed": 1770904220665,
+      "lastAccessed": 1771045194147,
       "keyFiles": [
         "app.e2e-spec.ts.bak",
         "jest-e2e.json"
@@ -140,7 +148,7 @@
       "path": "test/config",
       "purpose": "Configuration files",
       "fileCount": 1,
-      "lastAccessed": 1770904220666,
+      "lastAccessed": 1771045194148,
       "keyFiles": [
         "test-database.module.ts"
       ]
@@ -149,7 +157,7 @@
       "path": "test/helpers",
       "purpose": "Helper functions",
       "fileCount": 2,
-      "lastAccessed": 1770904220666,
+      "lastAccessed": 1771045194148,
       "keyFiles": [
         "auth-helper.ts",
         "test-data-builder.ts"
@@ -158,166 +166,88 @@
   },
   "hotPaths": [
     {
-      "path": ".env",
+      "path": "src/domain/itinerary/processor/ItineraryModificationProcessor.ts",
+      "accessCount": 10,
+      "lastAccessed": 1771046340548,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/itinerary/service/ItineraryCallbackService.ts",
+      "accessCount": 9,
+      "lastAccessed": 1771046887101,
+      "type": "directory"
+    },
+    {
+      "path": "src/domain/itinerary/service/ItineraryModificationCallbackService.ts",
+      "accessCount": 8,
+      "lastAccessed": 1771046920868,
+      "type": "directory"
+    },
+    {
+      "path": "src/domain/itinerary/presentation/ItineraryController.ts",
+      "accessCount": 6,
+      "lastAccessed": 1771046836077,
+      "type": "file"
+    },
+    {
+      "path": "src/domain/itinerary/ItineraryModule.ts",
       "accessCount": 3,
-      "lastAccessed": 1770951822212,
+      "lastAccessed": 1771045795764,
       "type": "file"
     },
     {
-      "path": "src/domain/course/exception/CourseNotFoundException.ts",
+      "path": "src/domain/course/entity/RoadmapSurvey.entity.ts",
       "accessCount": 2,
-      "lastAccessed": 1770941280730,
+      "lastAccessed": 1771045890098,
       "type": "file"
     },
     {
-      "path": "src/domain/course/exception/CourseAccessDeniedException.ts",
-      "accessCount": 2,
-      "lastAccessed": 1770941283999,
-      "type": "file"
-    },
-    {
-      "path": "src/domain/course/exception/InvalidDateRangeException.ts",
-      "accessCount": 2,
-      "lastAccessed": 1770941287493,
-      "type": "file"
-    },
-    {
-      "path": "src/domain/course/exception/CourseLikeNotFoundException.ts",
-      "accessCount": 2,
-      "lastAccessed": 1770941290807,
-      "type": "file"
-    },
-    {
-      "path": "src/domain/course/exception/CourseLikeAlreadyExistsException.ts",
-      "accessCount": 2,
-      "lastAccessed": 1770941294268,
-      "type": "file"
-    },
-    {
-      "path": "src/domain/course/exception/CourseBookmarkAlreadyExistsException.ts",
-      "accessCount": 2,
-      "lastAccessed": 1770941297640,
-      "type": "file"
-    },
-    {
-      "path": "src/domain/blog/exception/BlogNotFoundException.ts",
-      "accessCount": 2,
-      "lastAccessed": 1770941331427,
-      "type": "file"
-    },
-    {
-      "path": "src/domain/blog/exception/BlogAccessDeniedException.ts",
-      "accessCount": 2,
-      "lastAccessed": 1770941334706,
-      "type": "file"
-    },
-    {
-      "path": "src/domain/blog/exception/BlogLikeNotFoundException.ts",
-      "accessCount": 2,
-      "lastAccessed": 1770941338188,
-      "type": "file"
-    },
-    {
-      "path": "src/domain/blog/exception/BlogLikeAlreadyExistsException.ts",
-      "accessCount": 2,
-      "lastAccessed": 1770941341752,
-      "type": "file"
-    },
-    {
-      "path": "src/domain/country/exception/CountryNotFoundException.ts",
-      "accessCount": 2,
-      "lastAccessed": 1770941368202,
-      "type": "file"
-    },
-    {
-      "path": "src/domain/country/exception/RegionNotFoundException.ts",
-      "accessCount": 2,
-      "lastAccessed": 1770941371586,
-      "type": "file"
-    },
-    {
-      "path": "src/domain/country/exception/RegionHasPlacesException.ts",
-      "accessCount": 2,
-      "lastAccessed": 1770941375779,
-      "type": "file"
-    },
-    {
-      "path": "src/domain/visited-country/exception/VisitedCountryNotFoundException.ts",
-      "accessCount": 2,
-      "lastAccessed": 1770941397674,
-      "type": "file"
-    },
-    {
-      "path": "src/domain/visited-country/exception/VisitedCountryAccessDeniedException.ts",
-      "accessCount": 2,
-      "lastAccessed": 1770941400541,
-      "type": "file"
-    },
-    {
-      "path": "src/domain/place/exception/PlaceNotFoundException.ts",
-      "accessCount": 2,
-      "lastAccessed": 1770941705790,
-      "type": "file"
-    },
-    {
-      "path": "src/domain/notification/exception/NotificationNotFoundException.ts",
-      "accessCount": 2,
-      "lastAccessed": 1770941718441,
-      "type": "file"
-    },
-    {
-      "path": "docker-compose.prod.yml",
-      "accessCount": 2,
-      "lastAccessed": 1770952156049,
-      "type": "file"
-    },
-    {
-      "path": "infra/nginx/default.conf.template",
-      "accessCount": 2,
-      "lastAccessed": 1770952161309,
-      "type": "file"
-    },
-    {
-      "path": "src/domain/course/exception/code/index.ts",
+      "path": "IMPLEMENTATION_SUMMARY.md",
       "accessCount": 1,
-      "lastAccessed": 1770941268315,
+      "lastAccessed": 1771045243749,
       "type": "file"
     },
     {
-      "path": "src/domain/blog/exception/code/index.ts",
+      "path": "src/domain/course/entity/TravelCourse.entity.ts",
       "accessCount": 1,
-      "lastAccessed": 1770941327766,
+      "lastAccessed": 1771045679195,
       "type": "file"
     },
     {
-      "path": "src/domain/country/exception/code/index.ts",
+      "path": "src/domain/course/entity/RoadmapSurveyTheme.entity.ts",
       "accessCount": 1,
-      "lastAccessed": 1770941364602,
+      "lastAccessed": 1771045679799,
       "type": "file"
     },
     {
-      "path": "src/domain/visited-country/exception/code/index.ts",
+      "path": "src/domain/course/entity/RoadmapSurveyCompanion.entity.ts",
       "accessCount": 1,
-      "lastAccessed": 1770941387860,
+      "lastAccessed": 1771045680362,
       "type": "file"
     },
     {
-      "path": "src/domain/place/exception/code/index.ts",
+      "path": "src/domain/course/entity/Companion.enum.ts",
       "accessCount": 1,
-      "lastAccessed": 1770941705697,
+      "lastAccessed": 1771045702533,
       "type": "file"
     },
     {
-      "path": "src/domain/notification/exception/code/index.ts",
+      "path": "src/domain/course/entity/TravelTheme.enum.ts",
       "accessCount": 1,
-      "lastAccessed": 1770941714619,
+      "lastAccessed": 1771045703018,
       "type": "file"
     },
     {
-      "path": "src/domain/itinerary/processor/ItineraryProcessor.ts",
+      "path": "src/domain/course/entity/SurveyBudget.enum.ts",
       "accessCount": 1,
-      "lastAccessed": 1770951823064,
+      "lastAccessed": 1771045703384,
       "type": "file"
+    },
+    {
+      "path": "src/domain/itinerary",
+      "accessCount": 1,
+      "lastAccessed": 1771046784082,
+      "type": "directory"
     }
   ],
   "userDirectives": []
