@@ -167,6 +167,7 @@ export class ItineraryModificationProcessor extends WorkerHost {
         day_number: day.dayNumber,
         daily_date: this.formatDate(day.date),
         places: (day.coursePlaces || [])
+          .filter((coursePlace) => coursePlace.place != null)
           .sort((a, b) => a.visitOrder - b.visitOrder)
           .map((coursePlace) => ({
             place_name: coursePlace.place.name,
