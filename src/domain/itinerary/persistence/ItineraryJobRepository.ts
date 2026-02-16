@@ -80,6 +80,21 @@ export class ItineraryJobRepository {
   }
 
   /**
+   * TravelCourse의 진행 중인 작업 조회 (PENDING 또는 PROCESSING)
+   * @description 동시 수정 방지를 위한 체크
+   */
+  async findActiveByTravelCourseId(
+    travelCourseId: string,
+  ): Promise<ItineraryJob | null> {
+    return this.repository.findOne({
+      where: [
+        { travelCourseId, status: ItineraryStatus.PENDING },
+        { travelCourseId, status: ItineraryStatus.PROCESSING },
+      ],
+    });
+  }
+
+  /**
    * TravelCourse의 수정 작업 목록 조회
    * @description MODIFICATION 타입 작업을 최신순으로 조회
    */
