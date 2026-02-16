@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { Queue } from 'bullmq';
 import { ItineraryJobRepository } from '../persistence/ItineraryJobRepository';
 import { ItineraryJob } from '../entity/ItineraryJob.entity';
+import { ItineraryStatus } from '../entity/ItineraryStatus.enum';
 import { TravelCourse } from '../../course/entity/TravelCourse.entity';
 import { CourseAiChat } from '../../course/entity/CourseAiChat.entity';
 import { ChatWithItineraryResponse } from '../presentation/dto/response/ChatWithItineraryResponse';
@@ -12,6 +13,7 @@ import { ItineraryModificationJobStatusResponse } from '../presentation/dto/resp
 import { ItineraryNotFoundException } from '../exception/ItineraryNotFoundException';
 import { UnauthorizedItineraryAccessException } from '../exception/UnauthorizedItineraryAccessException';
 import { ItineraryJobNotFoundException } from '../exception/ItineraryJobNotFoundException';
+import { ItineraryJobAlreadyProcessingException } from '../exception/ItineraryJobAlreadyProcessingException';
 import { ChatLimitExceededException } from '../exception/ChatLimitExceededException';
 
 /**
@@ -23,6 +25,8 @@ import { ChatLimitExceededException } from '../exception/ChatLimitExceededExcept
  */
 @Injectable()
 export class ItineraryModificationService {
+  private static readonly MAX_CHAT_COUNT = 10;
+
   constructor(
     private readonly itineraryJobRepository: ItineraryJobRepository,
     @InjectRepository(TravelCourse)
@@ -60,20 +64,28 @@ export class ItineraryModificationService {
       throw new UnauthorizedItineraryAccessException();
     }
 
-    // 3. 대화 개수 확인 (최대 10개 제한)
+    // 3. 대화 개수 확인
     const chatCount = await this.chatRepository.count({
       where: { travelCourse: { id: itineraryId } },
     });
 
-    if (chatCount >= 10) {
+    if (chatCount >= ItineraryModificationService.MAX_CHAT_COUNT) {
       throw new ChatLimitExceededException();
     }
 
-    // 4. ItineraryJob 생성 (MODIFICATION)
+    // 4. 동시 수정 방지: PENDING/PROCESSING 상태의 작업이 있는지 확인
+    const pendingJob =
+      await this.itineraryJobRepository.findActiveByTravelCourseId(itineraryId);
+
+    if (pendingJob) {
+      throw new ItineraryJobAlreadyProcessingException();
+    }
+
+    // 5. ItineraryJob 생성 (MODIFICATION)
     const job = ItineraryJob.createModificationJob(userId, itineraryId, message);
     const savedJob = await this.itineraryJobRepository.save(job);
 
-    // 5. BullMQ 큐에 작업 추가
+    // 6. BullMQ 큐에 작업 추가
     await this.modificationQueue.add('modify-itinerary', {
       jobId: savedJob.id,
       travelCourseId: itineraryId,
