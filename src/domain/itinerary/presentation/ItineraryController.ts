@@ -205,16 +205,23 @@ export class ItineraryController {
     @Param('jobId') jobId: string,
     @Body() body: ItineraryModificationCallbackRequest,
   ) {
-    if (body.status === 'SUCCESS') {
-      await this.itineraryModificationCallbackService.handleSuccess(
-        jobId,
-        body.user_query || '',
-        body as import('../service/ItineraryModificationCallbackService').ModificationSuccessPayload,
-      );
-    } else if (body.status === 'FAILED' && body.error) {
+    if (body.status === 'FAILED') {
+      if (!body.error) {
+        throw new BadRequestException('FAILED 콜백에는 error가 필수입니다');
+      }
       await this.itineraryModificationCallbackService.handleFailure(
         jobId,
         body.error,
+      );
+    } else {
+      // SUCCESS, ASK_CLARIFICATION, GENERAL_CHAT, REJECTED
+      await this.itineraryModificationCallbackService.handleSuccess(
+        jobId,
+        body.user_query || '',
+        body.status,
+        body.message,
+        body.modified_itinerary,
+        body.diff_keys,
       );
     }
   }

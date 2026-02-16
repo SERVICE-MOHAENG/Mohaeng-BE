@@ -2,6 +2,8 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsIn,
+  IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   ValidateIf,
@@ -33,9 +35,11 @@ class CallbackPlaceRequest {
   address: string;
 
   @ApiProperty({ description: '위도', example: 35.6595 })
+  @IsNumber()
   latitude: number;
 
   @ApiProperty({ description: '경도', example: 139.7004 })
+  @IsNumber()
   longitude: number;
 
   @ApiProperty({ description: 'Google Maps URL' })
@@ -47,6 +51,7 @@ class CallbackPlaceRequest {
   description: string;
 
   @ApiProperty({ description: '방문 순서', example: 1 })
+  @IsInt()
   visit_sequence: number;
 
   @ApiProperty({ description: '방문 시각 (HH:MM)', example: '09:00' })
@@ -56,6 +61,7 @@ class CallbackPlaceRequest {
 
 class CallbackDayRequest {
   @ApiProperty({ description: '여행 일차', example: 1 })
+  @IsInt()
   day_number: number;
 
   @ApiProperty({ description: '해당 날짜', example: '2026-02-14' })
@@ -79,12 +85,15 @@ class ModifiedItineraryRequest {
   end_date: string;
 
   @ApiProperty({ description: '총 여행 일수', example: 3 })
+  @IsInt()
   trip_days: number;
 
   @ApiProperty({ description: '총 숙박 수', example: 2 })
+  @IsInt()
   nights: number;
 
   @ApiProperty({ description: '총 인원 수', example: 2 })
+  @IsInt()
   people_count: number;
 
   @ApiProperty({ description: '여행 태그', type: [String] })
@@ -114,27 +123,17 @@ class ModifiedItineraryRequest {
 export class ItineraryModificationCallbackRequest {
   @ApiProperty({
     description: '콜백 상태',
-    enum: ['SUCCESS', 'FAILED'],
+    enum: ['SUCCESS', 'ASK_CLARIFICATION', 'GENERAL_CHAT', 'REJECTED', 'FAILED'],
   })
-  @IsIn(['SUCCESS', 'FAILED'])
-  status: 'SUCCESS' | 'FAILED';
+  @IsIn(['SUCCESS', 'ASK_CLARIFICATION', 'GENERAL_CHAT', 'REJECTED', 'FAILED'])
+  status: 'SUCCESS' | 'ASK_CLARIFICATION' | 'GENERAL_CHAT' | 'REJECTED' | 'FAILED';
 
   @ApiProperty({
-    description: 'Intent 분류 결과 (SUCCESS 시)',
-    enum: ['SUCCESS', 'ASK_CLARIFICATION', 'GENERAL_CHAT', 'REJECTED'],
-    required: false,
-  })
-  @ValidateIf((o) => o.status === 'SUCCESS')
-  @IsOptional()
-  @IsIn(['SUCCESS', 'ASK_CLARIFICATION', 'GENERAL_CHAT', 'REJECTED'])
-  intent_status?: 'SUCCESS' | 'ASK_CLARIFICATION' | 'GENERAL_CHAT' | 'REJECTED';
-
-  @ApiProperty({
-    description: '수정된 로드맵 데이터 (intent_status가 SUCCESS일 때만)',
+    description: '수정된 로드맵 데이터 (status가 SUCCESS일 때만)',
     required: false,
     type: ModifiedItineraryRequest,
   })
-  @ValidateIf((o) => o.intent_status === 'SUCCESS')
+  @ValidateIf((o) => o.status === 'SUCCESS')
   @IsOptional()
   @ValidateNested()
   @Type(() => ModifiedItineraryRequest)
@@ -155,11 +154,11 @@ export class ItineraryModificationCallbackRequest {
   message: string;
 
   @ApiProperty({
-    description: '변경된 노드 ID 목록 (intent_status가 SUCCESS일 때)',
+    description: '변경된 노드 ID 목록 (status가 SUCCESS일 때)',
     type: [String],
     required: false,
   })
-  @ValidateIf((o) => o.intent_status === 'SUCCESS')
+  @ValidateIf((o) => o.status === 'SUCCESS')
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
