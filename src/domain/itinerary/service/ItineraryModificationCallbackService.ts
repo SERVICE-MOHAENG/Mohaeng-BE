@@ -43,12 +43,7 @@ export interface ModifiedItineraryPayload {
   itinerary: CallbackDayData[];
 }
 
-export interface ModificationSuccessPayload {
-  intent_status: 'SUCCESS' | 'ASK_CLARIFICATION' | 'GENERAL_CHAT' | 'REJECTED';
-  modified_itinerary?: ModifiedItineraryPayload;
-  message: string;
-  diff_keys?: string[];
-}
+export type IntentStatusType = 'SUCCESS' | 'ASK_CLARIFICATION' | 'GENERAL_CHAT' | 'REJECTED';
 
 export interface ModificationFailurePayload {
   code: string;
@@ -85,7 +80,10 @@ export class ItineraryModificationCallbackService {
   async handleSuccess(
     jobId: string,
     userMessage: string,
-    data: ModificationSuccessPayload,
+    status: IntentStatusType,
+    message: string,
+    modifiedItinerary?: ModifiedItineraryPayload,
+    diffKeys?: string[],
   ): Promise<void> {
     const job = await this.itineraryJobRepository.findById(jobId);
     if (!job) {
@@ -103,33 +101,31 @@ export class ItineraryModificationCallbackService {
       return;
     }
 
-    const intentStatus = this.mapIntentStatus(data.intent_status);
+    const intentStatus = this.mapIntentStatus(status);
 
     // Intent에 따라 다른 처리
-    if (intentStatus === IntentStatus.SUCCESS && data.modified_itinerary) {
+    if (intentStatus === IntentStatus.SUCCESS && modifiedItinerary) {
       // TravelCourse 업데이트 + 대화 저장
       await this.updateTravelCourse(
         job,
-        data.modified_itinerary,
-        data.message,
-        data.diff_keys,
+        userMessage,
+        modifiedItinerary,
+        message,
+        diffKeys,
       );
     } else {
       // TravelCourse 업데이트 없이 대화만 저장
       await this.saveChatHistoryOnly(
         job,
         userMessage,
-        data.message,
+        message,
         intentStatus,
-        data.diff_keys,
+        diffKeys,
       );
     }
 
-    // 대화 이력 저장 (USER + AI)
-    await this.saveChatHistory(job.travelCourseId!, userMessage, data.message);
-
     this.logger.log(
-      `Job ${jobId} 성공 처리 완료 (intent: ${data.intent_status})`,
+      `Job ${jobId} 성공 처리 완료 (status: ${status})`,
     );
   }
 
@@ -168,8 +164,9 @@ export class ItineraryModificationCallbackService {
    */
   private async updateTravelCourse(
     job: ItineraryJob,
+    userMessage: string,
     modifiedData: ModifiedItineraryPayload,
-    message: string,
+    aiMessage: string,
     diffKeys?: string[],
   ): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
@@ -277,10 +274,26 @@ export class ItineraryModificationCallbackService {
       // 6. ItineraryJob 업데이트
       job.markSuccessWithIntent(
         IntentStatus.SUCCESS,
-        message,
+        aiMessage,
         diffKeys ?? undefined,
       );
       await manager.save(ItineraryJob, job);
+
+      // 7. 대화 이력 저장 (USER + AI) - 트랜잭션 내에서
+      const courseRef = new TravelCourse();
+      courseRef.id = job.travelCourseId!;
+
+      const userChat = new CourseAiChat();
+      userChat.role = ChatRole.USER;
+      userChat.content = userMessage;
+      userChat.travelCourse = courseRef;
+      await manager.save(CourseAiChat, userChat);
+
+      const aiChat = new CourseAiChat();
+      aiChat.role = ChatRole.AI;
+      aiChat.content = aiMessage;
+      aiChat.travelCourse = courseRef;
+      await manager.save(CourseAiChat, aiChat);
     });
   }
 
@@ -295,37 +308,26 @@ export class ItineraryModificationCallbackService {
     intentStatus: IntentStatus,
     diffKeys?: string[],
   ): Promise<void> {
-    job.markSuccessWithIntent(intentStatus, aiMessage, diffKeys);
-    await this.itineraryJobRepository.save(job);
-  }
+    await this.dataSource.transaction(async (manager) => {
+      job.markSuccessWithIntent(intentStatus, aiMessage, diffKeys);
+      await manager.save(ItineraryJob, job);
 
-  /**
-   * 대화 이력 저장 (USER + AI)
-   * @description 최대 10개(5쌍)까지만 저장 가능. 요청 전에 개수 체크됨
-   */
-  private async saveChatHistory(
-    travelCourseId: string,
-    userMessage: string,
-    aiMessage: string,
-  ): Promise<void> {
-    const course = new TravelCourse();
-    course.id = travelCourseId;
+      // 대화 이력 저장 (USER + AI)
+      const course = new TravelCourse();
+      course.id = job.travelCourseId!;
 
-    // USER 메시지 저장
-    const userChat = new CourseAiChat();
-    userChat.role = ChatRole.USER;
-    userChat.content = userMessage;
-    userChat.travelCourse = course;
-    await this.chatRepository.save(userChat);
+      const userChat = new CourseAiChat();
+      userChat.role = ChatRole.USER;
+      userChat.content = userMessage;
+      userChat.travelCourse = course;
+      await manager.save(CourseAiChat, userChat);
 
-    // AI 메시지 저장
-    const aiChat = new CourseAiChat();
-    aiChat.role = ChatRole.AI;
-    aiChat.content = aiMessage;
-    aiChat.travelCourse = course;
-    await this.chatRepository.save(aiChat);
-
-    this.logger.log(`로드맵 ${travelCourseId}: 대화 저장 완료`);
+      const aiChat = new CourseAiChat();
+      aiChat.role = ChatRole.AI;
+      aiChat.content = aiMessage;
+      aiChat.travelCourse = course;
+      await manager.save(CourseAiChat, aiChat);
+    });
   }
 
   /**
