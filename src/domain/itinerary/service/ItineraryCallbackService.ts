@@ -102,6 +102,13 @@ export class ItineraryCallbackService {
     }
 
     // 설문 데이터 로드 (Region 매핑용)
+    if (!job.surveyId) {
+      this.logger.error(`Job ${jobId} has no surveyId`);
+      job.markFailed('SURVEY_NOT_FOUND', '설문을 찾을 수 없습니다');
+      await this.itineraryJobRepository.save(job);
+      return;
+    }
+
     const survey = await this.surveyRepository.findOne({
       where: { id: job.surveyId },
       relations: ['destinations', 'destinations.region'],
