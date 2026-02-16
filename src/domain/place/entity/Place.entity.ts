@@ -75,7 +75,7 @@ export class Place {
   })
   placeUrl: string;
 
-  @ManyToOne(() => Region, { nullable: false, onDelete: 'CASCADE' })
+  @ManyToOne(() => Region, { nullable: false, onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'region_id' })
   region: Region;
 
