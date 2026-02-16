@@ -99,12 +99,12 @@ export class ItineraryJob extends BaseEntity {
   @Column({ type: 'uuid', name: 'user_id' })
   userId: string;
 
-  @ManyToOne(() => CourseSurvey, { nullable: false, onDelete: 'CASCADE' })
+  @ManyToOne(() => CourseSurvey, { nullable: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'survey_id' })
-  survey: CourseSurvey;
+  survey: CourseSurvey | null;
 
-  @Column({ type: 'uuid', name: 'survey_id' })
-  surveyId: string;
+  @Column({ type: 'uuid', name: 'survey_id', nullable: true })
+  surveyId: string | null;
 
   @ManyToOne(() => TravelCourse, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'travel_course_id' })
@@ -176,7 +176,7 @@ export class ItineraryJob extends BaseEntity {
   completedAt: Date | null;
 
   /**
-   * 팩토리 메서드
+   * 팩토리 메서드 (생성용)
    */
   static create(userId: string, surveyId: string): ItineraryJob {
     const job = new ItineraryJob();
@@ -186,6 +186,7 @@ export class ItineraryJob extends BaseEntity {
     job.jobType = ItineraryJobType.GENERATION;
     job.intentStatus = null;
     job.diffKeys = null;
+    job.userQuery = null;
     job.travelCourseId = null;
     job.attemptCount = 0;
     job.errorCode = null;
@@ -258,7 +259,7 @@ export class ItineraryJob extends BaseEntity {
   ): ItineraryJob {
     const job = new ItineraryJob();
     job.userId = userId;
-    job.surveyId = '00000000-0000-0000-0000-000000000000'; // Dummy survey ID for modification
+    job.surveyId = null; // 수정 작업은 survey와 무관
     job.travelCourseId = travelCourseId;
     job.status = ItineraryStatus.PENDING;
     job.jobType = ItineraryJobType.MODIFICATION;
