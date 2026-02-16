@@ -5,6 +5,7 @@ import Redis from 'ioredis';
 @Injectable()
 export class GlobalRedisService implements OnModuleDestroy {
   private readonly client: Redis;
+  private readonly subscribers: Set<Redis> = new Set();
 
   constructor(private readonly configService: ConfigService) {
     const host = this.configService.get<string>('REDIS_HOST') || 'localhost';
@@ -34,6 +35,12 @@ export class GlobalRedisService implements OnModuleDestroy {
   }
 
   onModuleDestroy() {
+    // Cleanup all subscribers
+    for (const subscriber of this.subscribers) {
+      subscriber.disconnect();
+    }
+    this.subscribers.clear();
+
     this.client.disconnect();
   }
 
@@ -175,13 +182,15 @@ export class GlobalRedisService implements OnModuleDestroy {
 
   /**
    * 채널을 구독합니다 (Pub/Sub)
-   * @returns 구독 해제 함수
+   * @returns 구독 해제 함수 (비동기)
    */
   async subscribe(
     channel: string,
     callback: (message: string) => void,
-  ): Promise<() => void> {
+  ): Promise<() => Promise<void>> {
     const subscriber = this.client.duplicate();
+    this.subscribers.add(subscriber);
+
     await subscriber.subscribe(channel);
 
     subscriber.on('message', (ch, msg) => {
@@ -190,9 +199,10 @@ export class GlobalRedisService implements OnModuleDestroy {
       }
     });
 
-    return () => {
-      subscriber.unsubscribe(channel);
+    return async () => {
+      await subscriber.unsubscribe(channel);
       subscriber.disconnect();
+      this.subscribers.delete(subscriber);
     };
   }
 }
