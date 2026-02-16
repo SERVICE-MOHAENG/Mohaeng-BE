@@ -27,9 +27,20 @@ export class RemoveCoursePlaceTravelCourseFK1769600000000
       `);
     }
 
-    await queryRunner.query(`
-      DROP INDEX idx_travel_course_id ON course_place_table
+    // 인덱스 존재 여부 확인 후 삭제
+    const indexExists = await queryRunner.query(`
+      SELECT COUNT(*) as count
+      FROM INFORMATION_SCHEMA.STATISTICS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'course_place_table'
+        AND INDEX_NAME = 'idx_travel_course_id'
     `);
+
+    if (indexExists[0].count > 0) {
+      await queryRunner.query(`
+        DROP INDEX idx_travel_course_id ON course_place_table
+      `);
+    }
 
     await queryRunner.query(`
       ALTER TABLE course_place_table
