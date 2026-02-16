@@ -195,10 +195,10 @@ export class ItineraryService {
       throw new SurveyNotFoundException();
     }
 
-    // 2. 진행 중인 작업 체크 (재시도 허용을 위해 PENDING/PROCESSING만 체크)
-    const activeJob =
-      await this.itineraryJobRepository.findActiveBySurveyId(surveyId);
-    if (activeJob) {
+    // 2. 중복 작업 체크
+    const existingJob =
+      await this.itineraryJobRepository.findBySurveyId(surveyId);
+    if (existingJob) {
       throw new ItineraryJobAlreadyProcessingException();
     }
 

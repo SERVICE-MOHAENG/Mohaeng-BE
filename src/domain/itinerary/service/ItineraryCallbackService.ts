@@ -15,7 +15,6 @@ import { CourseSurveyDestination } from '../../course/entity/CourseSurveyDestina
 import { Region } from '../../country/entity/Region.entity';
 import { User } from '../../user/entity/User.entity';
 import { ItineraryJobNotFoundException } from '../exception/ItineraryJobNotFoundException';
-import { NoDestinationForDateException } from '../exception/NoDestinationForDateException';
 
 interface CallbackPlaceData {
   place_name: string;
@@ -102,13 +101,6 @@ export class ItineraryCallbackService {
     }
 
     // 설문 데이터 로드 (Region 매핑용)
-    if (!job.surveyId) {
-      this.logger.error(`Job ${jobId} has no surveyId`);
-      job.markFailed('SURVEY_NOT_FOUND', '설문을 찾을 수 없습니다');
-      await this.itineraryJobRepository.save(job);
-      return;
-    }
-
     const survey = await this.surveyRepository.findOne({
       where: { id: job.surveyId },
       relations: ['destinations', 'destinations.region'],
@@ -263,17 +255,11 @@ export class ItineraryCallbackService {
   /**
    * 날짜 기반 Region 매칭
    * @description 설문의 CourseSurveyDestination에서 해당 날짜에 맞는 Region을 찾음
-   * @throws NoDestinationForDateException destinations가 비어있거나 해당 날짜의 Region을 찾을 수 없을 때
    */
   private resolveRegion(
     destinations: CourseSurveyDestination[],
     dailyDate: string,
   ): Region {
-    // destinations가 비어있으면 에러
-    if (destinations.length === 0) {
-      throw new NoDestinationForDateException(dailyDate);
-    }
-
     const date = new Date(dailyDate);
 
     for (const dest of destinations) {
@@ -285,6 +271,13 @@ export class ItineraryCallbackService {
     }
 
     // fallback: 첫 번째 destination의 region
-    return destinations[0].region;
+    if (destinations.length > 0) {
+      return destinations[0].region;
+    }
+
+    // 최후 fallback: 빈 Region 참조 (이 경우는 발생하지 않아야 함)
+    const fallbackRegion = new Region();
+    fallbackRegion.id = destinations[0]?.regionId ?? '';
+    return fallbackRegion;
   }
 }

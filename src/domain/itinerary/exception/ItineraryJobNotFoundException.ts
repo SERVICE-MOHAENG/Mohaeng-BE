@@ -1,13 +1,13 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { ApiResponseDto } from '../../../global/dto/ApiResponseDto';
-import { ItineraryErrorCode, ItineraryErrorMessage } from './code';
+import { ItineraryErrorCode } from './code/ItineraryErrorCode';
 
 export class ItineraryJobNotFoundException extends HttpException {
   constructor() {
     super(
       ApiResponseDto.error(
-        ItineraryErrorCode.ITINERARY_JOB_NOT_FOUND,
-        ItineraryErrorMessage[ItineraryErrorCode.ITINERARY_JOB_NOT_FOUND],
+        ItineraryErrorCode.JOB_NOT_FOUND,
+        '일정 생성 작업을 찾을 수 없습니다',
       ),
       HttpStatus.NOT_FOUND,
     );

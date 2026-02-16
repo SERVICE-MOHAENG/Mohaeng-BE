@@ -23,19 +23,13 @@ import { UserId } from '../../../global/decorators/UserId';
 import { ServiceSecretGuard } from '../guard/ServiceSecretGuard';
 import { ItineraryService } from '../service/ItineraryService';
 import { ItineraryCallbackService } from '../service/ItineraryCallbackService';
-import { ItineraryModificationService } from '../service/ItineraryModificationService';
-import { ItineraryModificationCallbackService } from '../service/ItineraryModificationCallbackService';
 import { CreateItineraryRequest } from './dto/request/CreateItineraryRequest';
 import { CreateSurveyRequest } from './dto/request/CreateSurveyRequest';
 import { ItineraryCallbackRequest } from './dto/request/ItineraryCallbackRequest';
-import { ChatWithItineraryRequest } from './dto/request/ChatWithItineraryRequest';
-import { ItineraryModificationCallbackRequest } from './dto/request/ItineraryModificationCallbackRequest';
 import { CreateItineraryResponse } from './dto/response/CreateItineraryResponse';
 import { CreateSurveyResponse } from './dto/response/CreateSurveyResponse';
 import { ItineraryJobStatusResponse } from './dto/response/ItineraryJobStatusResponse';
 import { ItineraryResultResponse } from './dto/response/ItineraryResultResponse';
-import { ChatWithItineraryResponse } from './dto/response/ChatWithItineraryResponse';
-import { ItineraryModificationJobStatusResponse } from './dto/response/ItineraryModificationJobStatusResponse';
 
 @ApiTags('itineraries')
 @Controller('v1/itineraries')
@@ -44,8 +38,6 @@ export class ItineraryController {
   constructor(
     private readonly itineraryService: ItineraryService,
     private readonly itineraryCallbackService: ItineraryCallbackService,
-    private readonly itineraryModificationService: ItineraryModificationService,
-    private readonly itineraryModificationCallbackService: ItineraryModificationCallbackService,
   ) {}
 
   /**
@@ -84,10 +76,10 @@ export class ItineraryController {
   }
 
   /**
-   * 작업 상태 조회 (Polling)
+   * 작업 상태 polling
    */
   @Get(':jobId/status')
-  @ApiOperation({ summary: '일정 생성 작업 상태 조회 (Polling)' })
+  @ApiOperation({ summary: '일정 생성 작업 상태 조회' })
   @ApiParam({ name: 'jobId', description: '작업 ID' })
   @ApiResponse({ status: 200, type: ItineraryJobStatusResponse })
   @UserApiBearerAuth()
@@ -146,83 +138,6 @@ export class ItineraryController {
       );
     } else if (body.status === 'FAILED' && body.error) {
       await this.itineraryCallbackService.handleFailure(jobId, body.error);
-    }
-  }
-
-  /**
-   * 로드맵 수정 채팅 요청
-   */
-  @Post(':id/chat')
-  @ApiOperation({ summary: '로드맵 수정 채팅 요청' })
-  @ApiParam({ name: 'id', description: '로드맵 ID' })
-  @ApiBody({ type: ChatWithItineraryRequest })
-  @ApiResponse({ status: 202, type: ChatWithItineraryResponse })
-  @UserApiBearerAuth()
-  @HttpCode(HttpStatus.ACCEPTED)
-  async chatWithItinerary(
-    @UserId() userId: string,
-    @Param('id') itineraryId: string,
-    @Body() request: ChatWithItineraryRequest,
-  ) {
-    const result = await this.itineraryModificationService.chatWithItinerary(
-      userId,
-      itineraryId,
-      request.message,
-    );
-    return { chat: result };
-  }
-
-  /**
-   * 수정 작업 상태 조회
-   */
-  @Get('modification-jobs/:jobId/status')
-  @ApiOperation({ summary: '로드맵 수정 작업 상태 조회' })
-  @ApiParam({ name: 'jobId', description: '작업 ID' })
-  @ApiResponse({ status: 200, type: ItineraryModificationJobStatusResponse })
-  @UserApiBearerAuth()
-  async getModificationJobStatus(
-    @UserId() userId: string,
-    @Param('jobId') jobId: string,
-  ) {
-    const result =
-      await this.itineraryModificationService.getModificationJobStatus(
-        userId,
-        jobId,
-      );
-    return { status: result };
-  }
-
-  /**
-   * Python 서버 수정 콜백 (내부 서비스 인증)
-   */
-  @Post(':jobId/chat-result')
-  @ApiOperation({ summary: 'Python LLM 서버 수정 콜백 (내부 전용)' })
-  @ApiParam({ name: 'jobId', description: '작업 ID' })
-  @ApiBody({ type: ItineraryModificationCallbackRequest })
-  @UseGuards(ServiceSecretGuard)
-  @HttpCode(HttpStatus.OK)
-  async handleModificationCallback(
-    @Param('jobId') jobId: string,
-    @Body() body: ItineraryModificationCallbackRequest,
-  ) {
-    if (body.status === 'FAILED') {
-      if (!body.error) {
-        throw new BadRequestException('FAILED 콜백에는 error가 필수입니다');
-      }
-      await this.itineraryModificationCallbackService.handleFailure(
-        jobId,
-        body.error,
-      );
-    } else {
-      // SUCCESS, ASK_CLARIFICATION, GENERAL_CHAT, REJECTED
-      await this.itineraryModificationCallbackService.handleSuccess(
-        jobId,
-        body.user_query || '',
-        body.status,
-        body.message,
-        body.modified_itinerary,
-        body.diff_keys,
-      );
     }
   }
 }

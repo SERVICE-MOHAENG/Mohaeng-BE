@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, JoinColumn, OneToMany, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { User } from '../../user/entity/User.entity';
 import { Country } from '../../country/entity/Country.entity';
 import { CourseHashTag } from './CourseHashTag.entity';
@@ -19,10 +19,10 @@ export class TravelCourse {
   @PrimaryGeneratedColumn('uuid', { name: 'course_id' })
   id: string;
 
-  @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
+  @Column({ type: 'timestamp', name: 'created_at', nullable: false })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamp', name: 'updated_at' })
+  @Column({ type: 'timestamp', name: 'updated_at', nullable: false })
   updatedAt: Date;
 
   @Column({
@@ -177,6 +177,8 @@ export class TravelCourse {
     course.likeCount = 0;
     course.bookmarkCount = 0;
     const now = new Date();
+    course.createdAt = now;
+    course.updatedAt = now;
     course.travelStartDay = now;
     course.travelFinishDay = now;
     course.courseCountries = (countries || []).map((country) =>

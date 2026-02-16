@@ -57,6 +57,7 @@ export class CreateSurveyRequest {
     type: [String],
   })
   @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
+  @ValidateIf((_, value) => value !== undefined && value !== null)
   @IsArray()
   @ArrayNotEmpty()
   @IsString({ each: true })

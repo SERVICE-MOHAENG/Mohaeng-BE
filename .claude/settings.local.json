@@ -17,8 +17,7 @@
       "Bash(gh pr list:*)",
       "Bash(brew list:*)",
       "WebFetch(domain:github.com)",
-      "Bash(git checkout:*)",
-      "Bash(grep:*)"
+      "Bash(git checkout:*)"
     ]
   }
 }
