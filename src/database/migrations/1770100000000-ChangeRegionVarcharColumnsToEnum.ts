@@ -19,6 +19,20 @@ export class ChangeRegionVarcharColumnsToEnum1770100000000
     // =============================================
     // 1. region_table - travel_range
     // =============================================
+    // 기존 데이터를 새 ENUM 값으로 업데이트
+    await queryRunner.query(`
+      UPDATE region_table SET travel_range = 'SHORT_HAUL'
+      WHERE travel_range IN ('DOMESTIC', 'NEAR_ASIA')
+    `);
+    await queryRunner.query(`
+      UPDATE region_table SET travel_range = 'MEDIUM_HAUL'
+      WHERE travel_range IN ('SOUTHEAST_ASIA')
+    `);
+    await queryRunner.query(`
+      UPDATE region_table SET travel_range = 'LONG_HAUL'
+      WHERE travel_range IN ('EUROPE')
+    `);
+
     await queryRunner.query(`
       ALTER TABLE region_table
       MODIFY COLUMN travel_range ENUM('SHORT_HAUL', 'MEDIUM_HAUL', 'LONG_HAUL')
