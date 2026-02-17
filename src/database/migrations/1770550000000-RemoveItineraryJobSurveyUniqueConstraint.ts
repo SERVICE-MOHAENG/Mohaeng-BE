@@ -10,17 +10,94 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 export class RemoveItineraryJobSurveyUniqueConstraint1770550000000
   implements MigrationInterface
 {
+  private readonly tableName = 'itinerary_job_table';
+  private readonly uniqueIndexName = 'uq_itinerary_job_survey';
+  private readonly fallbackIndexName = 'idx_itinerary_job_survey';
+  private readonly columnName = 'survey_id';
+
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`
-      ALTER TABLE itinerary_job_table
-        DROP INDEX uq_itinerary_job_survey
-    `);
+    if (queryRunner.connection.options.type !== 'mysql') {
+      return;
+    }
+
+    const uniqueIndex = await queryRunner.query(
+      `
+      SELECT 1
+      FROM information_schema.statistics
+      WHERE table_schema = DATABASE()
+        AND table_name = ?
+        AND index_name = ?
+      LIMIT 1
+      `,
+      [this.tableName, this.uniqueIndexName],
+    );
+
+    if (uniqueIndex.length === 0) {
+      return;
+    }
+
+    const fallbackIndex = await queryRunner.query(
+      `
+      SELECT 1
+      FROM information_schema.statistics
+      WHERE table_schema = DATABASE()
+        AND table_name = ?
+        AND index_name = ?
+      LIMIT 1
+      `,
+      [this.tableName, this.fallbackIndexName],
+    );
+
+    if (fallbackIndex.length === 0) {
+      await queryRunner.query(
+        `CREATE INDEX \`${this.fallbackIndexName}\` ON \`${this.tableName}\`(\`${this.columnName}\`)`,
+      );
+    }
+
+    await queryRunner.query(
+      `ALTER TABLE \`${this.tableName}\` DROP INDEX \`${this.uniqueIndexName}\``,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`
-      ALTER TABLE itinerary_job_table
-        ADD UNIQUE KEY uq_itinerary_job_survey (survey_id)
-    `);
+    if (queryRunner.connection.options.type !== 'mysql') {
+      return;
+    }
+
+    const uniqueIndex = await queryRunner.query(
+      `
+      SELECT 1
+      FROM information_schema.statistics
+      WHERE table_schema = DATABASE()
+        AND table_name = ?
+        AND index_name = ?
+      LIMIT 1
+      `,
+      [this.tableName, this.uniqueIndexName],
+    );
+
+    if (uniqueIndex.length === 0) {
+      await queryRunner.query(
+        `ALTER TABLE \`${this.tableName}\` ADD UNIQUE KEY \`${this.uniqueIndexName}\` (\`${this.columnName}\`)`,
+      );
+    }
+
+    const fallbackIndex = await queryRunner.query(
+      `
+      SELECT 1
+      FROM information_schema.statistics
+      WHERE table_schema = DATABASE()
+        AND table_name = ?
+        AND index_name = ?
+      LIMIT 1
+      `,
+      [this.tableName, this.fallbackIndexName],
+    );
+
+    if (fallbackIndex.length > 0) {
+      await queryRunner.query(
+        `ALTER TABLE \`${this.tableName}\` DROP INDEX \`${this.fallbackIndexName}\``,
+      );
+    }
   }
 }
