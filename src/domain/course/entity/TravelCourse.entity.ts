@@ -16,7 +16,7 @@ import { CourseRegion } from './CourseRegion.entity';
  */
 @Entity('travel_course')
 export class TravelCourse {
-  @PrimaryGeneratedColumn('uuid', { name: 'course_id' })
+  @PrimaryGeneratedColumn('uuid', { name: 'id' })
   id: string;
 
   @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
