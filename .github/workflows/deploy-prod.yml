@@ -91,7 +91,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Upload docker compose file to EC2
+      - name: Upload files to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -99,7 +99,8 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_PORT }}
           source: "docker-compose.prod.yml,infra/nginx/default.conf.template"
-          target: /tmp
+          target: ${{ secrets.APP_DIR }}
+          strip_components: 0
 
       - name: Deploy docker image over SSH
         uses: appleboy/ssh-action@v1.2.2
@@ -143,12 +144,7 @@ jobs:
             fi
 
             mkdir -p "$APP_DIR"
-            sudo rm -rf "$APP_DIR/infra/nginx/default.conf.template"
-            sudo mkdir -p "$APP_DIR/infra/nginx"
-            sudo chown -R "$(id -u):$(id -g)" "$APP_DIR/infra"
             cd "$APP_DIR"
-            cp /tmp/docker-compose.prod.yml "$APP_DIR/docker-compose.prod.yml"
-            cp /tmp/infra/nginx/default.conf.template "$APP_DIR/infra/nginx/default.conf.template"
 
             # Prefer writing the production .env from GitHub Secrets.
             # If PROD_ENV_FILE is not set, keep an existing .env on the server (if present).
