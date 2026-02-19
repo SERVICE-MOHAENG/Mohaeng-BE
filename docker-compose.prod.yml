@@ -12,6 +12,8 @@ services:
       AI_SERVER_NAME: ${AI_SERVER_NAME:-ai.example.com}
     volumes:
       - ./infra/nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
+    networks:
+      - mohaeng-network
     command:
       - /bin/sh
       - -c
@@ -34,6 +36,8 @@ services:
       - .env
     expose:
       - "8080"
+    networks:
+      - mohaeng-network
 
   db:
     image: postgres:16-alpine
@@ -45,6 +49,8 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mohaeng-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
       interval: 10s
@@ -58,11 +64,18 @@ services:
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis_data:/data
+    networks:
+      - mohaeng-network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 10
+
+networks:
+  mohaeng-network:
+    name: mohaeng-network
+    driver: bridge
 
 volumes:
   postgres_data:
