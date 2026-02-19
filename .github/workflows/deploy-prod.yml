@@ -143,6 +143,7 @@ jobs:
             fi
 
             mkdir -p "$APP_DIR"
+            sudo rm -rf "$APP_DIR/infra/nginx/default.conf.template"
             sudo mkdir -p "$APP_DIR/infra/nginx"
             sudo chown -R "$(id -u):$(id -g)" "$APP_DIR/infra"
             cd "$APP_DIR"
