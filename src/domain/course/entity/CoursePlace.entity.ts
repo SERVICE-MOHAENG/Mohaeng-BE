@@ -47,7 +47,7 @@ export class CoursePlace {
   description: string | null;
 
   @ManyToOne(() => CourseDay, { nullable: false, onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'date_id' })
+  @JoinColumn({ name: 'course_day_id' })
   courseDay: CourseDay;
 
   @ManyToOne(() => Place, { nullable: false, onDelete: 'CASCADE' })
