@@ -98,7 +98,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_PORT }}
-          source: docker-compose.prod.yml
+          source: "docker-compose.prod.yml,infra/nginx/default.conf.template"
           target: /tmp
 
       - name: Deploy docker image over SSH
@@ -143,8 +143,10 @@ jobs:
             fi
 
             mkdir -p "$APP_DIR"
+            mkdir -p "$APP_DIR/infra/nginx"
             cd "$APP_DIR"
             cp /tmp/docker-compose.prod.yml "$APP_DIR/docker-compose.prod.yml"
+            cp /tmp/infra/nginx/default.conf.template "$APP_DIR/infra/nginx/default.conf.template"
 
             # Prefer writing the production .env from GitHub Secrets.
             # If PROD_ENV_FILE is not set, keep an existing .env on the server (if present).
