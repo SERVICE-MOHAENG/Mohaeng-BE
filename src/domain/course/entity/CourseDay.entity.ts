@@ -7,9 +7,9 @@ import { CoursePlace } from './CoursePlace.entity';
  * @description
  * - 여행 코스 날짜 정보
  */
-@Entity('course_date')
+@Entity('course_day_table')
 export class CourseDay {
-  @PrimaryGeneratedColumn('uuid', { name: 'date_id' })
+  @PrimaryGeneratedColumn('uuid', { name: 'id' })
   id: string;
 
   @ManyToOne(() => TravelCourse, { nullable: false, onDelete: 'CASCADE' })
