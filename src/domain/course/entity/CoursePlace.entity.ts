@@ -47,11 +47,11 @@ export class CoursePlace {
   description: string | null;
 
   @ManyToOne(() => CourseDay, { nullable: false, onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'date_id' })
+  @JoinColumn({ name: 'course_day_id' })
   courseDay: CourseDay;
 
   @ManyToOne(() => Place, { nullable: false, onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'place_id2', referencedColumnName: 'placeId' })
+  @JoinColumn({ name: 'place_id', referencedColumnName: 'placeId' })
   place: Place;
 
   /**
