@@ -27,10 +27,9 @@ export class UserPreferenceRepository {
       relations: [
         'weatherPreferences',
         'travelRanges',
-        'environments',
+        'travelStyles',
         'foodPersonalities',
         'mainInterests',
-        'continents',
         'budgets',
       ],
     });
@@ -47,10 +46,9 @@ export class UserPreferenceRepository {
       relations: [
         'weatherPreferences',
         'travelRanges',
-        'environments',
+        'travelStyles',
         'foodPersonalities',
         'mainInterests',
-        'continents',
         'budgets',
       ],
     });

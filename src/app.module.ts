@@ -14,6 +14,7 @@ import { ItineraryModule } from './domain/itinerary/ItineraryModule';
 import { PlaceModule } from './domain/place/PlaceModule';
 import { NotificationModule } from './domain/notification/NotificationModule';
 import { CountryModule } from './domain/country/CountryModule';
+import { PreferenceModule } from './domain/preference/PreferenceModule';
 import { User } from './domain/user/entity/User.entity';
 import { TravelCourse } from './domain/course/entity/TravelCourse.entity';
 import { CoursePlace } from './domain/course/entity/CoursePlace.entity';
@@ -27,6 +28,10 @@ import { CourseSurvey } from './domain/course/entity/CourseSurvey.entity';
 import { CourseSurveyDestination } from './domain/course/entity/CourseSurveyDestination.entity';
 import { CourseSurveyCompanion } from './domain/course/entity/CourseSurveyCompanion.entity';
 import { CourseSurveyTheme } from './domain/course/entity/CourseSurveyTheme.entity';
+import { RoadmapSurvey } from './domain/course/entity/RoadmapSurvey.entity';
+import { RoadmapSurveyCompanion } from './domain/course/entity/RoadmapSurveyCompanion.entity';
+import { RoadmapSurveyTheme } from './domain/course/entity/RoadmapSurveyTheme.entity';
+import { RoadmapSurveyDestination } from './domain/course/entity/RoadmapSurveyDestination.entity';
 import { TravelBlog } from './domain/blog/entity/TravelBlog.entity';
 import { BlogLike } from './domain/blog/entity/BlogLike.entity';
 import { Country } from './domain/country/entity/Country.entity';
@@ -42,6 +47,8 @@ import { UserPreferenceTravelStyle } from './domain/preference/entity/UserPrefer
 import { UserPreferenceFoodPersonality } from './domain/preference/entity/UserPreferenceFoodPersonality.entity';
 import { UserPreferenceMainInterest } from './domain/preference/entity/UserPreferenceMainInterest.entity';
 import { UserPreferenceBudget } from './domain/preference/entity/UserPreferenceBudget.entity';
+import { PreferenceJob } from './domain/preference/entity/PreferenceJob.entity';
+import { PreferenceRecommendation } from './domain/preference/entity/PreferenceRecommendation.entity';
 import { RegionCategory } from './domain/country/entity/RegionCategory.entity';
 import { RegionFoodPersonality } from './domain/country/entity/RegionFoodPersonality.entity';
 import { RegionMainInterest } from './domain/country/entity/RegionMainInterest.entity';
@@ -84,6 +91,11 @@ import { RegionBudget } from './domain/country/entity/RegionBudget.entity';
           CourseSurveyDestination,
           CourseSurveyCompanion,
           CourseSurveyTheme,
+          // RoadmapSurvey entities (신버전)
+          RoadmapSurvey,
+          RoadmapSurveyCompanion,
+          RoadmapSurveyTheme,
+          RoadmapSurveyDestination,
           ItineraryJob,
           TravelBlog,
           BlogLike,
@@ -100,6 +112,8 @@ import { RegionBudget } from './domain/country/entity/RegionBudget.entity';
           UserPreferenceFoodPersonality,
           UserPreferenceMainInterest,
           UserPreferenceBudget,
+          PreferenceJob,
+          PreferenceRecommendation,
           // Region mapping entities
           RegionCategory,
           RegionFoodPersonality,
@@ -159,6 +173,7 @@ import { RegionBudget } from './domain/country/entity/RegionBudget.entity';
     NotificationModule,
     VisitedCountryModule,
     ItineraryModule,
+    PreferenceModule,
   ],
   controllers: [],
   providers: [],

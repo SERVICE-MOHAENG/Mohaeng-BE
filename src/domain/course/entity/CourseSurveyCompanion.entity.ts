@@ -1,5 +1,6 @@
 import { Entity, Column, ManyToOne, JoinColumn, PrimaryGeneratedColumn } from 'typeorm';
 import { CourseSurvey } from './CourseSurvey.entity';
+import { Companion } from './Companion.enum';
 
 /**
  * CourseSurveyCompanion Entity
@@ -21,6 +22,12 @@ export class CourseSurveyCompanion {
   @Column({ type: 'uuid', name: 'course_survay_id' })
   surveyId: string;
 
-  @Column({ type: 'varchar', length: 50, name: 'companion_type', nullable: false })
-  companion: string;
+  @Column({
+    type: 'enum',
+    enum: Companion,
+    name: 'companion_type',
+    nullable: false,
+    comment: '동행자 유형',
+  })
+  companion: Companion;
 }

@@ -1,4 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { ItineraryJobRepository } from '../persistence/ItineraryJobRepository';
@@ -65,6 +67,8 @@ export interface ItineraryFailurePayload {
 export class ItineraryCallbackService {
   private readonly logger = new Logger(ItineraryCallbackService.name);
 
+  private static readonly MAX_RETRY_COUNT = 1;
+
   constructor(
     private readonly itineraryJobRepository: ItineraryJobRepository,
     private readonly dataSource: DataSource,
@@ -72,6 +76,8 @@ export class ItineraryCallbackService {
     private readonly placeRepository: Repository<Place>,
     @InjectRepository(CourseSurvey)
     private readonly surveyRepository: Repository<CourseSurvey>,
+    @InjectQueue('itinerary-generation')
+    private readonly itineraryQueue: Queue,
   ) {}
 
   /**
@@ -254,10 +260,31 @@ export class ItineraryCallbackService {
       return;
     }
 
-    job.markFailed(error.code, error.message);
-    await this.itineraryJobRepository.save(job);
+    if (job.attemptCount <= ItineraryCallbackService.MAX_RETRY_COUNT) {
+      // 1회 재시도: PENDING으로 리셋 후 재enqueue
+      job.status = ItineraryStatus.PENDING;
+      job.errorCode = null;
+      job.errorMessage = null;
+      job.startedAt = null;
+      job.completedAt = null;
+      await this.itineraryJobRepository.save(job);
 
-    this.logger.warn(`Job ${jobId} 실패 처리: ${error.code} - ${error.message}`);
+      await this.itineraryQueue.add(
+        'generate-itinerary',
+        { jobId: job.id, surveyId: job.surveyId },
+        { attempts: 3, backoff: { type: 'exponential', delay: 5000 } },
+      );
+
+      this.logger.warn(
+        `Job ${jobId} 실패 재시도: attemptCount=${job.attemptCount}, code=${error.code}`,
+      );
+    } else {
+      // 최종 FAILED 확정
+      job.markFailed(error.code, error.message);
+      await this.itineraryJobRepository.save(job);
+
+      this.logger.warn(`Job ${jobId} 최종 실패: ${error.code} - ${error.message}`);
+    }
   }
 
   /**
