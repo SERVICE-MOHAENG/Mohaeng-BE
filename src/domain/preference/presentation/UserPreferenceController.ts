@@ -6,12 +6,13 @@ import {
   HttpStatus,
   Post,
   Param,
-  BadRequestException,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags, ApiParam } from '@nestjs/swagger';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { ResponseInterceptor } from '../../../global/interceptors/ResponseInterceptor';
 import { UserApiBearerAuth } from '../../../global/decorators/UserApiBearerAuth';
 import { UserId } from '../../../global/decorators/UserId';
 import { ServiceSecretGuard } from '../../itinerary/guard/ServiceSecretGuard';
@@ -24,6 +25,10 @@ import { PreferenceCallbackRequest } from './dto/request/PreferenceCallbackReque
 import { UserPreferenceResponse } from './dto/response/UserPreferenceResponse';
 import { PreferenceRecommendationResponse } from './dto/response/PreferenceRecommendationResponse';
 import { PreferenceJobData } from '../processor/PreferenceProcessor';
+import {
+  MissingCallbackDataException,
+  MissingCallbackErrorException,
+} from '../exception/InvalidPreferenceCallbackException';
 
 /**
  * UserPreferenceController
@@ -36,6 +41,7 @@ import { PreferenceJobData } from '../processor/PreferenceProcessor';
  */
 @ApiTags('preferences')
 @Controller('v1/preferences')
+@UseInterceptors(ResponseInterceptor)
 export class UserPreferenceController {
   constructor(
     private readonly userPreferenceService: UserPreferenceService,
@@ -155,12 +161,12 @@ export class UserPreferenceController {
   ): Promise<void> {
     if (body.status === 'SUCCESS') {
       if (!body.data) {
-        throw new BadRequestException('SUCCESS 콜백에는 data가 필수입니다');
+        throw new MissingCallbackDataException();
       }
       await this.preferenceCallbackService.handleSuccess(jobId, body.data);
     } else {
       if (!body.error) {
-        throw new BadRequestException('FAILED 콜백에는 error가 필수입니다');
+        throw new MissingCallbackErrorException();
       }
       await this.preferenceCallbackService.handleFailure(jobId, body.error);
     }
