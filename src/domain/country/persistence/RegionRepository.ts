@@ -22,6 +22,10 @@ export class RegionRepository {
     });
   }
 
+  async findByName(name: string): Promise<Region | null> {
+    return this.repository.findOne({ where: { name } });
+  }
+
   async findByCountryId(countryId: string): Promise<Region[]> {
     return this.repository.find({
       where: { country: { id: countryId } },
