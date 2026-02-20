@@ -3,16 +3,24 @@ import {
   ArrayNotEmpty,
   IsArray,
   IsDateString,
+  IsEnum,
   IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
   Max,
   Min,
-  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
+import { SurveyBudget } from '../../../../course/entity/SurveyBudget.enum';
+import { PacePreference } from '../../../../course/entity/PacePreference.enum';
+import { PlanningPreference } from '../../../../course/entity/PlanningPreference.enum';
+import { DestinationPreference } from '../../../../course/entity/DestinationPreference.enum';
+import { ActivityPreference } from '../../../../course/entity/ActivityPreference.enum';
+import { PriorityPreference } from '../../../../course/entity/PriorityPreference.enum';
+import { Companion } from '../../../../course/entity/Companion.enum';
+import { TravelTheme } from '../../../../course/entity/TravelTheme.enum';
 
 class SurveyRegionRequest {
   @ApiProperty({ description: '지역명', example: 'SEOUL' })
@@ -53,59 +61,76 @@ export class CreateSurveyRequest {
 
   @ApiProperty({
     description: '동행자 유형 목록',
-    example: ['FAMILY', 'FRIEND'],
-    type: [String],
+    enum: Companion,
+    isArray: true,
+    example: [Companion.FAMILY],
   })
   @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
   @IsArray()
   @ArrayNotEmpty()
-  @IsString({ each: true })
-  companion_type: string[];
+  @IsEnum(Companion, { each: true })
+  companion_type: Companion[];
 
   @ApiProperty({
     description: '여행 테마 목록',
-    example: ['UNIQUE_TRIP'],
-    type: [String],
+    enum: TravelTheme,
+    isArray: true,
+    example: [TravelTheme.UNIQUE_TRIP],
   })
   @IsArray()
   @ArrayNotEmpty()
-  @IsString({ each: true })
-  travel_themes: string[];
-
-  @ApiProperty({ description: '여행 스타일(빡빡/널널)', example: 'DENSE' })
-  @IsString()
-  @IsNotEmpty()
-  pace_preference: string;
-
-  @ApiProperty({ description: '여행 스타일(계획/즉흥)', example: 'PLANNED' })
-  @IsString()
-  @IsNotEmpty()
-  planning_preference: string;
+  @IsEnum(TravelTheme, { each: true })
+  travel_themes: TravelTheme[];
 
   @ApiProperty({
-    description: '여행 스타일(관광지/로컬)',
-    example: 'TOURIST_SPOTS',
+    description: '일정 밀도 선호',
+    enum: PacePreference,
+    example: PacePreference.DENSE,
   })
-  @IsString()
-  @IsNotEmpty()
-  destination_preference: string;
+  @IsEnum(PacePreference)
+  pace_preference: PacePreference;
 
-  @ApiProperty({ description: '여행 스타일(활동/휴식)', example: 'ACTIVE' })
-  @IsString()
-  @IsNotEmpty()
-  activity_preference: string;
+  @ApiProperty({
+    description: '계획 성향',
+    enum: PlanningPreference,
+    example: PlanningPreference.PLANNED,
+  })
+  @IsEnum(PlanningPreference)
+  planning_preference: PlanningPreference;
 
-  @ApiProperty({ description: '여행 스타일(효율/감성)', example: 'EFFICIENCY' })
-  @IsString()
-  @IsNotEmpty()
-  priority_preference: string;
+  @ApiProperty({
+    description: '여행지 선호',
+    enum: DestinationPreference,
+    example: DestinationPreference.TOURIST_SPOTS,
+  })
+  @IsEnum(DestinationPreference)
+  destination_preference: DestinationPreference;
 
-  @ApiProperty({ description: '예산 범위', example: 'LOW' })
-  @IsString()
-  @IsNotEmpty()
-  budget_range: string;
+  @ApiProperty({
+    description: '활동 선호',
+    enum: ActivityPreference,
+    example: ActivityPreference.ACTIVE,
+  })
+  @IsEnum(ActivityPreference)
+  activity_preference: ActivityPreference;
 
-  @ApiProperty({ description: '추가 요청 사항', required: false, example: 'string' })
+  @ApiProperty({
+    description: '우선 가치',
+    enum: PriorityPreference,
+    example: PriorityPreference.EFFICIENCY,
+  })
+  @IsEnum(PriorityPreference)
+  priority_preference: PriorityPreference;
+
+  @ApiProperty({
+    description: '예산 범위',
+    enum: SurveyBudget,
+    example: SurveyBudget.LOW,
+  })
+  @IsEnum(SurveyBudget)
+  budget_range: SurveyBudget;
+
+  @ApiProperty({ description: '추가 요청 사항', required: false, example: '해산물 위주로 부탁드려요' })
   @IsOptional()
   @IsString()
   notes?: string;
