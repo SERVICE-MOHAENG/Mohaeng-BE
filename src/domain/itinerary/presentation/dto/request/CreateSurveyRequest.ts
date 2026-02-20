@@ -77,6 +77,7 @@ export class CreateSurveyRequest {
     isArray: true,
     example: [TravelTheme.UNIQUE_TRIP],
   })
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
   @IsArray()
   @ArrayNotEmpty()
   @IsEnum(TravelTheme, { each: true })
