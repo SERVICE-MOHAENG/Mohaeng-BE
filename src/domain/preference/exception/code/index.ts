@@ -17,4 +17,4 @@ export const PreferenceErrorMessage = {
     'SUCCESS 콜백에는 data가 필수입니다',
   [PreferenceErrorCode.MISSING_CALLBACK_ERROR]:
     'FAILED 콜백에는 error가 필수입니다',
-} as const;
+} as const satisfies Record<PreferenceErrorCode, string>;
