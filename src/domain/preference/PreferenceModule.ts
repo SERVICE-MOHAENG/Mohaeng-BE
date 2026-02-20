@@ -20,6 +20,7 @@ import { PreferenceCallbackService } from './service/PreferenceCallbackService';
 import { PreferenceJobCleanupService } from './service/PreferenceJobCleanupService';
 import { PreferenceProcessor } from './processor/PreferenceProcessor';
 import { UserPreferenceController } from './presentation/UserPreferenceController';
+import { UserModule } from '../user/UserModule';
 
 /**
  * PreferenceModule
@@ -45,6 +46,7 @@ import { UserPreferenceController } from './presentation/UserPreferenceControlle
       name: 'preference-recommendation',
     }),
     HttpModule,
+    UserModule,
   ],
   controllers: [UserPreferenceController],
   providers: [
