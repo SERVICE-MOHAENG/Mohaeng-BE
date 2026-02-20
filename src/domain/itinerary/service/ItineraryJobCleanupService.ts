@@ -8,7 +8,7 @@ import { GlobalRedisService } from '../../../global/redis/GlobalRedisService';
  * ItineraryJobCleanupService
  * @description
  * - Stale Job 감지 크론잡
- * - 매 분마다 PROCESSING 상태에서 3분 초과된 Job을 FAILED 처리
+ * - 매 분마다 PROCESSING 상태에서 10분 초과된 Job을 FAILED 처리
  */
 @Injectable()
 export class ItineraryJobCleanupService {
@@ -52,7 +52,7 @@ export class ItineraryJobCleanupService {
 
       // 여전히 PROCESSING 상태인 경우에만 타임아웃 처리
       if (currentJob.status === ItineraryStatus.PROCESSING) {
-        currentJob.markFailed('TIMEOUT', '일정 생성 시간이 초과되었습니다 (3분)');
+        currentJob.markFailed('TIMEOUT', '일정 생성 시간이 초과되었습니다 (10분)');
         await this.itineraryJobRepository.save(currentJob);
 
         // Redis Pub/Sub: 타임아웃 알림 발행
@@ -63,7 +63,7 @@ export class ItineraryJobCleanupService {
             jobId: currentJob.id,
             error: {
               code: 'TIMEOUT',
-              message: '일정 생성 시간이 초과되었습니다 (3분)',
+              message: '일정 생성 시간이 초과되었습니다 (10분)',
             },
           }),
         );
