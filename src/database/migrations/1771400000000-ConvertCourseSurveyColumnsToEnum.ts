@@ -14,15 +14,11 @@ export class ConvertCourseSurveyColumnsToEnum1771400000000
     // =============================================
     // 1. course_survey_table 컬럼 varchar → ENUM 변환
     // =============================================
+    // budget: 기존 varchar 값(LOW/MID/HIGH/LUXURY)을 그대로 사용하므로
+    // 1단계: 기존 값 + 신규 값 모두 허용하는 ENUM으로 확장
     await queryRunner.query(`
       ALTER TABLE course_survey_table
-      MODIFY COLUMN budget ENUM(
-        'LOW', 'MEDIUM', 'HIGH', 'COST_EFFECTIVE', 'BALANCED', 'PREMIUM_LUXURY'
-      ) NOT NULL COMMENT '예산 범위'
-    `);
-    await queryRunner.query(`
-      ALTER TABLE course_survey_table
-      MODIFY COLUMN budget ENUM('COST_EFFECTIVE', 'BALANCED', 'PREMIUM_LUXURY') NOT NULL COMMENT '예산 범위'
+      MODIFY COLUMN budget ENUM('LOW', 'MID', 'HIGH', 'LUXURY') NOT NULL COMMENT '예산 범위'
     `);
 
     await queryRunner.query(`
