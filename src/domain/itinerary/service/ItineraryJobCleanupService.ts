@@ -13,7 +13,7 @@ import { GlobalRedisService } from '../../../global/redis/GlobalRedisService';
 @Injectable()
 export class ItineraryJobCleanupService {
   private readonly logger = new Logger(ItineraryJobCleanupService.name);
-  private static readonly TIMEOUT_MINUTES = 3;
+  private static readonly TIMEOUT_MINUTES = 10;
 
   constructor(
     private readonly itineraryJobRepository: ItineraryJobRepository,
