@@ -73,7 +73,20 @@ export class GlobalRedisService implements OnModuleDestroy {
    * 값을 조회하고 즉시 삭제합니다 (원자적 연산)
    */
   async getAndDelete(key: string): Promise<string | null> {
-    return await this.client.getdel(key);
+    // Redis 6.2 미만 환경에서는 GETDEL 명령이 없어 Lua 스크립트로 대체합니다.
+    const result = await this.client.eval(
+      `
+      local value = redis.call('GET', KEYS[1])
+      if value then
+        redis.call('DEL', KEYS[1])
+      end
+      return value
+      `,
+      1,
+      key,
+    );
+
+    return typeof result === 'string' ? result : null;
   }
 
   /**

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { createHash, randomBytes, randomInt } from 'crypto';
+import type { StringValue } from 'ms';
 import { User } from '../../user/entity/User.entity';
 import { Provider } from '../../user/entity/Provider.enum';
 import { UserNotActiveException } from '../../user/exception/UserNotActiveException';
@@ -36,6 +37,7 @@ const OTP_RATE_LIMIT_MAX = 5;
 const OTP_MAX_VERIFY_ATTEMPTS = 5;
 const OTP_VERIFIED_FLAG_TTL_SECONDS = 10 * 60;
 const REFRESH_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60; // 7일
+const DEFAULT_REFRESH_TOKEN_EXPIRES_IN = '7d';
 
 @Injectable()
 export class AuthService {
@@ -188,7 +190,7 @@ export class AuthService {
     let payload: { userId: string; jti: string };
     try {
       payload = this.jwtService.verify(refreshToken, {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+        secret: this.getRefreshJwtSecret(),
       });
     } catch (error) {
       throw new AuthInvalidRefreshTokenException();
@@ -296,8 +298,8 @@ export class AuthService {
     };
 
     const refreshToken = this.jwtService.sign(refreshTokenPayload, {
-      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-      expiresIn: '7d',
+      secret: this.getRefreshJwtSecret(),
+      expiresIn: this.getRefreshTokenExpiresIn() as StringValue,
     });
 
     const tokenHash = this.hashToken(refreshToken);
@@ -317,6 +319,23 @@ export class AuthService {
 
   private hashToken(token: string): string {
     return createHash('sha256').update(token).digest('hex');
+  }
+
+  private getRefreshJwtSecret(): string {
+    const secret = this.configService.get<string>('JWT_REFRESH_SECRET');
+
+    if (!secret) {
+      throw new Error('JWT refresh secret is not set.');
+    }
+
+    return secret;
+  }
+
+  private getRefreshTokenExpiresIn(): string {
+    return (
+      this.configService.get<string>('JWT_REFRESH_TOKEN_EXPIRES_IN') ||
+      DEFAULT_REFRESH_TOKEN_EXPIRES_IN
+    );
   }
 
   private normalizeEmail(email: string): string {
