@@ -11,19 +11,32 @@ export class EmailOtpService {
 
   constructor(private readonly configService: ConfigService) {
     const host = this.configService.get<string>('SMTP_HOST');
-    const port = this.configService.get<number>('SMTP_PORT');
+    const rawPort = this.configService.get<string | number>('SMTP_PORT');
     const user = this.configService.get<string>('SMTP_USER');
     const pass = this.configService.get<string>('SMTP_PASS');
     const from = this.configService.get<string>('SMTP_FROM') ?? user;
+    const secureOverride = this.configService.get<string>('SMTP_SECURE');
 
-    if (!host || !port || !user || !pass || !from) {
+    const port =
+      typeof rawPort === 'number'
+        ? rawPort
+        : rawPort
+          ? Number(rawPort)
+          : NaN;
+
+    if (!host || !Number.isFinite(port) || !user || !pass || !from) {
       throw new Error('SMTP configuration is missing.');
     }
+
+    const secure =
+      secureOverride !== undefined
+        ? secureOverride.toLowerCase() === 'true'
+        : port === 465;
 
     this.transporter = nodemailer.createTransport({
       host,
       port,
-      secure: port === 465,
+      secure,
       auth: { user, pass },
     });
 
@@ -40,7 +53,8 @@ export class EmailOtpService {
         text: `당신의 인증 코드는 ${otp}입니다. 이 코드는 5분동안 유효합니다.`,
         html,
       });
-    } catch {
+    } catch (error) {
+      console.error('[EmailOtpService] sendOtp failed:', error);
       throw new GlobalExternalServiceErrorException();
     }
   }
