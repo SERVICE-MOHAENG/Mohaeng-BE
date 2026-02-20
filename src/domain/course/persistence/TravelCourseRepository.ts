@@ -97,24 +97,30 @@ export class TravelCourseRepository {
     page: number = 1,
     limit: number = 10,
   ): Promise<[TravelCourse[], number]> {
-    // 1단계: 필터링/페이지네이션으로 코스 ID만 조회
-    const queryBuilder = this.repository
+    const baseQuery = this.repository
       .createQueryBuilder('course')
-      .select('course.id')
       .where('course.isPublic = :isPublic', { isPublic: true });
 
     if (countryCode) {
-      queryBuilder
+      baseQuery
         .leftJoin('course.courseCountries', 'courseCountries')
         .leftJoin('courseCountries.country', 'country')
         .andWhere('country.code = :countryCode', { countryCode });
     }
 
-    queryBuilder.orderBy('course.likeCount', 'DESC');
-    queryBuilder.skip((page - 1) * limit).take(limit);
+    const total = await baseQuery.clone().getCount();
 
-    const [courseIdEntities, total] = await queryBuilder.getManyAndCount();
-    const courseIds = courseIdEntities.map((c) => c.id);
+    // Postgres + pagination + getManyAndCount 조합에서 발생하는 별칭 오류를 피하기 위해
+    // ID 목록은 raw 쿼리로 분리 조회한다.
+    const pagedIds = await baseQuery
+      .clone()
+      .select('course.id', 'id')
+      .orderBy('course.likeCount', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getRawMany<{ id: string }>();
+
+    const courseIds = pagedIds.map((row) => row.id);
 
     if (courseIds.length === 0) {
       return [[], total];
