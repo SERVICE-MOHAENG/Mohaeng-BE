@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -26,6 +26,7 @@ import { ChatLimitExceededException } from '../exception/ChatLimitExceededExcept
 @Injectable()
 export class ItineraryModificationService {
   private static readonly MAX_CHAT_COUNT = 10;
+  private readonly logger = new Logger(ItineraryModificationService.name);
 
   constructor(
     private readonly itineraryJobRepository: ItineraryJobRepository,
@@ -104,7 +105,14 @@ export class ItineraryModificationService {
       );
     } catch (err) {
       savedJob.markFailed('QUEUE_ERROR', '작업 큐 등록에 실패했습니다');
-      await this.itineraryJobRepository.save(savedJob);
+      try {
+        await this.itineraryJobRepository.save(savedJob);
+      } catch (saveErr) {
+        this.logger.error(
+          `Job FAILED 상태 저장 실패: jobId=${savedJob.id}`,
+          saveErr,
+        );
+      }
       throw err;
     }
 

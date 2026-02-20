@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
@@ -30,6 +30,8 @@ import { SurveyNotFoundException } from '../exception/SurveyNotFoundException';
  */
 @Injectable()
 export class ItineraryService {
+  private readonly logger = new Logger(ItineraryService.name);
+
   constructor(
     private readonly itineraryJobRepository: ItineraryJobRepository,
     @InjectRepository(CourseSurvey)
@@ -224,7 +226,14 @@ export class ItineraryService {
       );
     } catch (err) {
       savedJob.markFailed('QUEUE_ERROR', '작업 큐 등록에 실패했습니다');
-      await this.itineraryJobRepository.save(savedJob);
+      try {
+        await this.itineraryJobRepository.save(savedJob);
+      } catch (saveErr) {
+        this.logger.error(
+          `Job FAILED 상태 저장 실패: jobId=${savedJob.id}`,
+          saveErr,
+        );
+      }
       throw err;
     }
 
