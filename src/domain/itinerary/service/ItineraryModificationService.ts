@@ -86,11 +86,21 @@ export class ItineraryModificationService {
     const savedJob = await this.itineraryJobRepository.save(job);
 
     // 6. BullMQ 큐에 작업 추가
-    await this.modificationQueue.add('modify-itinerary', {
-      jobId: savedJob.id,
-      travelCourseId: itineraryId,
-      userMessage: message,
-    });
+    await this.modificationQueue.add(
+      'modify-itinerary',
+      {
+        jobId: savedJob.id,
+        travelCourseId: itineraryId,
+        userMessage: message,
+      },
+      {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 5000, // 5s → 10s → 20s
+        },
+      },
+    );
 
     return ChatWithItineraryResponse.from(savedJob);
   }

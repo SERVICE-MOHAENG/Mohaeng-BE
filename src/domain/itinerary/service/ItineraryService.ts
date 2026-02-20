@@ -207,10 +207,20 @@ export class ItineraryService {
     const savedJob = await this.itineraryJobRepository.save(job);
 
     // 4. BullMQ 큐에 작업 추가
-    await this.itineraryQueue.add('generate-itinerary', {
-      jobId: savedJob.id,
-      surveyId,
-    });
+    await this.itineraryQueue.add(
+      'generate-itinerary',
+      {
+        jobId: savedJob.id,
+        surveyId,
+      },
+      {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 5000, // 5s → 10s → 20s
+        },
+      },
+    );
 
     return CreateItineraryResponse.from(savedJob);
   }
