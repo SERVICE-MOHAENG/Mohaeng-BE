@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { UserPreferenceRepository } from '../persistence/UserPreferenceRepository';
 import { UserPreference } from '../entity/UserPreference.entity';
 import { UserPreferenceWeather } from '../entity/UserPreferenceWeather.entity';
@@ -16,15 +17,17 @@ import { BudgetLevel } from '../entity/BudgetLevel.enum';
 
 /**
  * 선호도 생성/수정 DTO
+ * - weather / travelRange / travelStyle / budget : 단일값
+ * - foodPersonalities / mainInterests            : 다중값 배열
  */
 export interface CreateUserPreferenceDto {
   userId: string;
-  weatherPreferences: WeatherPreference[];
-  travelRanges: TravelRange[];
-  travelStyles: TravelStyle[];
+  weather: WeatherPreference;
+  travelRange: TravelRange;
+  travelStyle: TravelStyle;
   foodPersonalities: FoodPersonality[];
   mainInterests: MainInterest[];
-  budgets: BudgetLevel[];
+  budget: BudgetLevel;
 }
 
 /**
@@ -36,58 +39,62 @@ export interface CreateUserPreferenceDto {
 export class UserPreferenceService {
   constructor(
     private readonly userPreferenceRepository: UserPreferenceRepository,
+    private readonly dataSource: DataSource,
   ) {}
 
   /**
    * 사용자 선호도 생성 또는 업데이트
    * @description
    * - 이미 선호도가 있으면 기존 것을 삭제하고 새로 생성
+   * - 삭제-생성을 트랜잭션으로 묶어 데이터 유실 방지
    * - cascade 설정으로 매핑 테이블도 자동으로 저장됨
    */
   async createOrUpdate(
     dto: CreateUserPreferenceDto,
   ): Promise<UserPreference> {
-    // 기존 선호도가 있으면 삭제
-    const existing = await this.userPreferenceRepository.findByUserId(
-      dto.userId,
-    );
-    if (existing) {
-      await this.userPreferenceRepository.delete(existing.id);
-    }
+    return this.dataSource.transaction(async (manager) => {
+      // 기존 선호도가 있으면 삭제
+      const existing = await manager.findOne(UserPreference, {
+        where: { userId: dto.userId },
+      });
+      if (existing) {
+        await manager.delete(UserPreference, existing.id);
+      }
 
-    // 새 선호도 생성
-    const preference = UserPreference.create(dto.userId);
+      // 새 선호도 생성
+      const preference = UserPreference.create(dto.userId);
+      const saved = await manager.save(UserPreference, preference);
 
-    // 매핑 엔티티들 생성 (아직 preference.id가 없으므로 save 후 설정됨)
-    const saved = await this.userPreferenceRepository.save(preference);
+      // 각 선호도 매핑 엔티티 생성
+      // 단일 선택 4개 → 매핑 테이블에 row 1개씩 저장
+      saved.weatherPreferences = [
+        UserPreferenceWeather.create(saved.id, dto.weather),
+      ];
 
-    // 각 선호도 매핑 엔티티 생성
-    saved.weatherPreferences = dto.weatherPreferences.map((weather) =>
-      UserPreferenceWeather.create(saved.id, weather),
-    );
+      saved.travelRanges = [
+        UserPreferenceTravelRange.create(saved.id, dto.travelRange),
+      ];
 
-    saved.travelRanges = dto.travelRanges.map((range) =>
-      UserPreferenceTravelRange.create(saved.id, range),
-    );
+      saved.travelStyles = [
+        UserPreferenceTravelStyle.create(saved.id, dto.travelStyle),
+      ];
 
-    saved.travelStyles = dto.travelStyles.map((style) =>
-      UserPreferenceTravelStyle.create(saved.id, style),
-    );
+      saved.budgets = [
+        UserPreferenceBudget.create(saved.id, dto.budget),
+      ];
 
-    saved.foodPersonalities = dto.foodPersonalities.map((food) =>
-      UserPreferenceFoodPersonality.create(saved.id, food),
-    );
+      // 다중 선택 2개 → 배열 그대로 저장
+      saved.foodPersonalities = dto.foodPersonalities.map((food) =>
+        UserPreferenceFoodPersonality.create(saved.id, food),
+      );
 
-    saved.mainInterests = dto.mainInterests.map((interest) =>
-      UserPreferenceMainInterest.create(saved.id, interest),
-    );
+      saved.mainInterests = dto.mainInterests.map((interest) =>
+        UserPreferenceMainInterest.create(saved.id, interest),
+      );
 
-    saved.budgets = dto.budgets.map((budget) =>
-      UserPreferenceBudget.create(saved.id, budget),
-    );
-
-    // cascade로 매핑 테이블도 자동 저장
-    return this.userPreferenceRepository.save(saved);
+      // cascade로 매핑 테이블도 자동 저장
+      return manager.save(UserPreference, saved);
+    });
   }
 
   /**

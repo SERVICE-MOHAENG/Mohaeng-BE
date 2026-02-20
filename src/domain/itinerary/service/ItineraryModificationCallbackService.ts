@@ -1,4 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { ItineraryJobRepository } from '../persistence/ItineraryJobRepository';
@@ -65,6 +67,8 @@ export class ItineraryModificationCallbackService {
     ItineraryModificationCallbackService.name,
   );
 
+  private static readonly MAX_RETRY_COUNT = 1;
+
   constructor(
     private readonly itineraryJobRepository: ItineraryJobRepository,
     private readonly dataSource: DataSource,
@@ -72,6 +76,8 @@ export class ItineraryModificationCallbackService {
     private readonly placeRepository: Repository<Place>,
     @InjectRepository(CourseAiChat)
     private readonly chatRepository: Repository<CourseAiChat>,
+    @InjectQueue('itinerary-modification')
+    private readonly modificationQueue: Queue,
   ) {}
 
   /**
@@ -152,10 +158,35 @@ export class ItineraryModificationCallbackService {
       return;
     }
 
-    job.markFailed(error.code, error.message);
-    await this.itineraryJobRepository.save(job);
+    if (job.attemptCount <= ItineraryModificationCallbackService.MAX_RETRY_COUNT) {
+      // 1회 재시도: PENDING으로 리셋 후 재enqueue
+      job.status = ItineraryStatus.PENDING;
+      job.errorCode = null;
+      job.errorMessage = null;
+      job.startedAt = null;
+      job.completedAt = null;
+      await this.itineraryJobRepository.save(job);
 
-    this.logger.warn(`Job ${jobId} 실패 처리: ${error.code} - ${error.message}`);
+      await this.modificationQueue.add(
+        'modify-itinerary',
+        {
+          jobId: job.id,
+          travelCourseId: job.travelCourseId,
+          userMessage: job.userQuery,
+        },
+        { attempts: 3, backoff: { type: 'exponential', delay: 5000 } },
+      );
+
+      this.logger.warn(
+        `Job ${jobId} 수정 실패 재시도: attemptCount=${job.attemptCount}, code=${error.code}`,
+      );
+    } else {
+      // 최종 FAILED 확정
+      job.markFailed(error.code, error.message);
+      await this.itineraryJobRepository.save(job);
+
+      this.logger.warn(`Job ${jobId} 수정 최종 실패: ${error.code} - ${error.message}`);
+    }
   }
 
   /**

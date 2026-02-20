@@ -4,11 +4,17 @@ import { TravelCourse } from './TravelCourse.entity';
 import { CourseSurveyDestination } from './CourseSurveyDestination.entity';
 import { CourseSurveyCompanion } from './CourseSurveyCompanion.entity';
 import { CourseSurveyTheme } from './CourseSurveyTheme.entity';
+import { SurveyBudget } from './SurveyBudget.enum';
+import { PacePreference } from './PacePreference.enum';
+import { PlanningPreference } from './PlanningPreference.enum';
+import { DestinationPreference } from './DestinationPreference.enum';
+import { ActivityPreference } from './ActivityPreference.enum';
+import { PriorityPreference } from './PriorityPreference.enum';
 
 /**
  * CourseSurvey Entity
  * @description
- * - 로드맵 설문 정보
+ * - 로드맵 설문 정보 (레거시 - course_survey_table)
  */
 @Entity('course_survey_table')
 export class CourseSurvey {
@@ -32,8 +38,14 @@ export class CourseSurvey {
   @Column({ type: 'int', name: 'pax_count', nullable: false })
   paxCount: number;
 
-  @Column({ type: 'varchar', length: 50, name: 'budget', nullable: false })
-  budget: string;
+  @Column({
+    type: 'enum',
+    enum: SurveyBudget,
+    name: 'budget',
+    nullable: false,
+    comment: '예산 범위',
+  })
+  budget: SurveyBudget;
 
   @Column({ type: 'text', name: 'user_note', nullable: true })
   userNote: string | null;
@@ -47,20 +59,50 @@ export class CourseSurvey {
   @Column({ type: 'timestamp', name: 'created_at', nullable: false })
   createdAt: Date;
 
-  @Column({ type: 'varchar', length: 50, name: 'is_dense', nullable: false })
-  pacePreference: string;
+  @Column({
+    type: 'enum',
+    enum: PacePreference,
+    name: 'is_dense',
+    nullable: false,
+    comment: '일정 밀도 선호: DENSE=빡빡하게, RELAXED=널널하게',
+  })
+  pacePreference: PacePreference;
 
-  @Column({ type: 'varchar', length: 50, name: 'is_planned', nullable: false })
-  planningPreference: string;
+  @Column({
+    type: 'enum',
+    enum: PlanningPreference,
+    name: 'is_planned',
+    nullable: false,
+    comment: '계획 성향: PLANNED=계획형, SPONTANEOUS=즉흥형',
+  })
+  planningPreference: PlanningPreference;
 
-  @Column({ type: 'varchar', length: 50, name: 'is_tourist_spots', nullable: false })
-  destinationPreference: string;
+  @Column({
+    type: 'enum',
+    enum: DestinationPreference,
+    name: 'is_tourist_spots',
+    nullable: false,
+    comment: '여행지 선호: TOURIST_SPOTS=관광지 위주, LOCAL_EXPERIENCE=로컬 위주',
+  })
+  destinationPreference: DestinationPreference;
 
-  @Column({ type: 'varchar', length: 50, name: 'is_activate', nullable: false })
-  activityPreference: string;
+  @Column({
+    type: 'enum',
+    enum: ActivityPreference,
+    name: 'is_activate',
+    nullable: false,
+    comment: '활동 선호: ACTIVE=활동 중심, REST_FOCUSED=휴식 중심',
+  })
+  activityPreference: ActivityPreference;
 
-  @Column({ type: 'varchar', length: 50, name: 'is_efficiency', nullable: false })
-  priorityPreference: string;
+  @Column({
+    type: 'enum',
+    enum: PriorityPreference,
+    name: 'is_efficiency',
+    nullable: false,
+    comment: '우선 가치: EFFICIENCY=효율 우선, EMOTIONAL=감성 우선',
+  })
+  priorityPreference: PriorityPreference;
 
   @OneToMany(
     () => CourseSurveyDestination,

@@ -46,6 +46,9 @@ export class ItineraryModificationJobStatusResponse {
   @ApiProperty({ description: '완료 시각', nullable: true })
   completedAt: Date | null;
 
+  @ApiProperty({ description: '수정 대상 로드맵 ID', nullable: true })
+  travelCourseId: string | null;
+
   static from(job: ItineraryJob): ItineraryModificationJobStatusResponse {
     const response = new ItineraryModificationJobStatusResponse();
     response.jobId = job.id;
@@ -58,6 +61,7 @@ export class ItineraryModificationJobStatusResponse {
     response.createdAt = job.createdAt;
     response.startedAt = job.startedAt;
     response.completedAt = job.completedAt;
+    response.travelCourseId = job.travelCourseId;
     return response;
   }
 }

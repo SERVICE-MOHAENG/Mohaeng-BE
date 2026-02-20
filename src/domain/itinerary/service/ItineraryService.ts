@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
@@ -30,6 +30,8 @@ import { SurveyNotFoundException } from '../exception/SurveyNotFoundException';
  */
 @Injectable()
 export class ItineraryService {
+  private readonly logger = new Logger(ItineraryService.name);
+
   constructor(
     private readonly itineraryJobRepository: ItineraryJobRepository,
     @InjectRepository(CourseSurvey)
@@ -207,10 +209,33 @@ export class ItineraryService {
     const savedJob = await this.itineraryJobRepository.save(job);
 
     // 4. BullMQ 큐에 작업 추가
-    await this.itineraryQueue.add('generate-itinerary', {
-      jobId: savedJob.id,
-      surveyId,
-    });
+    try {
+      await this.itineraryQueue.add(
+        'generate-itinerary',
+        {
+          jobId: savedJob.id,
+          surveyId,
+        },
+        {
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 5000, // 5s → 10s → 20s
+          },
+        },
+      );
+    } catch (err) {
+      savedJob.markFailed('QUEUE_ERROR', '작업 큐 등록에 실패했습니다');
+      try {
+        await this.itineraryJobRepository.save(savedJob);
+      } catch (saveErr) {
+        this.logger.error(
+          `Job FAILED 상태 저장 실패: jobId=${savedJob.id}`,
+          saveErr,
+        );
+      }
+      throw err;
+    }
 
     return CreateItineraryResponse.from(savedJob);
   }
