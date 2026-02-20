@@ -107,6 +107,9 @@ export class ItineraryResultResponse {
   @ApiProperty({ description: '작업 상태', enum: ItineraryStatus })
   status: ItineraryStatus;
 
+  @ApiProperty({ description: '생성된 로드맵 ID (SUCCESS 시)', nullable: true })
+  travelCourseId: string | null;
+
   @ApiProperty({
     description: '생성 결과 데이터 (SUCCESS 시)',
     nullable: true,
@@ -127,6 +130,7 @@ export class ItineraryResultResponse {
   ): ItineraryResultResponse {
     const response = new ItineraryResultResponse();
     response.status = job.status;
+    response.travelCourseId = job.travelCourseId;
     response.data = null;
     response.error = null;
 

@@ -24,6 +24,9 @@ export class ItineraryJobStatusResponse {
   @ApiProperty({ description: '완료 시각', nullable: true })
   completedAt: Date | null;
 
+  @ApiProperty({ description: '생성된 로드맵 ID (SUCCESS 시)', nullable: true })
+  travelCourseId: string | null;
+
   static from(job: ItineraryJob): ItineraryJobStatusResponse {
     const response = new ItineraryJobStatusResponse();
     response.status = job.status;
@@ -33,6 +36,7 @@ export class ItineraryJobStatusResponse {
     response.createdAt = job.createdAt;
     response.startedAt = job.startedAt;
     response.completedAt = job.completedAt;
+    response.travelCourseId = job.travelCourseId;
     return response;
   }
 }
