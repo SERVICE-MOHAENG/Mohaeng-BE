@@ -16,15 +16,17 @@ import { BudgetLevel } from '../entity/BudgetLevel.enum';
 
 /**
  * 선호도 생성/수정 DTO
+ * - weather / travelRange / travelStyle / budget : 단일값
+ * - foodPersonalities / mainInterests            : 다중값 배열
  */
 export interface CreateUserPreferenceDto {
   userId: string;
-  weatherPreferences: WeatherPreference[];
-  travelRanges: TravelRange[];
-  travelStyles: TravelStyle[];
+  weather: WeatherPreference;
+  travelRange: TravelRange;
+  travelStyle: TravelStyle;
   foodPersonalities: FoodPersonality[];
   mainInterests: MainInterest[];
-  budgets: BudgetLevel[];
+  budget: BudgetLevel;
 }
 
 /**
@@ -62,28 +64,30 @@ export class UserPreferenceService {
     const saved = await this.userPreferenceRepository.save(preference);
 
     // 각 선호도 매핑 엔티티 생성
-    saved.weatherPreferences = dto.weatherPreferences.map((weather) =>
-      UserPreferenceWeather.create(saved.id, weather),
-    );
+    // 단일 선택 4개 → 매핑 테이블에 row 1개씩 저장
+    saved.weatherPreferences = [
+      UserPreferenceWeather.create(saved.id, dto.weather),
+    ];
 
-    saved.travelRanges = dto.travelRanges.map((range) =>
-      UserPreferenceTravelRange.create(saved.id, range),
-    );
+    saved.travelRanges = [
+      UserPreferenceTravelRange.create(saved.id, dto.travelRange),
+    ];
 
-    saved.travelStyles = dto.travelStyles.map((style) =>
-      UserPreferenceTravelStyle.create(saved.id, style),
-    );
+    saved.travelStyles = [
+      UserPreferenceTravelStyle.create(saved.id, dto.travelStyle),
+    ];
 
+    saved.budgets = [
+      UserPreferenceBudget.create(saved.id, dto.budget),
+    ];
+
+    // 다중 선택 2개 → 배열 그대로 저장
     saved.foodPersonalities = dto.foodPersonalities.map((food) =>
       UserPreferenceFoodPersonality.create(saved.id, food),
     );
 
     saved.mainInterests = dto.mainInterests.map((interest) =>
       UserPreferenceMainInterest.create(saved.id, interest),
-    );
-
-    saved.budgets = dto.budgets.map((budget) =>
-      UserPreferenceBudget.create(saved.id, budget),
     );
 
     // cascade로 매핑 테이블도 자동 저장
