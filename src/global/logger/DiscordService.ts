@@ -19,7 +19,10 @@ export class DiscordService {
   private readonly webhookUrl: string | undefined;
 
   constructor(private readonly configService: ConfigService) {
-    this.webhookUrl = this.configService.get<string>('DISCORD_WEBHOOK_URL');
+    const rawWebhookUrl = this.configService.get<string>('DISCORD_WEBHOOK_URL');
+    this.webhookUrl = rawWebhookUrl
+      ? rawWebhookUrl.trim().replace(/,+$/, '')
+      : undefined;
   }
 
   /**
