@@ -1,5 +1,6 @@
 import { Entity, Column, ManyToOne, JoinColumn, PrimaryGeneratedColumn } from 'typeorm';
 import { CourseSurvey } from './CourseSurvey.entity';
+import { TravelTheme } from './TravelTheme.enum';
 
 /**
  * CourseSurveyTheme Entity
@@ -21,6 +22,12 @@ export class CourseSurveyTheme {
   @Column({ type: 'uuid', name: 'course_survay_id' })
   surveyId: string;
 
-  @Column({ type: 'varchar', length: 50, name: 'theme_type', nullable: false })
-  theme: string;
+  @Column({
+    type: 'enum',
+    enum: TravelTheme,
+    name: 'theme_type',
+    nullable: false,
+    comment: '여행 테마',
+  })
+  theme: TravelTheme;
 }
