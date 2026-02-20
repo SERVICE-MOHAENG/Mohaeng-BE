@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsArray, IsString, ValidateNested } from 'class-validator';
+import { IsIn, IsOptional, IsArray, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 class RecommendedDestinationDto {
@@ -35,7 +35,7 @@ class PreferenceCallbackErrorDto {
  */
 export class PreferenceCallbackRequest {
   @ApiProperty({ enum: ['SUCCESS', 'FAILED'] })
-  @IsEnum(['SUCCESS', 'FAILED'])
+  @IsIn(['SUCCESS', 'FAILED'])
   status: 'SUCCESS' | 'FAILED';
 
   @ApiProperty({ required: false, type: PreferenceCallbackDataDto })
