@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
 import { CourseLike } from '../entity/CourseLike.entity';
 
 /**
@@ -42,22 +42,54 @@ export class CourseLikeRepository {
     const safePage = Math.max(1, page);
     const safeLimit = Math.max(1, Math.min(100, limit));
 
-    return this.repository.findAndCount({
+    const baseOptions = {
       where: { user: { id: userId } },
-      relations: [
-        'travelCourse',
-        'travelCourse.user',
-        'travelCourse.courseCountries',
-        'travelCourse.courseCountries.country',
-        'travelCourse.courseDays',
-        'travelCourse.courseDays.coursePlaces',
-        'travelCourse.courseDays.coursePlaces.place',
-        'travelCourse.hashTags',
-      ],
       skip: (safePage - 1) * safeLimit,
       take: safeLimit,
-      order: { createdAt: 'DESC' },
-    });
+      order: { createdAt: 'DESC' as const },
+    };
+
+    try {
+      return await this.repository.findAndCount({
+        ...baseOptions,
+        relations: [
+          'travelCourse',
+          'travelCourse.user',
+          'travelCourse.courseCountries',
+          'travelCourse.courseCountries.country',
+          'travelCourse.courseDays',
+          'travelCourse.courseDays.coursePlaces',
+          'travelCourse.courseDays.coursePlaces.place',
+          'travelCourse.hashTags',
+        ],
+      });
+    } catch (error) {
+      if (!this.isMissingCourseDayIdError(error)) {
+        throw error;
+      }
+
+      // Legacy Postgres schema fallback: load without coursePlaces relation.
+      return this.repository.findAndCount({
+        ...baseOptions,
+        relations: [
+          'travelCourse',
+          'travelCourse.user',
+          'travelCourse.courseCountries',
+          'travelCourse.courseCountries.country',
+          'travelCourse.courseDays',
+          'travelCourse.hashTags',
+        ],
+      });
+    }
+  }
+
+  private isMissingCourseDayIdError(error: unknown): boolean {
+    if (!(error instanceof QueryFailedError)) {
+      return false;
+    }
+
+    const message = typeof error.message === 'string' ? error.message : '';
+    return message.includes('course_day_id') && message.includes('does not exist');
   }
 
   /**
