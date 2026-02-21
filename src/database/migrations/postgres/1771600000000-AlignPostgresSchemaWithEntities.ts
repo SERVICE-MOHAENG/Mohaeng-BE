@@ -455,6 +455,13 @@ export class AlignPostgresSchemaWithEntities1771600000000
       return;
     }
 
+    const hadDefault = await this.hasDefault(queryRunner, tableName, columnName);
+    if (hadDefault) {
+      await queryRunner.query(
+        `ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" DROP DEFAULT`,
+      );
+    }
+
     await queryRunner.query(
       `ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" TYPE "public"."${typeName}" USING "${columnName}"::text::"public"."${typeName}"`,
     );
@@ -642,5 +649,24 @@ export class AlignPostgresSchemaWithEntities1771600000000
       [tableName, columnName],
     );
     return rows[0]?.udt_name ?? null;
+  }
+
+  private async hasDefault(
+    queryRunner: QueryRunner,
+    tableName: string,
+    columnName: string,
+  ): Promise<boolean> {
+    const rows = await queryRunner.query(
+      `
+      SELECT column_default
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = $1
+        AND column_name = $2
+      LIMIT 1
+      `,
+      [tableName, columnName],
+    );
+    return rows.length > 0 && rows[0]?.column_default != null;
   }
 }
