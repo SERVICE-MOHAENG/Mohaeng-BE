@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, LessThan, Repository } from 'typeorm';
+import { In, LessThan, QueryFailedError, Repository } from 'typeorm';
 import { ItineraryJob, ItineraryJobType } from '../entity/ItineraryJob.entity';
 import { ItineraryStatus } from '../entity/ItineraryStatus.enum';
 
@@ -17,31 +17,59 @@ export class ItineraryJobRepository {
   ) {}
 
   async findById(id: string): Promise<ItineraryJob | null> {
-    return this.repository.findOne({ where: { id } });
+    try {
+      return await this.repository.findOne({ where: { id } });
+    } catch (error) {
+      if (error instanceof QueryFailedError) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   async findByIdAndUserId(
     id: string,
     userId: string,
   ): Promise<ItineraryJob | null> {
-    return this.repository.findOne({ where: { id, userId } });
+    try {
+      return await this.repository.findOne({ where: { id, userId } });
+    } catch (error) {
+      if (error instanceof QueryFailedError) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   async findByIdAndUserIdWithRelations(
     id: string,
     userId: string,
   ): Promise<ItineraryJob | null> {
-    return this.repository.findOne({
-      where: { id, userId },
-      relations: ['survey', 'survey.destinations', 'survey.companions', 'survey.themes', 'travelCourse'],
-    });
+    try {
+      return await this.repository.findOne({
+        where: { id, userId },
+        relations: ['survey', 'survey.destinations', 'survey.companions', 'survey.themes', 'travelCourse'],
+      });
+    } catch (error) {
+      if (error instanceof QueryFailedError) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   async findByIdWithRelations(id: string): Promise<ItineraryJob | null> {
-    return this.repository.findOne({
-      where: { id },
-      relations: ['survey', 'survey.destinations', 'survey.companions', 'survey.themes', 'travelCourse'],
-    });
+    try {
+      return await this.repository.findOne({
+        where: { id },
+        relations: ['survey', 'survey.destinations', 'survey.companions', 'survey.themes', 'travelCourse'],
+      });
+    } catch (error) {
+      if (error instanceof QueryFailedError) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   async findBySurveyId(surveyId: string): Promise<ItineraryJob | null> {
