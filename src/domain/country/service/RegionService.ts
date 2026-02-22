@@ -43,6 +43,14 @@ export class RegionService {
   }
 
   /**
+   * 국가 이름으로 지역 목록 조회
+   */
+  async findByCountryName(countryName: string): Promise<Region[]> {
+    const country = await this.countryService.findByName(countryName);
+    return this.regionRepository.findByCountryId(country.id);
+  }
+
+  /**
    * 모든 지역 조회
    */
   async findAll(): Promise<Region[]> {

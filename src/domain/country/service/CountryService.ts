@@ -36,6 +36,17 @@ export class CountryService {
   }
 
   /**
+   * 국가 이름으로 국가 조회
+   */
+  async findByName(name: string): Promise<Country> {
+    const country = await this.countryRepository.findByName(name);
+    if (!country) {
+      throw new CountryNotFoundException();
+    }
+    return country;
+  }
+
+  /**
    * 모든 국가 조회
    */
   async findAll(): Promise<Country[]> {
