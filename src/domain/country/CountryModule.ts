@@ -7,6 +7,7 @@ import { CountryRepository } from './persistence/CountryRepository';
 import { RegionRepository } from './persistence/RegionRepository';
 import { CountryService } from './service/CountryService';
 import { RegionService } from './service/RegionService';
+import { CountryController } from './presentation/CountryController';
 
 /**
  * Country Module
@@ -15,6 +16,7 @@ import { RegionService } from './service/RegionService';
  */
 @Module({
   imports: [TypeOrmModule.forFeature([Country, Region, Place])],
+  controllers: [CountryController],
   providers: [
     CountryRepository,
     RegionRepository,

@@ -23,6 +23,10 @@ export class CountryRepository {
     return this.repository.findOne({ where: { code: code.toUpperCase() } });
   }
 
+  async findByName(name: string): Promise<Country | null> {
+    return this.repository.findOne({ where: { name } });
+  }
+
   async findAll(): Promise<Country[]> {
     return this.repository.find({
       order: { name: 'ASC' },
