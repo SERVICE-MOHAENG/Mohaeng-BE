@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
 import { UserVisitedCountry } from '../entity/UserVisitedCountry.entity';
 
 /**
@@ -16,10 +16,17 @@ export class UserVisitedCountryRepository {
   ) {}
 
   async findById(id: string): Promise<UserVisitedCountry | null> {
-    return this.repository.findOne({
-      where: { id },
-      relations: ['user', 'country'],
-    });
+    try {
+      return await this.repository.findOne({
+        where: { id },
+        relations: ['user', 'country'],
+      });
+    } catch (error) {
+      if (error instanceof QueryFailedError) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   async findByUserId(userId: string): Promise<UserVisitedCountry[]> {
