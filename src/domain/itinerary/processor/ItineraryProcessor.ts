@@ -102,7 +102,7 @@ export class ItineraryProcessor extends WorkerHost {
       );
     } catch (error) {
       this.logger.error(
-        `Python 서버 호출 실패: jobId=${jobId}, error=${error.message}`,
+        `Python 서버 호출 실패: jobId=${jobId}, error=${error.message}, response=${JSON.stringify(error.response?.data)}`,
       );
       // throw하여 BullMQ가 자동 재시도하도록 함
       throw error;
