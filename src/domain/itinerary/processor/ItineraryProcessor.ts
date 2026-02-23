@@ -75,6 +75,9 @@ export class ItineraryProcessor extends WorkerHost {
     this.logger.log(
       `Python 서버 요청 시작: jobId=${jobId}, url=${pythonBaseUrl}/api/v1/generate, callbackUrl=${callbackUrl}`,
     );
+    this.logger.log(
+      `Python 서버 요청 payload: ${JSON.stringify({ job_id: jobId, callback_url: callbackUrl, payload })}`,
+    );
     try {
       const response = await firstValueFrom(
         this.httpService.post(
