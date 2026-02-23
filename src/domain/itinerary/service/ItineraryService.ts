@@ -173,8 +173,7 @@ export class ItineraryService {
     });
 
     const savedSurvey = await this.surveyRepository.save(survey);
-    const job = await this.createItinerary(userId, savedSurvey.id);
-    return CreateSurveyResponse.from(savedSurvey.id, job.jobId, job.status);
+    return CreateSurveyResponse.from(savedSurvey.id);
   }
 
   /**
