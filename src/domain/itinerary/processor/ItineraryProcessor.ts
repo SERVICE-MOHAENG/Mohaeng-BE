@@ -52,7 +52,7 @@ export class ItineraryProcessor extends WorkerHost {
     // 2. CourseSurvey 로드 (with relations)
     const survey = await this.surveyRepository.findOne({
       where: { id: surveyId },
-      relations: ['destinations', 'companions', 'themes'],
+      relations: ['destinations', 'destinations.region', 'companions', 'themes'],
     });
 
     if (!survey) {
@@ -142,13 +142,12 @@ export class ItineraryProcessor extends WorkerHost {
       start_date: surveyStartDate || calculatedStartDate,
       end_date: surveyEndDate || calculatedEndDate,
       regions: destinations.map((d) => ({
-        region: d.regionName,
+        region: d.region?.regionCode ?? d.regionName,
         start_date: this.formatDate(new Date(d.startDay)),
         end_date: this.formatDate(new Date(d.endDate)),
       })),
       people_count: survey.paxCount,
-      companion_type:
-        (survey.companions || []).map((companion) => companion.companion),
+      companion_type: (survey.companions || [])[0]?.companion ?? null,
       travel_themes: (survey.themes || []).map((t) => t.theme),
       pace_preference: survey.pacePreference,
       planning_preference: survey.planningPreference,

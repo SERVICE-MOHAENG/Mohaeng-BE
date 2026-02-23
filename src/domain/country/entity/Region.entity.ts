@@ -10,6 +10,7 @@ import { RegionWeather } from './RegionWeather.entity';
 import { RegionBudget } from './RegionBudget.entity';
 import { TravelRange } from '../../preference/entity/TravelRange.enum';
 import { BudgetLevel } from '../../preference/entity/BudgetLevel.enum';
+import { RegionCode } from './RegionCode.enum';
 
 /**
  * Region Entity
@@ -28,6 +29,15 @@ export class Region extends BaseEntity {
     nullable: false,
   })
   name: string;
+
+  @Column({
+    type: 'enum',
+    enum: RegionCode,
+    name: 'region_code',
+    nullable: true,
+    comment: 'Python LLM 서버 연동용 지역 코드',
+  })
+  regionCode: RegionCode | null;
 
   @Column({
     type: 'decimal',
@@ -167,6 +177,7 @@ export class Region extends BaseEntity {
     longitude?: number,
     imageUrl?: string,
     regionDescription?: string,
+    regionCode?: RegionCode,
   ): Region {
     const region = new Region();
     region.name = name;
@@ -177,6 +188,7 @@ export class Region extends BaseEntity {
     region.longitude = longitude ?? null;
     region.imageUrl = imageUrl ?? null;
     region.regionDescription = regionDescription ?? null;
+    region.regionCode = regionCode ?? null;
     region.popularityScore = 0;
     region.recommendationScore = 0;
     region.foodPersonalities = [];
