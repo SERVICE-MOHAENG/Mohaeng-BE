@@ -72,6 +72,9 @@ export class ItineraryProcessor extends WorkerHost {
     const callbackUrl = `${callbackBaseUrl}/api/v1/itineraries/${jobId}/result`;
 
     // 4. Python LLM 서버 호출
+    this.logger.log(
+      `Python 서버 요청 시작: jobId=${jobId}, url=${pythonBaseUrl}/api/v1/generate, callbackUrl=${callbackUrl}`,
+    );
     try {
       const response = await firstValueFrom(
         this.httpService.post(
