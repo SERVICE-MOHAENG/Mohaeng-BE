@@ -330,13 +330,13 @@ export class ItineraryModificationCallbackService {
 
       const userChat = new CourseAiChat();
       userChat.role = ChatRole.USER;
-      userChat.content = userMessage;
+      userChat.content = userMessage ?? '';
       userChat.travelCourse = courseRef;
       await manager.save(CourseAiChat, userChat);
 
       const aiChat = new CourseAiChat();
       aiChat.role = ChatRole.AI;
-      aiChat.content = aiMessage;
+      aiChat.content = aiMessage ?? '';
       aiChat.travelCourse = courseRef;
       await manager.save(CourseAiChat, aiChat);
     });
@@ -363,13 +363,13 @@ export class ItineraryModificationCallbackService {
 
       const userChat = new CourseAiChat();
       userChat.role = ChatRole.USER;
-      userChat.content = userMessage;
+      userChat.content = userMessage ?? '';
       userChat.travelCourse = course;
       await manager.save(CourseAiChat, userChat);
 
       const aiChat = new CourseAiChat();
       aiChat.role = ChatRole.AI;
-      aiChat.content = aiMessage;
+      aiChat.content = aiMessage ?? '';
       aiChat.travelCourse = course;
       await manager.save(CourseAiChat, aiChat);
     });
