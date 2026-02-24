@@ -18,7 +18,8 @@
       "Bash(brew list:*)",
       "WebFetch(domain:github.com)",
       "Bash(git checkout:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

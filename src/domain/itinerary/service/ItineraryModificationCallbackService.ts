@@ -231,12 +231,15 @@ export class ItineraryModificationCallbackService {
 
       if (modifiedData.tags && modifiedData.tags.length > 0) {
         const hashTags = modifiedData.tags.map((tag) =>
-          CourseHashTag.create(tag, course),
+          CourseHashTag.create(tag.slice(0, 49), course),
         );
         await manager.save(CourseHashTag, hashTags);
       }
 
       // 4. 새 CourseDay + CoursePlace 생성
+      // 트랜잭션 내 동일 place_id 중복 INSERT 방지용 캐시
+      const savedPlaceMap = new Map<string, Place>();
+
       for (const dayData of modifiedData.itinerary) {
         const courseDay = CourseDay.create(
           course,
@@ -246,18 +249,28 @@ export class ItineraryModificationCallbackService {
         const savedDay = await manager.save(CourseDay, courseDay);
 
         for (const placeData of dayData.places) {
-          // Place upsert
-          let place = await manager.findOne(Place, {
-            where: { placeId: placeData.place_id },
-          });
+          // place_id 없으면 스킵 (FK 위반 방지)
+          if (!placeData.place_id || placeData.place_id.trim() === '') {
+            this.logger.warn(
+              `[Job ${job.id}] Day ${dayData.day_number} place_id 없는 장소 스킵: ${placeData.place_name}`,
+            );
+            continue;
+          }
+
+          const placeId = placeData.place_id.trim().slice(0, 255);
+
+          // 트랜잭션 내 캐시 → DB 순으로 조회 (동일 place_id 중복 INSERT 방지)
+          let place =
+            savedPlaceMap.get(placeId) ??
+            (await manager.findOne(Place, { where: { placeId } }));
 
           if (place) {
-            place.name = placeData.place_name;
-            place.address = placeData.address;
+            place.name = (placeData.place_name ?? '').slice(0, 255);
+            place.address = (placeData.address ?? '').slice(0, 500);
             place.latitude = placeData.latitude;
             place.longitude = placeData.longitude;
-            place.description = placeData.description;
-            place.placeUrl = placeData.place_url;
+            place.description = placeData.description ?? null;
+            place.placeUrl = (placeData.place_url ?? '').slice(0, 500);
             place.updatedAt = new Date();
           } else {
             // 새 Place 생성 - 날짜에 맞는 region 찾기
@@ -266,17 +279,18 @@ export class ItineraryModificationCallbackService {
               dayData.daily_date,
             );
             place = Place.create(
-              placeData.place_id,
-              placeData.place_name,
-              placeData.address,
+              placeId,
+              (placeData.place_name ?? '').slice(0, 255),
+              (placeData.address ?? '').slice(0, 500),
               placeData.latitude,
               placeData.longitude,
-              placeData.place_url,
+              (placeData.place_url ?? '').slice(0, 500),
               region,
               placeData.description,
             );
           }
           await manager.save(Place, place);
+          savedPlaceMap.set(placeId, place);
 
           // CoursePlace 생성
           const coursePlace = CoursePlace.create(
@@ -292,7 +306,7 @@ export class ItineraryModificationCallbackService {
       }
 
       // 5. TravelCourse 메타데이터 업데이트
-      course.title = modifiedData.title;
+      course.title = (modifiedData.title ?? '').slice(0, 200);
       course.description = modifiedData.summary;
       course.nights = modifiedData.nights;
       course.days = modifiedData.trip_days;

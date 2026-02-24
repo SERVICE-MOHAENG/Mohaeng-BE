@@ -226,7 +226,7 @@ export class ItineraryJob extends BaseEntity {
    */
   markFailed(errorCode: string, errorMessage: string): void {
     this.status = ItineraryStatus.FAILED;
-    this.errorCode = errorCode;
+    this.errorCode = errorCode.slice(0, 50);
     this.errorMessage = errorMessage;
     this.completedAt = new Date();
   }
