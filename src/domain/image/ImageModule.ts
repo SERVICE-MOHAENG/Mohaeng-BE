@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { ImageController } from './presentation/ImageController';
-import { AdminImageController } from './presentation/AdminImageController';
 import { ImageService } from './service/ImageService';
 
 /**
@@ -10,7 +9,7 @@ import { ImageService } from './service/ImageService';
  * - S3Service는 GlobalModule을 통해 전역으로 주입됨
  */
 @Module({
-  controllers: [ImageController, AdminImageController],
+  controllers: [ImageController],
   providers: [ImageService],
 })
 export class ImageModule {}
