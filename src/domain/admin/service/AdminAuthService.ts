@@ -168,7 +168,7 @@ export class AdminAuthService {
     // Access Token 발급 (Admin 전용 secret)
     const accessToken = this.globalJwtService.signAdminToken({
       adminId: admin.id,
-      email: admin.username,
+      username: admin.username,
       permissions: admin.permissions,
       isSuperAdmin: admin.isSuperAdmin,
     });

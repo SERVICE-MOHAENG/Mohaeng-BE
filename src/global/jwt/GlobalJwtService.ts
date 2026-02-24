@@ -5,7 +5,7 @@ import type { StringValue } from 'ms';
 
 export interface AdminTokenPayload {
   adminId: string;
-  email: string;
+  username: string;
   permissions: number;
   isSuperAdmin: boolean;
   iat: number;
@@ -78,7 +78,7 @@ export class GlobalJwtService {
 
   signAdminToken(payload: {
     adminId: string;
-    email: string;
+    username: string;
     permissions: number;
     isSuperAdmin: boolean;
   }): string {

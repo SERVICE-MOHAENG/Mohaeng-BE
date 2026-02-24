@@ -10,7 +10,7 @@ import { ADMIN_PERMISSIONS_KEY } from '../decorators/AdminAuth';
 
 type AuthenticatedAdmin = {
   id: string;
-  email: string;
+  username: string;
   permissions: number;
   isSuperAdmin: boolean;
 };
@@ -77,7 +77,7 @@ export class AdminAuthGuard implements CanActivate {
   private toAuthenticatedAdmin(payload: AdminTokenPayload): AuthenticatedAdmin {
     return {
       id: payload.adminId,
-      email: payload.email,
+      username: payload.username,
       permissions: payload.permissions,
       isSuperAdmin: payload.isSuperAdmin,
     };
