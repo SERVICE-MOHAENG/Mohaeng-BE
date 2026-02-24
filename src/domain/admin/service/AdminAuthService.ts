@@ -40,25 +40,25 @@ export class AdminAuthService {
    * @param isSuperAdmin 슈퍼어드민 여부
    */
   async register(
-    email: string,
+    username: string,
     password: string,
     isSuperAdmin: boolean = false,
   ): Promise<Admin> {
-    const exists = await this.adminRepository.existsByEmail(email);
+    const exists = await this.adminRepository.existsByUsername(username);
     if (exists) {
       throw new AdminEmailAlreadyExistsException();
     }
 
     const passwordHash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
-    const admin = Admin.create(email, passwordHash, isSuperAdmin);
+    const admin = Admin.create(username, passwordHash, isSuperAdmin);
     return this.adminRepository.save(admin);
   }
 
   /**
    * 관리자 로그인
    */
-  async login(email: string, password: string): Promise<AdminAuthTokens> {
-    const admin = await this.adminRepository.findByEmail(email);
+  async login(username: string, password: string): Promise<AdminAuthTokens> {
+    const admin = await this.adminRepository.findByUsername(username);
     if (!admin) {
       throw new AdminInvalidCredentialsException();
     }
@@ -168,7 +168,7 @@ export class AdminAuthService {
     // Access Token 발급 (Admin 전용 secret)
     const accessToken = this.globalJwtService.signAdminToken({
       adminId: admin.id,
-      email: admin.email,
+      email: admin.username,
       permissions: admin.permissions,
       isSuperAdmin: admin.isSuperAdmin,
     });

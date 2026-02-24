@@ -13,13 +13,13 @@ export class CreateAdminTable1772000000000 implements MigrationInterface {
         id UUID NOT NULL DEFAULT gen_random_uuid(),
         created_at TIMESTAMP NOT NULL DEFAULT now(),
         updated_at TIMESTAMP NOT NULL DEFAULT now(),
-        email VARCHAR(255) NOT NULL,
+        username VARCHAR(100) NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
         permissions INT NOT NULL DEFAULT 0,
         is_super_admin BOOLEAN NOT NULL DEFAULT false,
         is_active BOOLEAN NOT NULL DEFAULT true,
         CONSTRAINT PK_admin_table PRIMARY KEY (id),
-        CONSTRAINT UQ_admin_email UNIQUE (email)
+        CONSTRAINT UQ_admin_username UNIQUE (username)
       )
     `);
   }

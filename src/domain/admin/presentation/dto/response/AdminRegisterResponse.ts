@@ -5,8 +5,8 @@ export class AdminRegisterResponse {
   @ApiProperty({ description: '관리자 ID' })
   id: string;
 
-  @ApiProperty({ description: '관리자 이메일' })
-  email: string;
+  @ApiProperty({ description: '관리자 아이디' })
+  username: string;
 
   @ApiProperty({ description: '슈퍼어드민 여부' })
   isSuperAdmin: boolean;
@@ -14,7 +14,7 @@ export class AdminRegisterResponse {
   static from(admin: Admin): AdminRegisterResponse {
     const res = new AdminRegisterResponse();
     res.id = admin.id;
-    res.email = admin.email;
+    res.username = admin.username;
     res.isSuperAdmin = admin.isSuperAdmin;
     return res;
   }

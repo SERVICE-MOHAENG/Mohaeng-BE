@@ -31,7 +31,7 @@ export class AdminAuthController {
     @Body() request: AdminRegisterRequest,
   ): Promise<AdminRegisterResponse> {
     const admin = await this.adminAuthService.register(
-      request.email,
+      request.username,
       request.password,
       request.isSuperAdmin,
     );
@@ -50,7 +50,7 @@ export class AdminAuthController {
   async login(
     @Body() request: AdminLoginRequest,
   ): Promise<AdminAuthTokensResponse> {
-    return this.adminAuthService.login(request.email, request.password);
+    return this.adminAuthService.login(request.username, request.password);
   }
 
   @Post('refresh')

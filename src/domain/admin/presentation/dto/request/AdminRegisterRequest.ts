@@ -1,10 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class AdminRegisterRequest {
-  @ApiProperty({ example: 'admin@example.com', description: '관리자 이메일' })
-  @IsEmail()
-  email: string;
+  @ApiProperty({ example: 'admin', description: '관리자 아이디' })
+  @IsString()
+  username: string;
 
   @ApiProperty({ example: 'password123', description: '비밀번호 (최소 8자)' })
   @IsString()

@@ -11,12 +11,13 @@ import { BaseEntity } from '../../../global/BaseEntity';
 export class Admin extends BaseEntity {
   @Column({
     type: 'varchar',
-    length: 255,
-    name: 'email',
+    length: 100,
+    name: 'username',
     nullable: false,
     unique: true,
+    comment: '관리자 아이디',
   })
-  email: string;
+  username: string;
 
   @Column({
     type: 'varchar',
@@ -56,12 +57,12 @@ export class Admin extends BaseEntity {
    * 관리자 생성 팩토리 메서드
    */
   static create(
-    email: string,
+    username: string,
     passwordHash: string,
     isSuperAdmin: boolean = false,
   ): Admin {
     const admin = new Admin();
-    admin.email = email;
+    admin.username = username;
     admin.passwordHash = passwordHash;
     admin.permissions = 0;
     admin.isSuperAdmin = isSuperAdmin;

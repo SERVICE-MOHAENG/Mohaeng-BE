@@ -15,8 +15,8 @@ export class AdminRepository {
     private readonly repository: Repository<Admin>,
   ) {}
 
-  async findByEmail(email: string): Promise<Admin | null> {
-    return this.repository.findOne({ where: { email } });
+  async findByUsername(username: string): Promise<Admin | null> {
+    return this.repository.findOne({ where: { username } });
   }
 
   async findById(id: string): Promise<Admin | null> {
@@ -27,8 +27,8 @@ export class AdminRepository {
     return this.repository.save(admin);
   }
 
-  async existsByEmail(email: string): Promise<boolean> {
-    const count = await this.repository.count({ where: { email } });
+  async existsByUsername(username: string): Promise<boolean> {
+    const count = await this.repository.count({ where: { username } });
     return count > 0;
   }
 }
