@@ -1,6 +1,5 @@
 import { Body, Controller, Param, Patch } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AdminAuth } from '../../../global/decorators/AdminAuth';
 import { AdminApiBearerAuth } from '../../../global/decorators/AdminApiBearerAuth';
 import { CountryService } from '../../country/service/CountryService';
 import { UpdateImageUrlRequest } from './dto/request/UpdateImageUrlRequest';
@@ -17,7 +16,6 @@ export class AdminCountryController {
   constructor(private readonly countryService: CountryService) {}
 
   @Patch(':id/image')
-  @AdminAuth()
   @AdminApiBearerAuth()
   @ApiOperation({ summary: '국가 이미지 URL 업데이트 (관리자)' })
   @ApiResponse({

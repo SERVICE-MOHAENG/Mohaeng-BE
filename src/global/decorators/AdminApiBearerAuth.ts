@@ -1,5 +1,8 @@
-import { applyDecorators } from '@nestjs/common';
+import { applyDecorators, SetMetadata, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { AdminPermission } from '../../domain/admin/entity/AdminPermission.enum';
+import { AdminAuthGuard } from '../guards/AdminAuth.guard';
+import { ADMIN_PERMISSIONS_KEY } from './AdminAuth';
 
 /**
  * 관리자 API Bearer 인증 데코레이터
@@ -19,12 +22,22 @@ import { ApiBearerAuth, ApiUnauthorizedResponse } from '@nestjs/swagger';
  * @AdminApiBearerAuth()
  */
 export function AdminApiBearerAuth(
-  _permissions?: string | string[],
+  permissions?: AdminPermission | AdminPermission[],
 ): MethodDecorator {
-  // 할 일: AdminGuard 구현 후 UseGuards(AdminGuard) 추가
-  return applyDecorators(
+  const decorators = [
     ApiBearerAuth('access-token'),
     ApiUnauthorizedResponse({ description: '인증 실패' }),
-    // UseGuards(AdminGuard), // AdminGuard 구현 후 주석 해제
-  );
+    UseGuards(AdminAuthGuard),
+  ];
+
+  if (permissions) {
+    const permissionArray = Array.isArray(permissions)
+      ? permissions
+      : [permissions];
+    if (permissionArray.length > 0) {
+      decorators.push(SetMetadata(ADMIN_PERMISSIONS_KEY, permissionArray));
+    }
+  }
+
+  return applyDecorators(...decorators);
 }
