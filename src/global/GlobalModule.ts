@@ -11,6 +11,6 @@ import { UserAuthGuard } from './guards/UserAuth.guard';
   imports: [JwtModule, RedisModule, UserModule, S3Module],
   controllers: [],
   providers: [AdminAuthGuard, UserAuthGuard],
-  exports: [AdminAuthGuard, UserAuthGuard, JwtModule, RedisModule, S3Module],
+  exports: [AdminAuthGuard, UserAuthGuard, JwtModule, RedisModule, S3Module, UserModule],
 })
 export class GlobalModule {}
