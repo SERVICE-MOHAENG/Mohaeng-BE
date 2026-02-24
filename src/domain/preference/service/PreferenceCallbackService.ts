@@ -56,7 +56,7 @@ export class PreferenceCallbackService {
         const region = await this.regionRepository.findByName(dest.region_name);
         return PreferenceRecommendation.create(
           jobId,
-          dest.region_name,
+          dest.region_name.slice(0, 100),
           region?.id,
         );
       }),

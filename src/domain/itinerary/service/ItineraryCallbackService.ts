@@ -127,7 +127,7 @@ export class ItineraryCallbackService {
 
       // 2. TravelCourse 생성
       const course = new TravelCourse();
-      course.title = data.title;
+      course.title = (data.title ?? '').slice(0, 200);
       course.description = data.summary;
       course.nights = data.nights;
       course.days = data.trip_days;
@@ -159,12 +159,15 @@ export class ItineraryCallbackService {
       // 4. HashTags 생성
       if (data.tags && data.tags.length > 0) {
         const hashTags = data.tags.map((tag) =>
-          CourseHashTag.create(tag, savedCourse),
+          CourseHashTag.create(tag.slice(0, 49), savedCourse),
         );
         await manager.save(CourseHashTag, hashTags);
       }
 
       // 5. CourseDay + CoursePlace + Place 생성
+      // 트랜잭션 내 동일 place_id 중복 INSERT 방지용 캐시
+      const savedPlaceMap = new Map<string, Place>();
+
       for (const dayData of data.itinerary) {
         const courseDay = CourseDay.create(
           savedCourse,
@@ -174,37 +177,48 @@ export class ItineraryCallbackService {
         const savedDay = await manager.save(CourseDay, courseDay);
 
         for (const placeData of dayData.places) {
-          // Place upsert: 기존 Place가 있으면 업데이트, 없으면 생성
+          // place_id 없으면 스킵 (FK 위반 방지)
+          if (!placeData.place_id || placeData.place_id.trim() === '') {
+            this.logger.warn(
+              `[Job ${jobId}] Day ${dayData.day_number} place_id 없는 장소 스킵: ${placeData.place_name}`,
+            );
+            continue;
+          }
+
+          const placeId = placeData.place_id.trim().slice(0, 255);
+
           const region = this.resolveRegion(
             survey?.destinations ?? [],
             dayData.daily_date,
           );
 
-          let place = await manager.findOne(Place, {
-            where: { placeId: placeData.place_id },
-          });
+          // 트랜잭션 내 캐시 → DB 순으로 조회 (동일 place_id 중복 INSERT 방지)
+          let place =
+            savedPlaceMap.get(placeId) ??
+            (await manager.findOne(Place, { where: { placeId } }));
 
           if (place) {
-            place.name = placeData.place_name;
-            place.address = placeData.address;
+            place.name = (placeData.place_name ?? '').slice(0, 255);
+            place.address = (placeData.address ?? '').slice(0, 500);
             place.latitude = placeData.latitude;
             place.longitude = placeData.longitude;
-            place.description = placeData.description;
-            place.placeUrl = placeData.place_url;
+            place.description = placeData.description ?? null;
+            place.placeUrl = (placeData.place_url ?? '').slice(0, 500);
             place.updatedAt = new Date();
           } else {
             place = Place.create(
-              placeData.place_id,
-              placeData.place_name,
-              placeData.address,
+              placeId,
+              (placeData.place_name ?? '').slice(0, 255),
+              (placeData.address ?? '').slice(0, 500),
               placeData.latitude,
               placeData.longitude,
-              placeData.place_url,
+              (placeData.place_url ?? '').slice(0, 500),
               region,
               placeData.description,
             );
           }
           await manager.save(Place, place);
+          savedPlaceMap.set(placeId, place);
 
           // CoursePlace 생성
           const coursePlace = CoursePlace.create(
