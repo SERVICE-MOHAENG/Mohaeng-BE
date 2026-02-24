@@ -13,7 +13,7 @@ export class RemoveScoreColumnsFromCountryAndRegion1771600000000
     // country_table CHECK 제약 제거 후 컬럼 삭제
     await queryRunner.query(`
       ALTER TABLE country_table
-      DROP CHECK chk_country_popularity_score
+      DROP CONSTRAINT chk_country_popularity_score
     `);
     await queryRunner.query(`
       ALTER TABLE country_table
@@ -23,11 +23,14 @@ export class RemoveScoreColumnsFromCountryAndRegion1771600000000
     // region_table CHECK 제약 제거 후 컬럼 삭제
     await queryRunner.query(`
       ALTER TABLE region_table
-      DROP CHECK chk_region_popularity_score
+      DROP CONSTRAINT chk_region_popularity_score
     `);
     await queryRunner.query(`
       ALTER TABLE region_table
-      DROP COLUMN popularity_score,
+      DROP COLUMN popularity_score
+    `);
+    await queryRunner.query(`
+      ALTER TABLE region_table
       DROP COLUMN ai_score
     `);
   }
@@ -36,7 +39,7 @@ export class RemoveScoreColumnsFromCountryAndRegion1771600000000
     // country_table 롤백
     await queryRunner.query(`
       ALTER TABLE country_table
-      ADD COLUMN popularity_score FLOAT NOT NULL DEFAULT 0 COMMENT '인기도 점수 0-5'
+      ADD COLUMN popularity_score DOUBLE PRECISION NOT NULL DEFAULT 0
     `);
     await queryRunner.query(`
       ALTER TABLE country_table
@@ -47,8 +50,11 @@ export class RemoveScoreColumnsFromCountryAndRegion1771600000000
     // region_table 롤백
     await queryRunner.query(`
       ALTER TABLE region_table
-      ADD COLUMN popularity_score DECIMAL NOT NULL DEFAULT 0 COMMENT '인기도 점수 0-5',
-      ADD COLUMN ai_score DECIMAL(5, 2) NOT NULL DEFAULT 0 COMMENT 'AI 추천 점수 (0-100)'
+      ADD COLUMN popularity_score NUMERIC NOT NULL DEFAULT 0
+    `);
+    await queryRunner.query(`
+      ALTER TABLE region_table
+      ADD COLUMN ai_score NUMERIC(5, 2) NOT NULL DEFAULT 0
     `);
     await queryRunner.query(`
       ALTER TABLE region_table
