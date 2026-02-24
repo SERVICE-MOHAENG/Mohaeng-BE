@@ -31,10 +31,10 @@ export class CoursePlace {
 
   @Column({
     type: 'varchar',
-    length: 5,
+    length: 20,
     name: 'visit_time',
     nullable: true,
-    comment: '방문 시각 (HH:MM)',
+    comment: '방문 시각',
   })
   visitTime: string | null;
 

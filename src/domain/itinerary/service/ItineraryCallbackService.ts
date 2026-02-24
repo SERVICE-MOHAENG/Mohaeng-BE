@@ -212,7 +212,7 @@ export class ItineraryCallbackService {
             place,
             placeData.visit_sequence,
             undefined,
-            placeData.visit_time,
+            this.normalizeVisitTime(placeData.visit_time) ?? undefined,
             placeData.description,
           );
           await manager.save(CoursePlace, coursePlace);
@@ -313,5 +313,18 @@ export class ItineraryCallbackService {
 
     // fallback: 첫 번째 destination의 region
     return destinations[0].region;
+  }
+
+  private normalizeVisitTime(visitTime: string | null | undefined): string | null {
+    if (!visitTime) {
+      return null;
+    }
+
+    const normalized = visitTime.trim();
+    if (normalized.length === 0) {
+      return null;
+    }
+
+    return normalized.length > 20 ? normalized.slice(0, 20) : normalized;
   }
 }
