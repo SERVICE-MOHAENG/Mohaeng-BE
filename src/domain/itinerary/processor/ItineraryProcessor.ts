@@ -162,7 +162,10 @@ export class ItineraryProcessor extends WorkerHost {
   /**
    * Date → YYYY-MM-DD 문자열 변환
    */
-  private formatDate(date: Date): string {
+  private formatDate(date: Date | string): string {
+    if (typeof date === 'string') {
+      return date.slice(0, 10);
+    }
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
