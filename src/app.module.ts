@@ -15,6 +15,8 @@ import { PlaceModule } from './domain/place/PlaceModule';
 import { NotificationModule } from './domain/notification/NotificationModule';
 import { CountryModule } from './domain/country/CountryModule';
 import { PreferenceModule } from './domain/preference/PreferenceModule';
+import { ImageModule } from './domain/image/ImageModule';
+import { AdminModule } from './domain/admin/AdminModule';
 import { User } from './domain/user/entity/User.entity';
 import { TravelCourse } from './domain/course/entity/TravelCourse.entity';
 import { CoursePlace } from './domain/course/entity/CoursePlace.entity';
@@ -174,6 +176,8 @@ import { RegionBudget } from './domain/country/entity/RegionBudget.entity';
     VisitedCountryModule,
     ItineraryModule,
     PreferenceModule,
+    ImageModule,
+    AdminModule,
   ],
   controllers: [],
   providers: [],

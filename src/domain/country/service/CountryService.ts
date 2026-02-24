@@ -62,6 +62,15 @@ export class CountryService {
   }
 
   /**
+   * 국가 이미지 URL 업데이트
+   */
+  async updateImageUrl(id: string, imageUrl: string): Promise<Country> {
+    const country = await this.findById(id);
+    country.imageUrl = imageUrl;
+    return this.countryRepository.save(country);
+  }
+
+  /**
    * 국가 삭제
    */
   async delete(id: string): Promise<void> {
