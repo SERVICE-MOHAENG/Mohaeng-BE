@@ -75,6 +75,15 @@ export class RegionService {
   }
 
   /**
+   * 지역 이미지 URL 업데이트
+   */
+  async updateImageUrl(id: string, imageUrl: string): Promise<Region> {
+    const region = await this.findById(id);
+    region.imageUrl = imageUrl;
+    return this.regionRepository.save(region);
+  }
+
+  /**
    * 지역 삭제
    * @description
    * - 삭제 전 연결된 Place 존재 여부 확인
