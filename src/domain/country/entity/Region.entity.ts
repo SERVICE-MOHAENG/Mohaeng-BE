@@ -1,5 +1,4 @@
-import { Entity, Column, ManyToOne, JoinColumn, OneToMany, Check } from 'typeorm';
-import { Max, Min } from 'class-validator';
+import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { BaseEntity } from '../../../global/BaseEntity';
 import { Country } from './Country.entity';
 import { RegionFoodPersonality } from './RegionFoodPersonality.entity';
@@ -20,7 +19,6 @@ import { RegionCode } from './RegionCode.enum';
  * - 추천 알고리즘을 위한 환경, 식도락, 관심사 태그 포함
  */
 @Entity('region_table')
-@Check('chk_region_popularity_score', '"popularity_score" >= 0 AND "popularity_score" <= 5')
 export class Region extends BaseEntity {
   @Column({
     type: 'varchar',
@@ -85,32 +83,6 @@ export class Region extends BaseEntity {
     comment: '평균 여행 예산 수준',
   })
   averageBudgetLevel: BudgetLevel;
-
-  @Column({
-    type: 'decimal',
-    name: 'popularity_score',
-    nullable: false,
-    default: 0,
-    comment: '인기도 점수 0-5',
-    transformer: {
-      from: (value: string | null | undefined) => parseFloat(value ?? '0'),
-      to: (value: number | null | undefined) => value?.toString() ?? '0',
-    },
-  })
-  @Min(0)
-  @Max(5)
-  popularityScore: number;
-
-  @Column({
-    type: 'decimal',
-    precision: 5,
-    scale: 2,
-    name: 'ai_score',
-    nullable: false,
-    default: 0,
-    comment: 'AI 추천 점수 (0-100)',
-  })
-  recommendationScore: number;
 
   @Column({
     type: 'text',
@@ -189,8 +161,6 @@ export class Region extends BaseEntity {
     region.imageUrl = imageUrl ?? null;
     region.regionDescription = regionDescription ?? null;
     region.regionCode = regionCode ?? null;
-    region.popularityScore = 0;
-    region.recommendationScore = 0;
     region.foodPersonalities = [];
     region.mainInterests = [];
     region.categories = [];
@@ -200,18 +170,4 @@ export class Region extends BaseEntity {
     return region;
   }
 
-  /**
-   * 인기도 점수 증가
-   */
-  incrementPopularityScore(points: number = 1): void {
-    const current = Number(this.popularityScore);
-    this.popularityScore = Math.min(5, Math.max(0, current + points));
-  }
-
-  /**
-   * 추천 점수 계산 및 업데이트
-   */
-  updateRecommendationScore(score: number): void {
-    this.recommendationScore = Math.min(100, Math.max(0, score));
-  }
 }

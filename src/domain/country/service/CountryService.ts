@@ -3,6 +3,7 @@ import { CountryRepository } from '../persistence/CountryRepository';
 import { Country } from '../entity/Country.entity';
 import { CountryNotFoundException } from '../exception/CountryNotFoundException';
 import { Continent } from '../../preference/entity/Continent.enum';
+import { CountryCode } from '../entity/CountryCode.enum';
 
 /**
  * Country Service
@@ -56,8 +57,8 @@ export class CountryService {
   /**
    * 국가 생성
    */
-  async create(name: string, code: string, continent: Continent, imageUrl?: string): Promise<Country> {
-    const country = Country.create(name, code, continent, imageUrl);
+  async create(name: string, code: string, countryCode: CountryCode, continent: Continent, imageUrl?: string): Promise<Country> {
+    const country = Country.create(name, code, countryCode, continent, imageUrl);
     return this.countryRepository.save(country);
   }
 
