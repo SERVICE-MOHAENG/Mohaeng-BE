@@ -65,7 +65,7 @@ export class ItineraryProcessor extends WorkerHost {
     // 3. Python payload 구성
     const payload = this.buildPythonPayload(survey);
     const pythonBaseUrl = this.configService.get<string>('PYTHON_LLM_BASE_URL');
-    const serviceSecret = this.configService.get<string>('AI_SERVER_SERVICE_SECRET');
+    const serviceSecret = this.configService.get<string>('SERVICE_SECRET');
     const callbackBaseUrl =
       this.configService.get<string>('CALLBACK_BASE_URL') ||
       `http://localhost:${this.configService.get<string>('PORT') || '8080'}`;
