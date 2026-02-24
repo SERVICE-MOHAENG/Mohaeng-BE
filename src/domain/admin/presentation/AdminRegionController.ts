@@ -1,6 +1,5 @@
 import { Body, Controller, Param, Patch } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AdminAuth } from '../../../global/decorators/AdminAuth';
 import { AdminApiBearerAuth } from '../../../global/decorators/AdminApiBearerAuth';
 import { RegionService } from '../../country/service/RegionService';
 import { UpdateImageUrlRequest } from './dto/request/UpdateImageUrlRequest';
@@ -17,7 +16,6 @@ export class AdminRegionController {
   constructor(private readonly regionService: RegionService) {}
 
   @Patch(':id/image')
-  @AdminAuth()
   @AdminApiBearerAuth()
   @ApiOperation({ summary: '도시 이미지 URL 업데이트 (관리자)' })
   @ApiResponse({
