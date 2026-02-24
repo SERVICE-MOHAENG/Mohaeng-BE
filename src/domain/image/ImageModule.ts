@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ImageController } from './presentation/ImageController';
 import { AdminImageController } from './presentation/AdminImageController';
+import { ImageService } from './service/ImageService';
 
 /**
  * Image Module
@@ -10,5 +11,6 @@ import { AdminImageController } from './presentation/AdminImageController';
  */
 @Module({
   controllers: [ImageController, AdminImageController],
+  providers: [ImageService],
 })
 export class ImageModule {}

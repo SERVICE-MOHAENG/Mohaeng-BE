@@ -14,18 +14,15 @@ import {
 } from '@nestjs/swagger';
 import { memoryStorage } from 'multer';
 import { AdminApiBearerAuth } from '../../../global/decorators/AdminApiBearerAuth';
-import { S3Service } from '../../../global/s3/S3Service';
-import { InvalidImageTypeException } from '../exception/InvalidImageTypeException';
-import { ImageUploadFailedException } from '../exception/ImageUploadFailedException';
 import { ImageUploadResponse } from './dto/response/ImageUploadResponse';
+import { ImageService } from '../service/ImageService';
 
-const ALLOWED_MIMES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 @ApiTags('admin/images')
 @Controller('v1/admin/images')
 export class AdminImageController {
-  constructor(private readonly s3Service: S3Service) {}
+  constructor(private readonly imageService: ImageService) {}
 
   @Post('upload')
   @AdminApiBearerAuth()
@@ -63,20 +60,7 @@ export class AdminImageController {
   async uploadImage(
     @UploadedFile() file: Express.Multer.File,
   ): Promise<ImageUploadResponse> {
-    if (!file || !ALLOWED_MIMES.includes(file.mimetype)) {
-      throw new InvalidImageTypeException();
-    }
-
-    try {
-      const url = await this.s3Service.uploadFile(
-        file.buffer,
-        file.originalname,
-        file.mimetype,
-        'admin-images',
-      );
-      return ImageUploadResponse.from(url);
-    } catch {
-      throw new ImageUploadFailedException();
-    }
+    const url = await this.imageService.uploadImage(file, 'admin-images');
+    return ImageUploadResponse.from(url);
   }
 }

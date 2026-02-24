@@ -13,13 +13,10 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { memoryStorage } from 'multer';
-import { S3Service } from '../../../global/s3/S3Service';
 import { ImageUploadResponse } from './dto/response/ImageUploadResponse';
 import { UserApiBearerAuth } from '../../../global/decorators/UserApiBearerAuth';
-import { InvalidImageTypeException } from '../exception/InvalidImageTypeException';
-import { ImageUploadFailedException } from '../exception/ImageUploadFailedException';
+import { ImageService } from '../service/ImageService';
 
-const ALLOWED_MIMES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 /**
@@ -30,7 +27,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 @ApiTags('images')
 @Controller('v1/images')
 export class ImageController {
-  constructor(private readonly s3Service: S3Service) {}
+  constructor(private readonly imageService: ImageService) {}
 
   @Post('upload')
   @UserApiBearerAuth()
@@ -68,19 +65,7 @@ export class ImageController {
   async uploadImage(
     @UploadedFile() file: Express.Multer.File,
   ): Promise<ImageUploadResponse> {
-    if (!file || !ALLOWED_MIMES.includes(file.mimetype)) {
-      throw new InvalidImageTypeException();
-    }
-
-    try {
-      const url = await this.s3Service.uploadFile(
-        file.buffer,
-        file.originalname,
-        file.mimetype,
-      );
-      return ImageUploadResponse.from(url);
-    } catch {
-      throw new ImageUploadFailedException();
-    }
+    const url = await this.imageService.uploadImage(file);
+    return ImageUploadResponse.from(url);
   }
 }
