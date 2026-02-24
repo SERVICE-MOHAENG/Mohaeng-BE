@@ -16,6 +16,7 @@ import {
   ApiBody,
   ApiParam,
   ApiResponse,
+  ApiHeader,
 } from '@nestjs/swagger';
 import { ResponseInterceptor } from '../../../global/interceptors/ResponseInterceptor';
 import { UserApiBearerAuth } from '../../../global/decorators/UserApiBearerAuth';
@@ -121,6 +122,11 @@ export class ItineraryController {
   @Post(':jobId/result')
   @ApiOperation({ summary: 'Python LLM 서버 콜백 (내부 전용)' })
   @ApiParam({ name: 'jobId', description: '작업 ID' })
+  @ApiHeader({
+    name: 'x-service-secret',
+    description: '내부 서비스 인증 시크릿',
+    required: true,
+  })
   @ApiBody({ type: ItineraryCallbackRequest })
   @UseGuards(ServiceSecretGuard)
   @HttpCode(HttpStatus.OK)
@@ -198,6 +204,11 @@ export class ItineraryController {
   @Post(':jobId/chat-result')
   @ApiOperation({ summary: 'Python LLM 서버 수정 콜백 (내부 전용)' })
   @ApiParam({ name: 'jobId', description: '작업 ID' })
+  @ApiHeader({
+    name: 'x-service-secret',
+    description: '내부 서비스 인증 시크릿',
+    required: true,
+  })
   @ApiBody({ type: ItineraryModificationCallbackRequest })
   @UseGuards(ServiceSecretGuard)
   @HttpCode(HttpStatus.OK)
