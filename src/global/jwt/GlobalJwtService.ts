@@ -5,9 +5,16 @@ import type { StringValue } from 'ms';
 
 export interface AdminTokenPayload {
   adminId: string;
-  email: string;
+  username: string;
   permissions: number;
   isSuperAdmin: boolean;
+  iat: number;
+  exp: number;
+}
+
+export interface AdminRefreshTokenPayload {
+  adminId: string;
+  jti: string;
   iat: number;
   exp: number;
 }
@@ -34,31 +41,87 @@ export interface B2BTokenPayload {
 export class GlobalJwtService {
   private readonly secret: string;
   private readonly expiresIn: string;
+  private readonly adminSecret: string;
+  private readonly adminExpiresIn: string;
+  private readonly adminRefreshSecret: string;
+  private readonly adminRefreshExpiresIn: string;
 
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {
-    // Cache secret/expiry to keep token signing consistent
+    // User token secrets
     this.secret = this.configService.get<string>('JWT_ACCESS_SECRET') || '';
     this.expiresIn =
       this.configService.get<string>('JWT_ACCESS_EXPIRY') || '1h';
 
+    // Admin token secrets (User와 분리된 secret 사용)
+    this.adminSecret =
+      this.configService.get<string>('JWT_ADMIN_ACCESS_SECRET') || '';
+    this.adminExpiresIn =
+      this.configService.get<string>('JWT_ADMIN_ACCESS_EXPIRY') || '1h';
+    this.adminRefreshSecret =
+      this.configService.get<string>('JWT_ADMIN_REFRESH_SECRET') || '';
+    this.adminRefreshExpiresIn =
+      this.configService.get<string>('JWT_ADMIN_REFRESH_EXPIRES_IN') || '7d';
+
     if (!this.secret) {
       throw new Error('JWT access secret is not set.');
+    }
+    if (!this.adminSecret) {
+      throw new Error('JWT admin access secret is not set.');
+    }
+    if (!this.adminRefreshSecret) {
+      throw new Error('JWT admin refresh secret is not set.');
     }
   }
 
   signAdminToken(payload: {
     adminId: string;
-    email: string;
+    username: string;
     permissions: number;
     isSuperAdmin: boolean;
   }): string {
     return this.jwtService.sign(payload, {
-      secret: this.secret,
-      expiresIn: this.expiresIn as StringValue,
+      secret: this.adminSecret,
+      expiresIn: this.adminExpiresIn as StringValue,
     });
+  }
+
+  signAdminRefreshToken(payload: { adminId: string; jti: string }): string {
+    return this.jwtService.sign(payload, {
+      secret: this.adminRefreshSecret,
+      expiresIn: this.adminRefreshExpiresIn as StringValue,
+    });
+  }
+
+  verifyAdminToken(token: string): AdminTokenPayload {
+    const payload = this.jwtService.verify<Partial<AdminTokenPayload>>(token, {
+      secret: this.adminSecret,
+    });
+
+    if (
+      !payload.adminId ||
+      payload.permissions === undefined ||
+      payload.isSuperAdmin === undefined
+    ) {
+      throw new Error('Invalid admin token payload.');
+    }
+
+    return payload as AdminTokenPayload;
+  }
+
+  verifyAdminRefreshToken(token: string): AdminRefreshTokenPayload {
+    const payload = this.jwtService.verify<Partial<AdminRefreshTokenPayload>>(
+      token,
+      { secret: this.adminRefreshSecret },
+    );
+
+    if (!payload.adminId || !payload.jti) {
+      throw new Error('Invalid admin refresh token payload.');
+    }
+
+    return payload as AdminRefreshTokenPayload;
   }
 
   signUserToken(payload: {
@@ -93,22 +156,6 @@ export class GlobalJwtService {
       issuer: options?.issuer,
       audience: options?.audience,
     });
-  }
-
-  verifyAdminToken(token: string): AdminTokenPayload {
-    const payload = this.jwtService.verify<Partial<AdminTokenPayload>>(token, {
-      secret: this.secret,
-    });
-
-    if (
-      !payload.adminId ||
-      payload.permissions === undefined ||
-      payload.isSuperAdmin === undefined
-    ) {
-      throw new Error('Invalid admin token payload.');
-    }
-
-    return payload as AdminTokenPayload;
   }
 
   verifyUserToken(token: string): UserTokenPayload {
