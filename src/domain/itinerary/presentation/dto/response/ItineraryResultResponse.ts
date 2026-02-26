@@ -53,7 +53,10 @@ class ItineraryDayResultResponse {
   @ApiProperty({ description: '날짜 (YYYY-MM-DD)' })
   daily_date: string;
 
-  @ApiProperty({ description: '장소 목록', type: [ItineraryPlaceResultResponse] })
+  @ApiProperty({
+    description: '장소 목록',
+    type: [ItineraryPlaceResultResponse],
+  })
   places: ItineraryPlaceResultResponse[];
 }
 
@@ -73,7 +76,10 @@ class ItineraryDataResultResponse {
   @ApiProperty({ description: '총 인원 수' })
   people_count: number;
 
-  @ApiProperty({ description: '지역 목록', type: [ItineraryRegionResultResponse] })
+  @ApiProperty({
+    description: '지역 목록',
+    type: [ItineraryRegionResultResponse],
+  })
   regions: ItineraryRegionResultResponse[];
 
   @ApiProperty({ description: '태그 목록', type: [String] })
@@ -85,7 +91,10 @@ class ItineraryDataResultResponse {
   @ApiProperty({ description: '요약', nullable: true })
   summary: string | null;
 
-  @ApiProperty({ description: '일자별 일정', type: [ItineraryDayResultResponse] })
+  @ApiProperty({
+    description: '일자별 일정',
+    type: [ItineraryDayResultResponse],
+  })
   itinerary: ItineraryDayResultResponse[];
 
   @ApiProperty({ description: 'LLM 코멘터리' })
@@ -142,10 +151,9 @@ export class ItineraryResultResponse {
         nights: course.nights,
         people_count: course.peopleCount,
         regions: ItineraryResultResponse.mapRegions(course.courseRegions || []),
-        tags:
-          (course.hashTags || []).map((tag) =>
-            tag.tagName.startsWith('#') ? tag.tagName.slice(1) : tag.tagName,
-          ),
+        tags: (course.hashTags || []).map((tag) =>
+          tag.tagName.startsWith('#') ? tag.tagName.slice(1) : tag.tagName,
+        ),
         title: course.title,
         summary: course.description,
         itinerary: ItineraryResultResponse.mapDays(course.courseDays || []),

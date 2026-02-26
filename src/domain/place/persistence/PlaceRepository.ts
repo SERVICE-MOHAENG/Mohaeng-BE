@@ -30,7 +30,10 @@ export class PlaceRepository {
     });
   }
 
-  async findAll(page: number = 1, limit: number = 20): Promise<[Place[], number]> {
+  async findAll(
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<[Place[], number]> {
     return this.repository.findAndCount({
       relations: ['region', 'region.country'],
       skip: (page - 1) * limit,

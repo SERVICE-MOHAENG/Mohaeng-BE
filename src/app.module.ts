@@ -72,12 +72,14 @@ import { Admin } from './domain/admin/entity/Admin.entity';
         const dbTypeRaw = (configService.get('DB_TYPE') || 'mysql')
           .toString()
           .toLowerCase();
-        const dbType = (dbTypeRaw === 'postgres' || dbTypeRaw === 'postgresql'
-          ? 'postgres'
-          : 'mysql') as 'mysql' | 'postgres';
+        const dbType =
+          dbTypeRaw === 'postgres' || dbTypeRaw === 'postgresql'
+            ? 'postgres'
+            : 'mysql';
 
         const port = parseInt(
-          configService.get('DB_PORT') || (dbType === 'postgres' ? '5432' : '3306'),
+          configService.get('DB_PORT') ||
+            (dbType === 'postgres' ? '5432' : '3306'),
         );
 
         const entities = [

@@ -123,10 +123,21 @@ class ModifiedItineraryRequest {
 export class ItineraryModificationCallbackRequest {
   @ApiProperty({
     description: '콜백 상태',
-    enum: ['SUCCESS', 'ASK_CLARIFICATION', 'GENERAL_CHAT', 'REJECTED', 'FAILED'],
+    enum: [
+      'SUCCESS',
+      'ASK_CLARIFICATION',
+      'GENERAL_CHAT',
+      'REJECTED',
+      'FAILED',
+    ],
   })
   @IsIn(['SUCCESS', 'ASK_CLARIFICATION', 'GENERAL_CHAT', 'REJECTED', 'FAILED'])
-  status: 'SUCCESS' | 'ASK_CLARIFICATION' | 'GENERAL_CHAT' | 'REJECTED' | 'FAILED';
+  status:
+    | 'SUCCESS'
+    | 'ASK_CLARIFICATION'
+    | 'GENERAL_CHAT'
+    | 'REJECTED'
+    | 'FAILED';
 
   @ApiProperty({
     description: '수정된 로드맵 데이터 (status가 SUCCESS일 때만)',

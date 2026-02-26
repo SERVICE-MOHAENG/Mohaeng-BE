@@ -11,9 +11,7 @@ export class UnauthorizedItineraryAccessException extends HttpException {
     super(
       ApiResponseDto.error(
         ItineraryErrorCode.UNAUTHORIZED_ITINERARY_ACCESS,
-        ItineraryErrorMessage[
-          ItineraryErrorCode.UNAUTHORIZED_ITINERARY_ACCESS
-        ],
+        ItineraryErrorMessage[ItineraryErrorCode.UNAUTHORIZED_ITINERARY_ACCESS],
       ),
       HttpStatus.FORBIDDEN,
     );

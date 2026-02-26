@@ -6,9 +6,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * - 로컬 DB 이력 불일치로 누락된 컬럼/인덱스를 안전하게 복구
  * - 이미 존재하면 스킵 (idempotent)
  */
-export class EnsureItineraryModificationColumns1771000000000
-  implements MigrationInterface
-{
+export class EnsureItineraryModificationColumns1771000000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     if (queryRunner.connection.options.type !== 'mysql') {
       return;

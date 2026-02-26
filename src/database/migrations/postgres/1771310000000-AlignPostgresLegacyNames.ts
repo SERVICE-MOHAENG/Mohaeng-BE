@@ -1,18 +1,12 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AlignPostgresLegacyNames1771310000000
-  implements MigrationInterface
-{
+export class AlignPostgresLegacyNames1771310000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     if (queryRunner.connection.options.type !== 'postgres') {
       return;
     }
 
-    await this.renameTableIfNeeded(
-      queryRunner,
-      'place_table',
-      'place',
-    );
+    await this.renameTableIfNeeded(queryRunner, 'place_table', 'place');
     await this.renameTableIfNeeded(
       queryRunner,
       'course_place_table',
@@ -34,12 +28,7 @@ export class AlignPostgresLegacyNames1771310000000
       'course_survey_theme',
     );
 
-    await this.renameColumnIfNeeded(
-      queryRunner,
-      'place',
-      'id',
-      'place_id',
-    );
+    await this.renameColumnIfNeeded(queryRunner, 'place', 'id', 'place_id');
     await this.renameColumnIfNeeded(
       queryRunner,
       'place',
@@ -123,12 +112,7 @@ export class AlignPostgresLegacyNames1771310000000
       'description',
       'place_description',
     );
-    await this.renameColumnIfNeeded(
-      queryRunner,
-      'place',
-      'place_id',
-      'id',
-    );
+    await this.renameColumnIfNeeded(queryRunner, 'place', 'place_id', 'id');
 
     await this.renameTableIfNeeded(
       queryRunner,
@@ -150,11 +134,7 @@ export class AlignPostgresLegacyNames1771310000000
       'course_place',
       'course_place_table',
     );
-    await this.renameTableIfNeeded(
-      queryRunner,
-      'place',
-      'place_table',
-    );
+    await this.renameTableIfNeeded(queryRunner, 'place', 'place_table');
   }
 
   private async renameTableIfNeeded(
@@ -166,9 +146,7 @@ export class AlignPostgresLegacyNames1771310000000
     const hasTo = await this.hasTable(queryRunner, to);
 
     if (hasFrom && !hasTo) {
-      await queryRunner.query(
-        `ALTER TABLE "${from}" RENAME TO "${to}"`,
-      );
+      await queryRunner.query(`ALTER TABLE "${from}" RENAME TO "${to}"`);
     }
   }
 

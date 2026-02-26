@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddModificationFieldsToItineraryJob1770600000000
-  implements MigrationInterface
-{
+export class AddModificationFieldsToItineraryJob1770600000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     if (queryRunner.connection.options.type !== 'mysql') {
       return;

@@ -22,8 +22,7 @@ export class UserVisitedCountryService {
    * ID로 방문 국가 조회
    */
   async findById(id: string): Promise<UserVisitedCountry> {
-    const visitedCountry =
-      await this.userVisitedCountryRepository.findById(id);
+    const visitedCountry = await this.userVisitedCountryRepository.findById(id);
     if (!visitedCountry) {
       throw new VisitedCountryNotFoundException();
     }

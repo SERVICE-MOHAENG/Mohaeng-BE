@@ -12,9 +12,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  *
  * 비가역 마이그레이션: 테이블 DROP 후 재생성으로 기존 데이터 유실
  */
-export class RefactorSurveyDestinationTable1770400000000
-  implements MigrationInterface
-{
+export class RefactorSurveyDestinationTable1770400000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // =============================================
     // 1. 기존 테이블 DROP

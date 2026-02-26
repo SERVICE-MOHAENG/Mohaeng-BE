@@ -30,7 +30,9 @@ export class CourseLikesResponse {
     limit: number,
   ): CourseLikesResponse {
     const response = new CourseLikesResponse();
-    response.items = likes.map((like) => CourseResponse.fromEntity(like.travelCourse));
+    response.items = likes.map((like) =>
+      CourseResponse.fromEntity(like.travelCourse),
+    );
     response.page = page;
     response.limit = limit;
     response.total = total;

@@ -18,7 +18,10 @@ export class PreferenceRecommendationResponse {
   @ApiProperty({ description: '지역 이미지 URL', nullable: true })
   imageUrl: string | null;
 
-  @ApiProperty({ description: 'Region UUID (DB 매핑 실패 시 null)', nullable: true })
+  @ApiProperty({
+    description: 'Region UUID (DB 매핑 실패 시 null)',
+    nullable: true,
+  })
   regionId: string | null;
 
   static from(

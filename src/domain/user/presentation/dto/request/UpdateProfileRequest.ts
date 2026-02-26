@@ -51,8 +51,7 @@ export class UpdateProfileRequest {
   @MinLength(8)
   @MaxLength(30)
   @Matches(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,30}$/, {
-    message:
-      '비밀번호는 8-30자이며, 영문, 숫자, 특수문자를 포함해야 합니다.',
+    message: '비밀번호는 8-30자이며, 영문, 숫자, 특수문자를 포함해야 합니다.',
   })
   password?: string;
 

@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateCourseRegionTable1769200000000
-  implements MigrationInterface
-{
+export class CreateCourseRegionTable1769200000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // =============================================
     // course_region_table: 여행 코스-지역 다대다 매핑 테이블 생성

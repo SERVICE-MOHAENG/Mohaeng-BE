@@ -28,8 +28,7 @@ export const AuthErrorMessage = {
     '네이버 계정에서 이메일 혹은 이름 정보를 가져올 수 없습니다',
   [AuthErrorCode.KAKAO_PROFILE_EMAIL_MISSING]:
     '카카오 계정에서 이메일 혹은 이름 정보를 가져올 수 없습니다',
-  [AuthErrorCode.EMAIL_OTP_COOLDOWN]:
-    '인증번호 재전송은 1분 후에 가능합니다',
+  [AuthErrorCode.EMAIL_OTP_COOLDOWN]: '인증번호 재전송은 1분 후에 가능합니다',
   [AuthErrorCode.EMAIL_OTP_TOO_MANY_REQUESTS]:
     '인증번호는 1시간에 5회까지만 가능합니다',
   [AuthErrorCode.EMAIL_OTP_INVALID]: '인증번호가 올바르지 않습니다',

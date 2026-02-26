@@ -28,7 +28,10 @@ export class AdminCountryController {
     @Param('id') id: string,
     @Body() request: UpdateImageUrlRequest,
   ): Promise<CountryImageResponse> {
-    const country = await this.countryService.updateImageUrl(id, request.imageUrl);
+    const country = await this.countryService.updateImageUrl(
+      id,
+      request.imageUrl,
+    );
     return CountryImageResponse.from(country);
   }
 }

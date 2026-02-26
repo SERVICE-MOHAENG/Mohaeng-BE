@@ -1,16 +1,23 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class EnsureCourseDayTablePostgres1771315000000
-  implements MigrationInterface
-{
+export class EnsureCourseDayTablePostgres1771315000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     if (queryRunner.connection.options.type !== 'postgres') {
       return;
     }
 
-    await this.renameTableIfNeeded(queryRunner, 'course_day', 'course_day_table');
+    await this.renameTableIfNeeded(
+      queryRunner,
+      'course_day',
+      'course_day_table',
+    );
     await this.createCourseDayTableIfMissing(queryRunner);
-    await this.renameColumnIfNeeded(queryRunner, 'course_day_table', 'day_id', 'id');
+    await this.renameColumnIfNeeded(
+      queryRunner,
+      'course_day_table',
+      'day_id',
+      'id',
+    );
     await this.renameColumnIfNeeded(
       queryRunner,
       'course_day_table',
@@ -43,8 +50,17 @@ export class EnsureCourseDayTablePostgres1771315000000
       'course_id',
       'travel_course_id',
     );
-    await this.renameColumnIfNeeded(queryRunner, 'course_day_table', 'id', 'day_id');
-    await this.renameTableIfNeeded(queryRunner, 'course_day_table', 'course_day');
+    await this.renameColumnIfNeeded(
+      queryRunner,
+      'course_day_table',
+      'id',
+      'day_id',
+    );
+    await this.renameTableIfNeeded(
+      queryRunner,
+      'course_day_table',
+      'course_day',
+    );
   }
 
   private async createCourseDayTableIfMissing(

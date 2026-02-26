@@ -48,7 +48,13 @@ export class ItineraryJobRepository {
     try {
       return await this.repository.findOne({
         where: { id, userId },
-        relations: ['survey', 'survey.destinations', 'survey.companions', 'survey.themes', 'travelCourse'],
+        relations: [
+          'survey',
+          'survey.destinations',
+          'survey.companions',
+          'survey.themes',
+          'travelCourse',
+        ],
       });
     } catch (error) {
       if (error instanceof QueryFailedError) {
@@ -62,7 +68,13 @@ export class ItineraryJobRepository {
     try {
       return await this.repository.findOne({
         where: { id },
-        relations: ['survey', 'survey.destinations', 'survey.companions', 'survey.themes', 'travelCourse'],
+        relations: [
+          'survey',
+          'survey.destinations',
+          'survey.companions',
+          'survey.themes',
+          'travelCourse',
+        ],
       });
     } catch (error) {
       if (error instanceof QueryFailedError) {

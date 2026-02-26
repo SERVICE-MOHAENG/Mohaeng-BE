@@ -7,9 +7,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * - legacy PK/조인 컬럼명을 현재 엔티티 컬럼명에 맞게 정렬
  * - 이미 반영된 경우 스킵 (idempotent)
  */
-export class AlignMysqlSchemaWithEntities1771200000000
-  implements MigrationInterface
-{
+export class AlignMysqlSchemaWithEntities1771200000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     if (queryRunner.connection.options.type !== 'mysql') {
       return;
@@ -99,7 +97,11 @@ export class AlignMysqlSchemaWithEntities1771200000000
       'course_survey_destination',
       'course_survey_destination_table',
     );
-    await this.renameTableIfExists(queryRunner, 'course_place', 'course_place_table');
+    await this.renameTableIfExists(
+      queryRunner,
+      'course_place',
+      'course_place_table',
+    );
     await this.renameTableIfExists(queryRunner, 'place', 'place_table');
   }
 

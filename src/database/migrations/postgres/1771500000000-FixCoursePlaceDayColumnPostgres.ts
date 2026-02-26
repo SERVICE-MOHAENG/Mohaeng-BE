@@ -1,15 +1,21 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class FixCoursePlaceDayColumnPostgres1771500000000
-  implements MigrationInterface
-{
+export class FixCoursePlaceDayColumnPostgres1771500000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     if (queryRunner.connection.options.type !== 'postgres') {
       return;
     }
 
-    await this.renameTableIfNeeded(queryRunner, 'course_place_table', 'course_place');
-    await this.renameTableIfNeeded(queryRunner, 'course_day', 'course_day_table');
+    await this.renameTableIfNeeded(
+      queryRunner,
+      'course_place_table',
+      'course_place',
+    );
+    await this.renameTableIfNeeded(
+      queryRunner,
+      'course_day',
+      'course_day_table',
+    );
 
     await this.renameColumnIfNeeded(
       queryRunner,

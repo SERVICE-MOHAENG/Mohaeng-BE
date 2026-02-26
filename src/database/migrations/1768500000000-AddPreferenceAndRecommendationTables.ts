@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddPreferenceAndRecommendationTables1768500000000
-  implements MigrationInterface
-{
+export class AddPreferenceAndRecommendationTables1768500000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // =============================================
     // 1. country_table 컬럼 추가

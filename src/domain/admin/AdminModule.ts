@@ -16,7 +16,11 @@ import { AdminRegionController } from './presentation/AdminRegionController';
  */
 @Module({
   imports: [TypeOrmModule.forFeature([Admin]), CountryModule],
-  controllers: [AdminAuthController, AdminCountryController, AdminRegionController],
+  controllers: [
+    AdminAuthController,
+    AdminCountryController,
+    AdminRegionController,
+  ],
   providers: [AdminAuthService, AdminRepository],
   exports: [AdminAuthService],
 })

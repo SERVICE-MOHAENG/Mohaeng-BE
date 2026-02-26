@@ -169,5 +169,4 @@ export class Region extends BaseEntity {
     region.budgets = [];
     return region;
   }
-
 }

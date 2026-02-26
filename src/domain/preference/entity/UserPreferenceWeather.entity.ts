@@ -11,9 +11,13 @@ import { WeatherPreference } from './WeatherPreference.enum';
  */
 @Entity('user_preference_weather')
 export class UserPreferenceWeather extends BaseEntity {
-  @ManyToOne(() => UserPreference, (preference) => preference.weatherPreferences, {
-    onDelete: 'CASCADE',
-  })
+  @ManyToOne(
+    () => UserPreference,
+    (preference) => preference.weatherPreferences,
+    {
+      onDelete: 'CASCADE',
+    },
+  )
   @JoinColumn({ name: 'user_preference_id' })
   preference: UserPreference;
 

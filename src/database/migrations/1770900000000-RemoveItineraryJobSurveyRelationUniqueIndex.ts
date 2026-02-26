@@ -7,9 +7,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * - 현재 ManyToOne 관계에 맞게 일반 인덱스(idx_itinerary_job_survey)로 전환
  * - FK 의존성이 있는 인덱스이므로 FK를 먼저 분리 후 재생성
  */
-export class RemoveItineraryJobSurveyRelationUniqueIndex1770900000000
-  implements MigrationInterface
-{
+export class RemoveItineraryJobSurveyRelationUniqueIndex1770900000000 implements MigrationInterface {
   private readonly tableName = 'itinerary_job_table';
   private readonly columnName = 'survey_id';
   private readonly relationUniqueIndex = 'REL_904c1d86d75f038788d730c846';

@@ -76,9 +76,7 @@ export class UserVisitedCountryRepository {
     });
   }
 
-  async save(
-    visitedCountry: UserVisitedCountry,
-  ): Promise<UserVisitedCountry> {
+  async save(visitedCountry: UserVisitedCountry): Promise<UserVisitedCountry> {
     return this.repository.save(visitedCountry);
   }
 

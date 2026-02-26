@@ -14,8 +14,7 @@ import { UserRepository } from '../../../src/domain/user/persistence/UserReposit
 import { GlobalRedisService } from '../../../src/global/redis/GlobalRedisService';
 
 describe('GET /v1/auth/me', () => {
-  const getServer = (app: INestApplication): App =>
-    app.getHttpServer() as App;
+  const getServer = (app: INestApplication): App => app.getHttpServer() as App;
 
   type ErrorResponse = {
     success: boolean;

@@ -7,9 +7,7 @@ type ColumnInfo = {
   column_default: string | null;
 };
 
-export class EnsureItineraryModificationColumnsPostgres1771205000000
-  implements MigrationInterface
-{
+export class EnsureItineraryModificationColumnsPostgres1771205000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     if (queryRunner.connection.options.type !== 'postgres') {
       return;

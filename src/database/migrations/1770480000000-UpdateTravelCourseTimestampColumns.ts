@@ -8,9 +8,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * - updated_at: DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) 추가
  * - TypeORM의 @CreateDateColumn, @UpdateDateColumn과 일치
  */
-export class UpdateTravelCourseTimestampColumns1770480000000
-  implements MigrationInterface
-{
+export class UpdateTravelCourseTimestampColumns1770480000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       ALTER TABLE travel_course

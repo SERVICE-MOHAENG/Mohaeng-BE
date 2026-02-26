@@ -1,10 +1,9 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class CreateAllCoreTables1768389883585 implements MigrationInterface {
-
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        // 1. User 테이블 생성 (외래키 없음, 다른 테이블에서 참조됨)
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    // 1. User 테이블 생성 (외래키 없음, 다른 테이블에서 참조됨)
+    await queryRunner.query(`
             CREATE TABLE IF NOT EXISTS user_table (
                 id VARCHAR(36) PRIMARY KEY,
                 created_at DATETIME(6) NOT NULL,
@@ -22,8 +21,8 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 2. Country 테이블 생성 (외래키 없음, User와 독립적)
-        await queryRunner.query(`
+    // 2. Country 테이블 생성 (외래키 없음, User와 독립적)
+    await queryRunner.query(`
             CREATE TABLE country_table (
                 id VARCHAR(36) PRIMARY KEY,
                 created_at DATETIME(6) NOT NULL,
@@ -34,8 +33,8 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 3. Region 테이블 생성 (Country 참조)
-        await queryRunner.query(`
+    // 3. Region 테이블 생성 (Country 참조)
+    await queryRunner.query(`
             CREATE TABLE region_table (
                 id VARCHAR(36) PRIMARY KEY,
                 created_at DATETIME(6) NOT NULL,
@@ -50,8 +49,8 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 4. Place 테이블 생성 (Region 참조)
-        await queryRunner.query(`
+    // 4. Place 테이블 생성 (Region 참조)
+    await queryRunner.query(`
             CREATE TABLE place_table (
                 id VARCHAR(36) PRIMARY KEY,
                 created_at DATETIME(6) NOT NULL,
@@ -70,8 +69,8 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 5. TravelCourse 테이블 생성 (User 참조)
-        await queryRunner.query(`
+    // 5. TravelCourse 테이블 생성 (User 참조)
+    await queryRunner.query(`
             CREATE TABLE travel_course_table (
                 id VARCHAR(36) PRIMARY KEY,
                 created_at DATETIME(6) NOT NULL,
@@ -92,8 +91,8 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 6. CourseCountry 테이블 생성 (TravelCourse, Country 참조)
-        await queryRunner.query(`
+    // 6. CourseCountry 테이블 생성 (TravelCourse, Country 참조)
+    await queryRunner.query(`
             CREATE TABLE course_country_table (
                 id VARCHAR(36) PRIMARY KEY,
                 created_at DATETIME(6) NOT NULL,
@@ -108,8 +107,8 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 7. CoursePlace 테이블 생성 (TravelCourse, Place 참조)
-        await queryRunner.query(`
+    // 7. CoursePlace 테이블 생성 (TravelCourse, Place 참조)
+    await queryRunner.query(`
             CREATE TABLE course_place_table (
                 id VARCHAR(36) PRIMARY KEY,
                 created_at DATETIME(6) NOT NULL,
@@ -126,8 +125,8 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 8. CourseHashTag 테이블 생성 (TravelCourse 참조)
-        await queryRunner.query(`
+    // 8. CourseHashTag 테이블 생성 (TravelCourse 참조)
+    await queryRunner.query(`
             CREATE TABLE course_hashtag_table (
                 id VARCHAR(36) PRIMARY KEY,
                 created_at DATETIME(6) NOT NULL,
@@ -140,8 +139,8 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 9. CourseLike 테이블 생성 (TravelCourse, User 참조)
-        await queryRunner.query(`
+    // 9. CourseLike 테이블 생성 (TravelCourse, User 참조)
+    await queryRunner.query(`
             CREATE TABLE course_like_table (
                 id VARCHAR(36) PRIMARY KEY,
                 created_at DATETIME(6) NOT NULL,
@@ -156,8 +155,8 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 10. CourseBookmark 테이블 생성 (TravelCourse, User 참조)
-        await queryRunner.query(`
+    // 10. CourseBookmark 테이블 생성 (TravelCourse, User 참조)
+    await queryRunner.query(`
             CREATE TABLE course_bookmark_table (
                 id VARCHAR(36) PRIMARY KEY,
                 created_at DATETIME(6) NOT NULL,
@@ -172,8 +171,8 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 11. TravelBlog 테이블 생성 (User 참조)
-        await queryRunner.query(`
+    // 11. TravelBlog 테이블 생성 (User 참조)
+    await queryRunner.query(`
             CREATE TABLE travel_blog_table (
                 id VARCHAR(36) PRIMARY KEY,
                 created_at DATETIME(6) NOT NULL,
@@ -191,8 +190,8 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 12. BlogLike 테이블 생성 (TravelBlog, User 참조)
-        await queryRunner.query(`
+    // 12. BlogLike 테이블 생성 (TravelBlog, User 참조)
+    await queryRunner.query(`
             CREATE TABLE blog_like_table (
                 id VARCHAR(36) PRIMARY KEY,
                 created_at DATETIME(6) NOT NULL,
@@ -207,8 +206,8 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 13. UserVisitedCountry 테이블 생성 (User, Country 참조)
-        await queryRunner.query(`
+    // 13. UserVisitedCountry 테이블 생성 (User, Country 참조)
+    await queryRunner.query(`
             CREATE TABLE user_visited_country_table (
                 id VARCHAR(36) PRIMARY KEY,
                 created_at DATETIME(6) NOT NULL,
@@ -224,8 +223,8 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
 
-        // 14. Notification 테이블 생성 (User 참조)
-        await queryRunner.query(`
+    // 14. Notification 테이블 생성 (User 참조)
+    await queryRunner.query(`
             CREATE TABLE notification_table (
                 id VARCHAR(36) PRIMARY KEY,
                 created_at DATETIME(6) NOT NULL,
@@ -244,24 +243,23 @@ export class CreateAllCoreTables1768389883585 implements MigrationInterface {
                 INDEX idx_is_read (is_read)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        // 역순으로 삭제 (외래키 제약조건 때문에)
-        await queryRunner.query(`DROP TABLE IF EXISTS notification_table`);
-        await queryRunner.query(`DROP TABLE IF EXISTS user_visited_country_table`);
-        await queryRunner.query(`DROP TABLE IF EXISTS blog_like_table`);
-        await queryRunner.query(`DROP TABLE IF EXISTS travel_blog_table`);
-        await queryRunner.query(`DROP TABLE IF EXISTS course_bookmark_table`);
-        await queryRunner.query(`DROP TABLE IF EXISTS course_like_table`);
-        await queryRunner.query(`DROP TABLE IF EXISTS course_hashtag_table`);
-        await queryRunner.query(`DROP TABLE IF EXISTS course_place_table`);
-        await queryRunner.query(`DROP TABLE IF EXISTS course_country_table`);
-        await queryRunner.query(`DROP TABLE IF EXISTS travel_course_table`);
-        await queryRunner.query(`DROP TABLE IF EXISTS place_table`);
-        await queryRunner.query(`DROP TABLE IF EXISTS region_table`);
-        await queryRunner.query(`DROP TABLE IF EXISTS country_table`);
-        await queryRunner.query(`DROP TABLE IF EXISTS user_table`);
-    }
-
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    // 역순으로 삭제 (외래키 제약조건 때문에)
+    await queryRunner.query(`DROP TABLE IF EXISTS notification_table`);
+    await queryRunner.query(`DROP TABLE IF EXISTS user_visited_country_table`);
+    await queryRunner.query(`DROP TABLE IF EXISTS blog_like_table`);
+    await queryRunner.query(`DROP TABLE IF EXISTS travel_blog_table`);
+    await queryRunner.query(`DROP TABLE IF EXISTS course_bookmark_table`);
+    await queryRunner.query(`DROP TABLE IF EXISTS course_like_table`);
+    await queryRunner.query(`DROP TABLE IF EXISTS course_hashtag_table`);
+    await queryRunner.query(`DROP TABLE IF EXISTS course_place_table`);
+    await queryRunner.query(`DROP TABLE IF EXISTS course_country_table`);
+    await queryRunner.query(`DROP TABLE IF EXISTS travel_course_table`);
+    await queryRunner.query(`DROP TABLE IF EXISTS place_table`);
+    await queryRunner.query(`DROP TABLE IF EXISTS region_table`);
+    await queryRunner.query(`DROP TABLE IF EXISTS country_table`);
+    await queryRunner.query(`DROP TABLE IF EXISTS user_table`);
+  }
 }

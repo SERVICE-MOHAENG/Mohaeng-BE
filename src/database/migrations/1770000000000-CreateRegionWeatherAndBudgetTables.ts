@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateRegionWeatherAndBudgetTables1770000000000
-  implements MigrationInterface
-{
+export class CreateRegionWeatherAndBudgetTables1770000000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // =============================================
     // 1. region_weather_table (설문 1번: 날씨/계절 매칭)

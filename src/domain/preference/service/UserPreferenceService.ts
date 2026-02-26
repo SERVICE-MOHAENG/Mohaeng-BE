@@ -49,9 +49,7 @@ export class UserPreferenceService {
    * - 삭제-생성을 트랜잭션으로 묶어 데이터 유실 방지
    * - cascade 설정으로 매핑 테이블도 자동으로 저장됨
    */
-  async createOrUpdate(
-    dto: CreateUserPreferenceDto,
-  ): Promise<UserPreference> {
+  async createOrUpdate(dto: CreateUserPreferenceDto): Promise<UserPreference> {
     return this.dataSource.transaction(async (manager) => {
       // 기존 선호도가 있으면 삭제
       const existing = await manager.findOne(UserPreference, {
@@ -79,9 +77,7 @@ export class UserPreferenceService {
         UserPreferenceTravelStyle.create(saved.id, dto.travelStyle),
       ];
 
-      saved.budgets = [
-        UserPreferenceBudget.create(saved.id, dto.budget),
-      ];
+      saved.budgets = [UserPreferenceBudget.create(saved.id, dto.budget)];
 
       // 다중 선택 2개 → 배열 그대로 저장
       saved.foodPersonalities = dto.foodPersonalities.map((food) =>
