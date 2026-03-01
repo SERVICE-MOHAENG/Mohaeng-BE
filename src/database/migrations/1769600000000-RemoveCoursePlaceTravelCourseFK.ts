@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class RemoveCoursePlaceTravelCourseFK1769600000000
-  implements MigrationInterface
-{
+export class RemoveCoursePlaceTravelCourseFK1769600000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // =============================================
     // course_place_table: travel_course_id FK, 인덱스, 컬럼 제거

@@ -131,7 +131,11 @@ export class CreateSurveyRequest {
   @IsEnum(SurveyBudget)
   budget_range: SurveyBudget;
 
-  @ApiProperty({ description: '추가 요청 사항', required: false, example: '해산물 위주로 부탁드려요' })
+  @ApiProperty({
+    description: '추가 요청 사항',
+    required: false,
+    example: '해산물 위주로 부탁드려요',
+  })
   @IsOptional()
   @IsString()
   notes?: string;

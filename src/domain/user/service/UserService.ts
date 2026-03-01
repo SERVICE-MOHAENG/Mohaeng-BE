@@ -82,15 +82,18 @@ export class UserService {
     return user;
   }
 
-  async getMainpageUser(userId: string): Promise<MainpageResponse>{
+  async getMainpageUser(userId: string): Promise<MainpageResponse> {
     const user = await this.userRepository.findById(userId);
-    if(!user){
+    if (!user) {
       throw new UserNotFoundException();
     }
     return MainpageResponse.fromEntity(user);
   }
 
-  async updateProfile(userId: string, request: UpdateProfileRequest): Promise<UserResponse> {
+  async updateProfile(
+    userId: string,
+    request: UpdateProfileRequest,
+  ): Promise<UserResponse> {
     // 사용자 존재 확인
     const user = await this.userRepository.findById(userId);
     if (!user) {
@@ -98,10 +101,15 @@ export class UserService {
     }
 
     // 비밀번호 확인 일치 검증 (둘 다 제공되어야 함)
-    if (request.password !== undefined || request.passwordConfirm !== undefined) {
-      if (request.password !== request.passwordConfirm ||
-          request.password === undefined ||
-          request.passwordConfirm === undefined) {
+    if (
+      request.password !== undefined ||
+      request.passwordConfirm !== undefined
+    ) {
+      if (
+        request.password !== request.passwordConfirm ||
+        request.password === undefined ||
+        request.passwordConfirm === undefined
+      ) {
         throw new PasswordMismatchException();
       }
     }
@@ -124,5 +132,4 @@ export class UserService {
     const updatedUser = await this.userRepository.save(user);
     return UserResponse.fromEntity(updatedUser);
   }
-
 }

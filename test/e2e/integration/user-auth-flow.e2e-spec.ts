@@ -16,8 +16,7 @@ import { GlobalRedisService } from '../../../src/global/redis/GlobalRedisService
 import { UserErrorCode } from '../../../src/domain/user/exception/code';
 
 describe('Integration: User Authentication Flow', () => {
-  const getServer = (app: INestApplication): App =>
-    app.getHttpServer() as App;
+  const getServer = (app: INestApplication): App => app.getHttpServer() as App;
 
   type AuthTokensBody = {
     accessToken: string;
@@ -169,9 +168,7 @@ describe('Integration: User Authentication Flow', () => {
       .expect(403);
 
     const loginAfterBody = loginAfterDeactivation.body as ErrorResponse;
-    expect(loginAfterBody.errorCode).toBe(
-      UserErrorCode.USER_NOT_ACTIVE,
-    );
+    expect(loginAfterBody.errorCode).toBe(UserErrorCode.USER_NOT_ACTIVE);
   });
 
   it('should isolate multiple users', async () => {

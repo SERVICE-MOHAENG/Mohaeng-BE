@@ -18,11 +18,7 @@ export class EmailOtpService {
     const secureOverride = this.configService.get<string>('SMTP_SECURE');
 
     const port =
-      typeof rawPort === 'number'
-        ? rawPort
-        : rawPort
-          ? Number(rawPort)
-          : NaN;
+      typeof rawPort === 'number' ? rawPort : rawPort ? Number(rawPort) : NaN;
 
     if (!host || !Number.isFinite(port) || !user || !pass || !from) {
       throw new Error('SMTP configuration is missing.');

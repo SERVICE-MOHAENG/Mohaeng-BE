@@ -52,7 +52,10 @@ export class ItineraryJobCleanupService {
 
       // 여전히 PROCESSING 상태인 경우에만 타임아웃 처리
       if (currentJob.status === ItineraryStatus.PROCESSING) {
-        currentJob.markFailed('TIMEOUT', '일정 생성 시간이 초과되었습니다 (10분)');
+        currentJob.markFailed(
+          'TIMEOUT',
+          '일정 생성 시간이 초과되었습니다 (10분)',
+        );
         await this.itineraryJobRepository.save(currentJob);
 
         // Redis Pub/Sub: 타임아웃 알림 발행

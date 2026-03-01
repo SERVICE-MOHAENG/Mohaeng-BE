@@ -83,7 +83,11 @@ export class ItineraryModificationService {
     }
 
     // 5. ItineraryJob 생성 (MODIFICATION)
-    const job = ItineraryJob.createModificationJob(userId, itineraryId, message);
+    const job = ItineraryJob.createModificationJob(
+      userId,
+      itineraryId,
+      message,
+    );
     const savedJob = await this.itineraryJobRepository.save(job);
 
     // 6. BullMQ 큐에 작업 추가

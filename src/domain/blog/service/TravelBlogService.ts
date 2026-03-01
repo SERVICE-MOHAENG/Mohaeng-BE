@@ -232,7 +232,9 @@ export class TravelBlogService {
         }),
       );
     } else {
-      blogResponses = blogs.map((blog) => BlogResponse.fromEntityWithUser(blog));
+      blogResponses = blogs.map((blog) =>
+        BlogResponse.fromEntityWithUser(blog),
+      );
     }
 
     return {

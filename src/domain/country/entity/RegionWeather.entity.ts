@@ -33,10 +33,7 @@ export class RegionWeather extends BaseEntity {
   /**
    * 지역 날씨 선호 생성 팩토리 메서드
    */
-  static create(
-    region: Region,
-    weather: WeatherPreference,
-  ): RegionWeather {
+  static create(region: Region, weather: WeatherPreference): RegionWeather {
     const entity = new RegionWeather();
     entity.region = region;
     entity.weather = weather;

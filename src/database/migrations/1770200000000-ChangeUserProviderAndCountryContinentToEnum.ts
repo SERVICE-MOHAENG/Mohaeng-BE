@@ -9,9 +9,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * 비가역 마이그레이션: down() 실행 시 ENUM → VARCHAR로 복원되나,
  * ENUM에 없는 값이 있었다면 데이터 손실 가능
  */
-export class ChangeUserProviderAndCountryContinentToEnum1770200000000
-  implements MigrationInterface
-{
+export class ChangeUserProviderAndCountryContinentToEnum1770200000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // =============================================
     // 1. user_table - provider

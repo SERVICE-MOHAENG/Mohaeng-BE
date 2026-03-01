@@ -34,7 +34,10 @@ export class RoadmapSurveyCompanion extends BaseEntity {
   /**
    * 팩토리 메서드
    */
-  static create(surveyId: string, companion: Companion): RoadmapSurveyCompanion {
+  static create(
+    surveyId: string,
+    companion: Companion,
+  ): RoadmapSurveyCompanion {
     const entity = new RoadmapSurveyCompanion();
     entity.surveyId = surveyId;
     entity.companion = companion;

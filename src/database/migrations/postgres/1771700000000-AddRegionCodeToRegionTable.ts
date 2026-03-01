@@ -6,9 +6,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * - Python LLM 서버 연동용 지역 코드 enum 컬럼 추가
  * - nullable: 기존 데이터 호환성 유지
  */
-export class AddRegionCodeToRegionTable1771700000000
-  implements MigrationInterface
-{
+export class AddRegionCodeToRegionTable1771700000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     if (queryRunner.connection.options.type !== 'postgres') {
       return;
@@ -79,9 +77,13 @@ export class AddRegionCodeToRegionTable1771700000000
     );
 
     if (columnExists.length > 0) {
-      await queryRunner.query(`ALTER TABLE "region_table" DROP COLUMN "region_code"`);
+      await queryRunner.query(
+        `ALTER TABLE "region_table" DROP COLUMN "region_code"`,
+      );
     }
 
-    await queryRunner.query(`DROP TYPE IF EXISTS "public"."region_table_region_code_enum"`);
+    await queryRunner.query(
+      `DROP TYPE IF EXISTS "public"."region_table_region_code_enum"`,
+    );
   }
 }

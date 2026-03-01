@@ -48,17 +48,17 @@ export class UserController {
     const user = await this.userService.signup(request);
     return user;
   }
-  
-  @Get("mainpage/me")
+
+  @Get('mainpage/me')
   @UserApiBearerAuth()
-  @ApiOperation({ summary: '메인페이지 유저 정보'})
+  @ApiOperation({ summary: '메인페이지 유저 정보' })
   @ApiResponse({
     status: 200,
     description: '유저 정보 전송',
-    type:UserResponse,
+    type: UserResponse,
   })
-  async getUser(@UserId() userId: string): Promise<MainpageResponse>{
-    return this.userService.getMainpageUser(userId)
+  async getUser(@UserId() userId: string): Promise<MainpageResponse> {
+    return this.userService.getMainpageUser(userId);
   }
 
   @Patch('me')

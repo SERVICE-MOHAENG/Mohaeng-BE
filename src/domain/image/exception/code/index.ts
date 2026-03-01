@@ -8,8 +8,6 @@ export enum ImageErrorCode {
 export const ImageErrorMessage = {
   [ImageErrorCode.INVALID_IMAGE_TYPE]:
     '허용되지 않는 파일 형식입니다. (jpg, jpeg, png, webp만 허용)',
-  [ImageErrorCode.IMAGE_FILE_TOO_LARGE]:
-    '파일 크기가 너무 큽니다. (최대 10MB)',
-  [ImageErrorCode.IMAGE_UPLOAD_FAILED]:
-    'S3 파일 업로드에 실패했습니다.',
+  [ImageErrorCode.IMAGE_FILE_TOO_LARGE]: '파일 크기가 너무 큽니다. (최대 10MB)',
+  [ImageErrorCode.IMAGE_UPLOAD_FAILED]: 'S3 파일 업로드에 실패했습니다.',
 } as const;

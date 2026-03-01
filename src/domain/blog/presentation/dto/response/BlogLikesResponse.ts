@@ -31,7 +31,7 @@ export class BlogLikesResponse {
   ): BlogLikesResponse {
     const response = new BlogLikesResponse();
     response.items = likes.map((like) =>
-      BlogResponse.fromEntityWithUser(like.travelBlog)
+      BlogResponse.fromEntityWithUser(like.travelBlog),
     );
     response.page = page;
     response.limit = limit;

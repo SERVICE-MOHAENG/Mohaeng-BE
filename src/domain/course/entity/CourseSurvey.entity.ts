@@ -1,4 +1,11 @@
-import { Entity, Column, ManyToOne, OneToMany, JoinColumn, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { User } from '../../user/entity/User.entity';
 import { TravelCourse } from './TravelCourse.entity';
 import { CourseSurveyDestination } from './CourseSurveyDestination.entity';
@@ -82,7 +89,8 @@ export class CourseSurvey {
     enum: DestinationPreference,
     name: 'is_tourist_spots',
     nullable: false,
-    comment: '여행지 선호: TOURIST_SPOTS=관광지 위주, LOCAL_EXPERIENCE=로컬 위주',
+    comment:
+      '여행지 선호: TOURIST_SPOTS=관광지 위주, LOCAL_EXPERIENCE=로컬 위주',
   })
   destinationPreference: DestinationPreference;
 

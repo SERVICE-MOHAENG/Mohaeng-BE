@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateCourseDayTable1769500000000
-  implements MigrationInterface
-{
+export class CreateCourseDayTable1769500000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // =============================================
     // 1. course_day_table 생성

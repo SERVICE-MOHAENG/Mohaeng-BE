@@ -11,9 +11,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * - 결과: date_id 컬럼 + FK_a2f3d65b296029c3bee511cf20b 가 프로덕션 DB에 레거시로 잔존
  * - 이 마이그레이션은 해당 레거시 FK 및 컬럼을 안전하게 제거
  */
-export class DropLegacyCoursePlaceDateIdFkPostgres1772500000000
-  implements MigrationInterface
-{
+export class DropLegacyCoursePlaceDateIdFkPostgres1772500000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     if (queryRunner.connection.options.type !== 'postgres') {
       return;

@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AlignPostgresSchemaWithEntities1771600000000
-  implements MigrationInterface
-{
+export class AlignPostgresSchemaWithEntities1771600000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     if (queryRunner.connection.options.type !== 'postgres') {
       return;
@@ -101,11 +99,21 @@ export class AlignPostgresSchemaWithEntities1771600000000
     );
   }
 
-  private async alignCourseSurveyEnums(queryRunner: QueryRunner): Promise<void> {
+  private async alignCourseSurveyEnums(
+    queryRunner: QueryRunner,
+  ): Promise<void> {
     await this.ensureEnumType(
       queryRunner,
       'course_survey_companion_companion_type_enum',
-      ['FAMILY', 'FRIENDS', 'COUPLE', 'CHILDREN', 'PARENTS', 'COLLEAGUES', 'SOLO'],
+      [
+        'FAMILY',
+        'FRIENDS',
+        'COUPLE',
+        'CHILDREN',
+        'PARENTS',
+        'COLLEAGUES',
+        'SOLO',
+      ],
     );
     await this.alterEnumColumnIfNeeded(
       queryRunner,
@@ -125,20 +133,24 @@ export class AlignPostgresSchemaWithEntities1771600000000
       '동행자 유형',
     );
 
-    await this.ensureEnumType(queryRunner, 'course_survey_theme_theme_type_enum', [
-      'UNIQUE_TRIP',
-      'HONEYMOON',
-      'FAMILY_TRIP',
-      'HEALING',
-      'SIGHTSEEING',
-      'FOOD_TOUR',
-      'NATURE',
-      'SHOPPING',
-      'CULTURE_ART',
-      'ACTIVITY',
-      'CITY_TRIP',
-      'PHOTO_SPOTS',
-    ]);
+    await this.ensureEnumType(
+      queryRunner,
+      'course_survey_theme_theme_type_enum',
+      [
+        'UNIQUE_TRIP',
+        'HONEYMOON',
+        'FAMILY_TRIP',
+        'HEALING',
+        'SIGHTSEEING',
+        'FOOD_TOUR',
+        'NATURE',
+        'SHOPPING',
+        'CULTURE_ART',
+        'ACTIVITY',
+        'CITY_TRIP',
+        'PHOTO_SPOTS',
+      ],
+    );
     await this.alterEnumColumnIfNeeded(
       queryRunner,
       'course_survey_theme',
@@ -163,23 +175,26 @@ export class AlignPostgresSchemaWithEntities1771600000000
       'HIGH',
       'LUXURY',
     ]);
-    await this.ensureEnumType(queryRunner, 'course_survey_table_is_dense_enum', [
-      'DENSE',
-      'RELAXED',
-    ]);
-    await this.ensureEnumType(queryRunner, 'course_survey_table_is_planned_enum', [
-      'PLANNED',
-      'SPONTANEOUS',
-    ]);
+    await this.ensureEnumType(
+      queryRunner,
+      'course_survey_table_is_dense_enum',
+      ['DENSE', 'RELAXED'],
+    );
+    await this.ensureEnumType(
+      queryRunner,
+      'course_survey_table_is_planned_enum',
+      ['PLANNED', 'SPONTANEOUS'],
+    );
     await this.ensureEnumType(
       queryRunner,
       'course_survey_table_is_tourist_spots_enum',
       ['TOURIST_SPOTS', 'LOCAL_EXPERIENCE'],
     );
-    await this.ensureEnumType(queryRunner, 'course_survey_table_is_activate_enum', [
-      'ACTIVE',
-      'REST_FOCUSED',
-    ]);
+    await this.ensureEnumType(
+      queryRunner,
+      'course_survey_table_is_activate_enum',
+      ['ACTIVE', 'REST_FOCUSED'],
+    );
     await this.ensureEnumType(
       queryRunner,
       'course_survey_table_is_efficiency_enum',
@@ -223,9 +238,21 @@ export class AlignPostgresSchemaWithEntities1771600000000
       'course_survey_table_is_efficiency_enum',
     );
 
-    await this.setNotNullIfColumnExists(queryRunner, 'course_survey_table', 'budget');
-    await this.setNotNullIfColumnExists(queryRunner, 'course_survey_table', 'is_dense');
-    await this.setNotNullIfColumnExists(queryRunner, 'course_survey_table', 'is_planned');
+    await this.setNotNullIfColumnExists(
+      queryRunner,
+      'course_survey_table',
+      'budget',
+    );
+    await this.setNotNullIfColumnExists(
+      queryRunner,
+      'course_survey_table',
+      'is_dense',
+    );
+    await this.setNotNullIfColumnExists(
+      queryRunner,
+      'course_survey_table',
+      'is_planned',
+    );
     await this.setNotNullIfColumnExists(
       queryRunner,
       'course_survey_table',
@@ -455,7 +482,11 @@ export class AlignPostgresSchemaWithEntities1771600000000
       return;
     }
 
-    const hadDefault = await this.hasDefault(queryRunner, tableName, columnName);
+    const hadDefault = await this.hasDefault(
+      queryRunner,
+      tableName,
+      columnName,
+    );
     if (hadDefault) {
       await queryRunner.query(
         `ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" DROP DEFAULT`,

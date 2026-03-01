@@ -297,7 +297,9 @@ export class ItineraryCallbackService {
       job.markFailed(error.code, error.message);
       await this.itineraryJobRepository.save(job);
 
-      this.logger.warn(`Job ${jobId} 최종 실패: ${error.code} - ${error.message}`);
+      this.logger.warn(
+        `Job ${jobId} 최종 실패: ${error.code} - ${error.message}`,
+      );
     }
   }
 
@@ -329,7 +331,9 @@ export class ItineraryCallbackService {
     return destinations[0].region;
   }
 
-  private normalizeVisitTime(visitTime: string | null | undefined): string | null {
+  private normalizeVisitTime(
+    visitTime: string | null | undefined,
+  ): string | null {
     if (!visitTime) {
       return null;
     }

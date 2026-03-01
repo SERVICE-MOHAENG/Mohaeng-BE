@@ -70,7 +70,15 @@ export class RegionService {
     imageUrl?: string,
   ): Promise<Region> {
     const country = await this.countryService.findById(countryId);
-    const region = Region.create(name, country, travelRange, averageBudgetLevel, latitude, longitude, imageUrl);
+    const region = Region.create(
+      name,
+      country,
+      travelRange,
+      averageBudgetLevel,
+      latitude,
+      longitude,
+      imageUrl,
+    );
     return this.regionRepository.save(region);
   }
 

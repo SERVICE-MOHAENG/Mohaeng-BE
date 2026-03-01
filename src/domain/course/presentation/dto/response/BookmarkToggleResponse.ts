@@ -6,7 +6,9 @@ import { ApiProperty } from '@nestjs/swagger';
  * - 북마크 토글 응답
  */
 export class BookmarkToggleResponse {
-  @ApiProperty({ description: '북마크 상태 (true: 북마크됨, false: 북마크 취소됨)' })
+  @ApiProperty({
+    description: '북마크 상태 (true: 북마크됨, false: 북마크 취소됨)',
+  })
   bookmarked: boolean;
 
   @ApiProperty({ description: '응답 메시지' })

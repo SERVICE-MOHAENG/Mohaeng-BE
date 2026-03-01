@@ -1,4 +1,11 @@
-import { Entity, Column, ManyToOne, JoinColumn, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  PrimaryGeneratedColumn,
+  OneToMany,
+} from 'typeorm';
 import { TravelCourse } from './TravelCourse.entity';
 import { CoursePlace } from './CoursePlace.entity';
 
@@ -28,7 +35,11 @@ export class CourseDay {
   @OneToMany(() => CoursePlace, (coursePlace) => coursePlace.courseDay)
   coursePlaces: CoursePlace[];
 
-  static create(travelCourse: TravelCourse, dayNumber: number, date: Date): CourseDay {
+  static create(
+    travelCourse: TravelCourse,
+    dayNumber: number,
+    date: Date,
+  ): CourseDay {
     const courseDay = new CourseDay();
     courseDay.travelCourse = travelCourse;
     courseDay.dayNumber = dayNumber;

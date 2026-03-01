@@ -58,7 +58,9 @@ export class PreferenceJobCleanupService {
       }
 
       if (currentJob.status === PreferenceJobStatus.PROCESSING) {
-        if (currentJob.retryCount < PreferenceJobCleanupService.MAX_RETRY_COUNT) {
+        if (
+          currentJob.retryCount < PreferenceJobCleanupService.MAX_RETRY_COUNT
+        ) {
           // 1회 재시도: PENDING 리셋 후 재enqueue
           currentJob.resetForRetry();
           await this.preferenceJobRepository.save(currentJob);
@@ -78,12 +80,13 @@ export class PreferenceJobCleanupService {
           retriedCount++;
         } else {
           // 최종 FAILED 확정
-          currentJob.markFailed('JOB_TIMEOUT', '추천 작업 시간이 초과되었습니다 (10분)');
+          currentJob.markFailed(
+            'JOB_TIMEOUT',
+            '추천 작업 시간이 초과되었습니다 (10분)',
+          );
           await this.preferenceJobRepository.save(currentJob);
 
-          this.logger.warn(
-            `Stale job 최종 타임아웃: jobId=${currentJob.id}`,
-          );
+          this.logger.warn(`Stale job 최종 타임아웃: jobId=${currentJob.id}`);
           failedCount++;
         }
       }

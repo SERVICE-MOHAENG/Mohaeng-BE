@@ -32,10 +32,7 @@ export class RegionCategory extends BaseEntity {
   /**
    * 지역 카테고리 생성 팩토리 메서드
    */
-  static create(
-    region: Region,
-    category: PreferredCategory,
-  ): RegionCategory {
+  static create(region: Region, category: PreferredCategory): RegionCategory {
     const regionCategory = new RegionCategory();
     regionCategory.region = region;
     regionCategory.category = category;

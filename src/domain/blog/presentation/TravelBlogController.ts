@@ -119,7 +119,11 @@ export class TravelBlogController {
     @UserId() userId: string,
     @Query() request: GetMyBlogsRequest,
   ): Promise<BlogsResponse> {
-    return this.travelBlogService.getMyBlogs(userId, request.page, request.limit);
+    return this.travelBlogService.getMyBlogs(
+      userId,
+      request.page,
+      request.limit,
+    );
   }
 
   /**

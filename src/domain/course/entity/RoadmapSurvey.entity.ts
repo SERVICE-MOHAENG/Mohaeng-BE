@@ -39,7 +39,12 @@ export class RoadmapSurvey extends BaseEntity {
   @JoinColumn({ name: 'travel_course_id' })
   travelCourse: TravelCourse | null;
 
-  @Column({ type: 'uuid', name: 'travel_course_id', nullable: true, unique: true })
+  @Column({
+    type: 'uuid',
+    name: 'travel_course_id',
+    nullable: true,
+    unique: true,
+  })
   travelCourseId: string | null;
 
   @Column({
@@ -90,7 +95,8 @@ export class RoadmapSurvey extends BaseEntity {
     enum: DestinationPreference,
     name: 'destination_preference',
     nullable: false,
-    comment: '여행지 선호: TOURIST_SPOTS=관광지 위주, LOCAL_EXPERIENCE=로컬 위주',
+    comment:
+      '여행지 선호: TOURIST_SPOTS=관광지 위주, LOCAL_EXPERIENCE=로컬 위주',
   })
   destinationPreference: DestinationPreference;
 
@@ -112,9 +118,13 @@ export class RoadmapSurvey extends BaseEntity {
   })
   priorityPreference: PriorityPreference;
 
-  @OneToMany(() => RoadmapSurveyDestination, (destination) => destination.survey, {
-    cascade: true,
-  })
+  @OneToMany(
+    () => RoadmapSurveyDestination,
+    (destination) => destination.survey,
+    {
+      cascade: true,
+    },
+  )
   destinations: RoadmapSurveyDestination[];
 
   @OneToMany(() => RoadmapSurveyCompanion, (companion) => companion.survey, {

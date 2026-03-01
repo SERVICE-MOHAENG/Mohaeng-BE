@@ -6,9 +6,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * - preference_job_table: 여행지 추천 비동기 작업 추적
  * - preference_recommendation_table: Python LLM 추천 결과 저장
  */
-export class CreatePreferenceJobAndRecommendationTables1771300000000
-  implements MigrationInterface
-{
+export class CreatePreferenceJobAndRecommendationTables1771300000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // =============================================
     // 1. preference_job_table 생성
@@ -53,7 +51,9 @@ export class CreatePreferenceJobAndRecommendationTables1771300000000
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP TABLE IF EXISTS preference_recommendation_table`);
+    await queryRunner.query(
+      `DROP TABLE IF EXISTS preference_recommendation_table`,
+    );
     await queryRunner.query(`DROP TABLE IF EXISTS preference_job_table`);
   }
 }

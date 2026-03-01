@@ -81,7 +81,8 @@ export class CourseResponse {
     response.bookmarkCount = course.bookmarkCount;
     response.userId = course.user.id;
     response.userName = course.user.name;
-    response.countries = course.courseCountries?.map((cc) => cc.country.name) || [];
+    response.countries =
+      course.courseCountries?.map((cc) => cc.country.name) || [];
     response.hashTags = course.hashTags?.map((ht) => ht.tagName) || [];
     response.places =
       course.courseDays

@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, Repository } from 'typeorm';
-import { PreferenceJob, PreferenceJobStatus } from '../entity/PreferenceJob.entity';
+import {
+  PreferenceJob,
+  PreferenceJobStatus,
+} from '../entity/PreferenceJob.entity';
 
 /**
  * PreferenceJobRepository

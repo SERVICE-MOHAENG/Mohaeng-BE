@@ -7,9 +7,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * - course_survey_companion_table: companion_type → ENUM
  * - course_survey_theme_table: theme_type → ENUM
  */
-export class ConvertCourseSurveyColumnsToEnum1771400000000
-  implements MigrationInterface
-{
+export class ConvertCourseSurveyColumnsToEnum1771400000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // =============================================
     // 1. course_survey_table 컬럼 varchar → ENUM 변환

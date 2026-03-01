@@ -13,7 +13,11 @@ import { UserModule } from '../user/UserModule';
  * - 사용자 방문 국가 도메인 모듈
  */
 @Module({
-  imports: [TypeOrmModule.forFeature([UserVisitedCountry]), CountryModule, UserModule],
+  imports: [
+    TypeOrmModule.forFeature([UserVisitedCountry]),
+    CountryModule,
+    UserModule,
+  ],
   providers: [UserVisitedCountryRepository, UserVisitedCountryService],
   controllers: [UserVisitedCountryController],
   exports: [UserVisitedCountryService],

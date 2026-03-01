@@ -28,7 +28,10 @@ export class AdminRegionController {
     @Param('id') id: string,
     @Body() request: UpdateImageUrlRequest,
   ): Promise<RegionImageResponse> {
-    const region = await this.regionService.updateImageUrl(id, request.imageUrl);
+    const region = await this.regionService.updateImageUrl(
+      id,
+      request.imageUrl,
+    );
     return RegionImageResponse.from(region);
   }
 }

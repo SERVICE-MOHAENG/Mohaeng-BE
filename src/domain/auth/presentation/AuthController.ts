@@ -122,9 +122,7 @@ export class AuthController {
     type: CurrentUserResponse,
   })
   @ApiResponse({ status: 401, description: '인증 필요' })
-  me(
-    @CurrentUser() user: { id: string; email: string },
-  ): CurrentUserResponse {
+  me(@CurrentUser() user: { id: string; email: string }): CurrentUserResponse {
     return user;
   }
 
@@ -139,7 +137,6 @@ export class AuthController {
     void _req;
     // Guard가 자동으로 Google OAuth 페이지로 리다이렉트
   }
-
 
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)

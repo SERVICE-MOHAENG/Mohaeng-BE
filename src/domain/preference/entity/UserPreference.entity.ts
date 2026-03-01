@@ -44,11 +44,9 @@ export class UserPreference extends BaseEntity {
   )
   travelStyles: UserPreferenceTravelStyle[];
   // 4. 식도락 성향 (복수 선택)
-  @OneToMany(
-    () => UserPreferenceFoodPersonality,
-    (food) => food.preference,
-    { cascade: true },
-  )
+  @OneToMany(() => UserPreferenceFoodPersonality, (food) => food.preference, {
+    cascade: true,
+  })
   foodPersonalities: UserPreferenceFoodPersonality[];
 
   // 5. 핵심 관심사 (복수 선택)

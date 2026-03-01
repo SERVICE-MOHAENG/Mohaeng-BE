@@ -24,7 +24,6 @@ import { GlobalJwtService } from '../../../global/jwt/GlobalJwtService';
 import { GlobalRedisService } from '../../../global/redis/GlobalRedisService';
 import { EmailOtpService } from './EmailOtpService';
 
-
 type AuthTokens = {
   accessToken: string;
   refreshToken: string;
@@ -316,7 +315,6 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-
   private hashToken(token: string): string {
     return createHash('sha256').update(token).digest('hex');
   }
@@ -366,7 +364,6 @@ export class AuthService {
     const value = randomInt(0, 1000000);
     return value.toString().padStart(6, '0');
   }
-
 
   /**
    * 사용자의 모든 리프레시 토큰 삭제 (강제 로그아웃)

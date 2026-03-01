@@ -59,7 +59,11 @@ export class TravelCourseService {
       this.courseBookmarkRepository.existsByUserIdAndCourseId(userId, id),
     ]);
 
-    return CourseResponse.fromEntityWithUserStatus(course, isLiked, isBookmarked);
+    return CourseResponse.fromEntityWithUserStatus(
+      course,
+      isLiked,
+      isBookmarked,
+    );
   }
 
   /**
@@ -185,10 +189,20 @@ export class TravelCourseService {
     const coursesWithStatus = await Promise.all(
       courses.map(async (course) => {
         const [isLiked, isBookmarked] = await Promise.all([
-          this.courseLikeRepository.existsByUserIdAndCourseId(userId, course.id),
-          this.courseBookmarkRepository.existsByUserIdAndCourseId(userId, course.id),
+          this.courseLikeRepository.existsByUserIdAndCourseId(
+            userId,
+            course.id,
+          ),
+          this.courseBookmarkRepository.existsByUserIdAndCourseId(
+            userId,
+            course.id,
+          ),
         ]);
-        return CourseResponse.fromEntityWithUserStatus(course, isLiked, isBookmarked);
+        return CourseResponse.fromEntityWithUserStatus(
+          course,
+          isLiked,
+          isBookmarked,
+        );
       }),
     );
 
@@ -260,8 +274,14 @@ export class TravelCourseService {
       courseResponses = await Promise.all(
         courses.map(async (course) => {
           const [isLiked, isBookmarked] = await Promise.all([
-            this.courseLikeRepository.existsByUserIdAndCourseId(userId, course.id),
-            this.courseBookmarkRepository.existsByUserIdAndCourseId(userId, course.id),
+            this.courseLikeRepository.existsByUserIdAndCourseId(
+              userId,
+              course.id,
+            ),
+            this.courseBookmarkRepository.existsByUserIdAndCourseId(
+              userId,
+              course.id,
+            ),
           ]);
           const response = this.mapToCourseResponse(course);
           response.isLiked = isLiked;
@@ -270,7 +290,9 @@ export class TravelCourseService {
         }),
       );
     } else {
-      courseResponses = courses.map((course) => this.mapToCourseResponse(course));
+      courseResponses = courses.map((course) =>
+        this.mapToCourseResponse(course),
+      );
     }
 
     return {
