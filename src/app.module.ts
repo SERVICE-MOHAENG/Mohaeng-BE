@@ -58,6 +58,7 @@ import { RegionTravelStyle } from './domain/country/entity/RegionTravelStyle.ent
 import { RegionWeather } from './domain/country/entity/RegionWeather.entity';
 import { RegionBudget } from './domain/country/entity/RegionBudget.entity';
 import { Admin } from './domain/admin/entity/Admin.entity';
+import { CourseAiChat } from './domain/course/entity/CourseAiChat.entity';
 
 @Module({
   imports: [
@@ -127,6 +128,7 @@ import { Admin } from './domain/admin/entity/Admin.entity';
           RegionWeather,
           RegionBudget,
           Admin,
+          CourseAiChat,
         ];
 
         const common = {
