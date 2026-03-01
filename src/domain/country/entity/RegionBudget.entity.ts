@@ -33,10 +33,7 @@ export class RegionBudget extends BaseEntity {
   /**
    * 지역 예산 수준 생성 팩토리 메서드
    */
-  static create(
-    region: Region,
-    budgetLevel: BudgetLevel,
-  ): RegionBudget {
+  static create(region: Region, budgetLevel: BudgetLevel): RegionBudget {
     const entity = new RegionBudget();
     entity.region = region;
     entity.budgetLevel = budgetLevel;

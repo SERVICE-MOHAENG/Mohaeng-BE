@@ -52,7 +52,12 @@ export class ItineraryProcessor extends WorkerHost {
     // 2. CourseSurvey 로드 (with relations)
     const survey = await this.surveyRepository.findOne({
       where: { id: surveyId },
-      relations: ['destinations', 'destinations.region', 'companions', 'themes'],
+      relations: [
+        'destinations',
+        'destinations.region',
+        'companions',
+        'themes',
+      ],
     });
 
     if (!survey) {
@@ -116,12 +121,8 @@ export class ItineraryProcessor extends WorkerHost {
     const destinations = survey.destinations || [];
 
     // 전체 여행 시작/종료일 계산
-    const startDates = destinations.map(
-      (d) => new Date(d.startDay).getTime(),
-    );
-    const endDates = destinations.map(
-      (d) => new Date(d.endDate).getTime(),
-    );
+    const startDates = destinations.map((d) => new Date(d.startDay).getTime());
+    const endDates = destinations.map((d) => new Date(d.endDate).getTime());
 
     const calculatedStartDate =
       startDates.length > 0

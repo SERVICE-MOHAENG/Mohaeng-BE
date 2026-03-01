@@ -3,9 +3,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 /**
  * admin_table 생성 (PostgreSQL)
  */
-export class CreateAdminTablePostgres1772100000000
-  implements MigrationInterface
-{
+export class CreateAdminTablePostgres1772100000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     if (queryRunner.connection.options.type !== 'postgres') {
       return;

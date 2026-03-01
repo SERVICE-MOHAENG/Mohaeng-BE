@@ -67,7 +67,9 @@ export class PreferenceCallbackService {
     job.markSuccess();
     await this.preferenceJobRepository.save(job);
 
-    this.logger.log(`추천 완료: jobId=${jobId}, destinations=${recommendations.map((r) => r.regionName).join(', ')}`);
+    this.logger.log(
+      `추천 완료: jobId=${jobId}, destinations=${recommendations.map((r) => r.regionName).join(', ')}`,
+    );
   }
 
   /**
@@ -90,7 +92,9 @@ export class PreferenceCallbackService {
       job.status === PreferenceJobStatus.SUCCESS ||
       job.status === PreferenceJobStatus.FAILED
     ) {
-      this.logger.warn(`Job ${jobId} 이미 ${job.status} 상태입니다. 콜백 무시.`);
+      this.logger.warn(
+        `Job ${jobId} 이미 ${job.status} 상태입니다. 콜백 무시.`,
+      );
       return;
     }
 

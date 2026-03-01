@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class EnsureCourseDayIdDefaultPostgres1772200000000
-  implements MigrationInterface
-{
+export class EnsureCourseDayIdDefaultPostgres1772200000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     if (queryRunner.connection.options.type !== 'postgres') {
       return;

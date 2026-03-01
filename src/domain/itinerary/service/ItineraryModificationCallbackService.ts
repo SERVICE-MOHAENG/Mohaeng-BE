@@ -45,7 +45,11 @@ export interface ModifiedItineraryPayload {
   itinerary: CallbackDayData[];
 }
 
-export type IntentStatusType = 'SUCCESS' | 'ASK_CLARIFICATION' | 'GENERAL_CHAT' | 'REJECTED';
+export type IntentStatusType =
+  | 'SUCCESS'
+  | 'ASK_CLARIFICATION'
+  | 'GENERAL_CHAT'
+  | 'REJECTED';
 
 export interface ModificationFailurePayload {
   code: string;
@@ -130,9 +134,7 @@ export class ItineraryModificationCallbackService {
       );
     }
 
-    this.logger.log(
-      `Job ${jobId} 성공 처리 완료 (status: ${status})`,
-    );
+    this.logger.log(`Job ${jobId} 성공 처리 완료 (status: ${status})`);
   }
 
   /**
@@ -158,7 +160,9 @@ export class ItineraryModificationCallbackService {
       return;
     }
 
-    if (job.attemptCount <= ItineraryModificationCallbackService.MAX_RETRY_COUNT) {
+    if (
+      job.attemptCount <= ItineraryModificationCallbackService.MAX_RETRY_COUNT
+    ) {
       // 1회 재시도: PENDING으로 리셋 후 재enqueue
       job.status = ItineraryStatus.PENDING;
       job.errorCode = null;
@@ -185,7 +189,9 @@ export class ItineraryModificationCallbackService {
       job.markFailed(error.code, error.message);
       await this.itineraryJobRepository.save(job);
 
-      this.logger.warn(`Job ${jobId} 수정 최종 실패: ${error.code} - ${error.message}`);
+      this.logger.warn(
+        `Job ${jobId} 수정 최종 실패: ${error.code} - ${error.message}`,
+      );
     }
   }
 
@@ -378,9 +384,7 @@ export class ItineraryModificationCallbackService {
   /**
    * Intent 문자열을 IntentStatus enum으로 변환
    */
-  private mapIntentStatus(
-    intentStatus: string,
-  ): IntentStatus {
+  private mapIntentStatus(intentStatus: string): IntentStatus {
     switch (intentStatus) {
       case 'SUCCESS':
         return IntentStatus.SUCCESS;
@@ -391,7 +395,9 @@ export class ItineraryModificationCallbackService {
       case 'REJECTED':
         return IntentStatus.REJECTED;
       default:
-        this.logger.warn(`Unknown intent status: ${intentStatus}, defaulting to GENERAL_CHAT`);
+        this.logger.warn(
+          `Unknown intent status: ${intentStatus}, defaulting to GENERAL_CHAT`,
+        );
         return IntentStatus.GENERAL_CHAT;
     }
   }
@@ -399,10 +405,7 @@ export class ItineraryModificationCallbackService {
   /**
    * 날짜에 해당하는 Region 찾기
    */
-  private resolveRegionForDate(
-    courseRegions: any[],
-    dailyDate: string,
-  ): any {
+  private resolveRegionForDate(courseRegions: any[], dailyDate: string): any {
     if (courseRegions.length === 0) {
       throw new Error(`No regions found for course`);
     }
@@ -420,7 +423,9 @@ export class ItineraryModificationCallbackService {
     return courseRegions[0].region;
   }
 
-  private normalizeVisitTime(visitTime: string | null | undefined): string | null {
+  private normalizeVisitTime(
+    visitTime: string | null | undefined,
+  ): string | null {
     if (!visitTime) {
       return null;
     }

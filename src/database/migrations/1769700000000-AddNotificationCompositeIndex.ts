@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddNotificationCompositeIndex1769700000000
-  implements MigrationInterface
-{
+export class AddNotificationCompositeIndex1769700000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // 복합 인덱스 추가 (user_id, is_read)
     await queryRunner.query(`

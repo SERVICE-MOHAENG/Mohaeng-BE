@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddTravelCourseStartAndFinishDay1769100000000
-  implements MigrationInterface
-{
+export class AddTravelCourseStartAndFinishDay1769100000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // =============================================
     // travel_course_table: travel_start_day, travel_finish_day 컬럼 추가

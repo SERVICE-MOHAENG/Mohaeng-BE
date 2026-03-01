@@ -6,7 +6,9 @@ import { ApiProperty } from '@nestjs/swagger';
  * - 블로그 좋아요 토글 응답
  */
 export class BlogLikeToggleResponse {
-  @ApiProperty({ description: '좋아요 상태 (true: 좋아요됨, false: 좋아요 취소됨)' })
+  @ApiProperty({
+    description: '좋아요 상태 (true: 좋아요됨, false: 좋아요 취소됨)',
+  })
   liked: boolean;
 
   @ApiProperty({ description: '응답 메시지' })

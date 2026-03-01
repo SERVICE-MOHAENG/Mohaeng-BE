@@ -58,7 +58,9 @@ export class UserPreferenceController {
   @Post()
   @UserApiBearerAuth()
   @HttpCode(HttpStatus.ACCEPTED)
-  @ApiOperation({ summary: '선호도 등록/수정 후 여행지 추천 작업 시작 (비동기)' })
+  @ApiOperation({
+    summary: '선호도 등록/수정 후 여행지 추천 작업 시작 (비동기)',
+  })
   @ApiResponse({ status: 202, description: '{ jobId, status: "PENDING" }' })
   @ApiResponse({ status: 400, description: '잘못된 요청' })
   @ApiResponse({ status: 401, description: '인증 실패' })
@@ -120,7 +122,10 @@ export class UserPreferenceController {
   @UserApiBearerAuth()
   @ApiOperation({ summary: '추천 작업 상태 조회 (Polling)' })
   @ApiParam({ name: 'jobId', description: '작업 ID' })
-  @ApiResponse({ status: 200, description: '{ status: "PENDING"|"PROCESSING"|"SUCCESS"|"FAILED" }' })
+  @ApiResponse({
+    status: 200,
+    description: '{ status: "PENDING"|"PROCESSING"|"SUCCESS"|"FAILED" }',
+  })
   async getJobStatus(
     @Param('jobId') jobId: string,
   ): Promise<{ status: string }> {
@@ -135,7 +140,11 @@ export class UserPreferenceController {
   @UserApiBearerAuth()
   @ApiOperation({ summary: '추천 여행지 결과 조회 (이미지, 설명 포함)' })
   @ApiParam({ name: 'jobId', description: '작업 ID' })
-  @ApiResponse({ status: 200, type: PreferenceRecommendationResponse, isArray: true })
+  @ApiResponse({
+    status: 200,
+    type: PreferenceRecommendationResponse,
+    isArray: true,
+  })
   async getJobResult(
     @Param('jobId') jobId: string,
   ): Promise<{ destinations: PreferenceRecommendationResponse[] }> {

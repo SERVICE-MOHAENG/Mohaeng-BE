@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsArray, IsString, ValidateNested } from 'class-validator';
+import {
+  IsIn,
+  IsOptional,
+  IsArray,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 class RecommendedDestinationDto {

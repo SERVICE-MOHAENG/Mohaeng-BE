@@ -30,7 +30,9 @@ export class CountryController {
   async getRegionsByCountry(
     @Query() request: GetRegionsByCountryRequest,
   ): Promise<RegionsResponse> {
-    const regions = await this.regionService.findByCountryName(request.countryName);
+    const regions = await this.regionService.findByCountryName(
+      request.countryName,
+    );
     return RegionsResponse.from(regions);
   }
 }

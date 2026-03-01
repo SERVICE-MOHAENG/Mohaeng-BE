@@ -45,7 +45,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       const dbException = new GlobalDatabaseErrorException();
       status = dbException.getStatus();
       errorResponse = dbException.getResponse() as ApiResponseDto;
-        //LogInterceptor로 전송
+      //LogInterceptor로 전송
       this.logger.error(
         `[REDIS ERROR] ${(exception as Error).message}`,
         (exception as Error).stack,
@@ -73,9 +73,13 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         );
 
         //응답이 객체 형태이면 그대로 Response
-        if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
-            errorResponse = exceptionResponse as ApiResponseDto;
-        } else { //string 형태이면 객체로 수정
+        if (
+          typeof exceptionResponse === 'object' &&
+          exceptionResponse !== null
+        ) {
+          errorResponse = exceptionResponse as ApiResponseDto;
+        } else {
+          //string 형태이면 객체로 수정
           errorResponse = ApiResponseDto.error(
             'INTERNAL_SERVER_ERROR',
             exception.message,
@@ -83,12 +87,13 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         }
 
         if (shouldLog) {
-            //status >= 500 → error 레벨로 로그
-            if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
-              //LogInterceptor로 전송
+          //status >= 500 → error 레벨로 로그
+          if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+            //LogInterceptor로 전송
             this.logger.error(logMessage, exception.stack);
-          } else { // status < 500 && isCritical === true → warn 레벨로 로그
-                this.logger.warn(logMessage);
+          } else {
+            // status < 500 && isCritical === true → warn 레벨로 로그
+            this.logger.warn(logMessage);
           }
         }
       }

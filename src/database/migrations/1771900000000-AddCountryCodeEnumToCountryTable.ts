@@ -6,9 +6,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * - 국가 식별용 enum 코드 컬럼 추가
  * - 클라이언트에는 한국어 이름(country_name)으로 표시, 내부/Python 서버에는 이 enum 값 사용
  */
-export class AddCountryCodeEnumToCountryTable1771900000000
-  implements MigrationInterface
-{
+export class AddCountryCodeEnumToCountryTable1771900000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       CREATE TYPE "country_table_country_code_enum_enum" AS ENUM(

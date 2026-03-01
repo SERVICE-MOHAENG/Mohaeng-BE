@@ -8,9 +8,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * - CASCADE 체인 방지: Region → Place → CoursePlace → CourseDay → TravelCourse
  * - 데이터 무결성 및 의도하지 않은 대량 삭제 방지
  */
-export class ChangePlaceRegionFkToRestrict1770850000000
-  implements MigrationInterface
-{
+export class ChangePlaceRegionFkToRestrict1770850000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     if (queryRunner.connection.options.type !== 'mysql') {
       return;

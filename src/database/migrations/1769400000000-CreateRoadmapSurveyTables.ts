@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateRoadmapSurveyTables1769400000000
-  implements MigrationInterface
-{
+export class CreateRoadmapSurveyTables1769400000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // =============================================
     // 1. roadmap_survey_table 생성
@@ -98,8 +96,12 @@ export class CreateRoadmapSurveyTables1769400000000
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`DROP TABLE IF EXISTS roadmap_survey_theme_table`);
-    await queryRunner.query(`DROP TABLE IF EXISTS roadmap_survey_companion_table`);
-    await queryRunner.query(`DROP TABLE IF EXISTS roadmap_survey_destination_table`);
+    await queryRunner.query(
+      `DROP TABLE IF EXISTS roadmap_survey_companion_table`,
+    );
+    await queryRunner.query(
+      `DROP TABLE IF EXISTS roadmap_survey_destination_table`,
+    );
     await queryRunner.query(`DROP TABLE IF EXISTS roadmap_survey_table`);
   }
 }

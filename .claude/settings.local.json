@@ -19,7 +19,9 @@
       "WebFetch(domain:github.com)",
       "Bash(git checkout:*)",
       "Bash(grep:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(node:*)",
+      "mcp__plugin_oh-my-claudecode_t__python_repl"
     ]
   }
 }

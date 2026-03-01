@@ -32,10 +32,7 @@ export class RegionTravelStyle extends BaseEntity {
   /**
    * 지역 여행 스타일 생성 팩토리 메서드
    */
-  static create(
-    region: Region,
-    travelStyle: TravelStyle,
-  ): RegionTravelStyle {
+  static create(region: Region, travelStyle: TravelStyle): RegionTravelStyle {
     const regionTravelStyle = new RegionTravelStyle();
     regionTravelStyle.region = region;
     regionTravelStyle.travelStyle = travelStyle;

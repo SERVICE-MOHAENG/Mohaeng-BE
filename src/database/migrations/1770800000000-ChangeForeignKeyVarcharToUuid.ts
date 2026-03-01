@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class ChangeForeignKeyVarcharToUuid1770800000000
-  implements MigrationInterface
-{
+export class ChangeForeignKeyVarcharToUuid1770800000000 implements MigrationInterface {
   private readonly targets: Array<{ table: string; column: string }> = [
     { table: 'course_date', column: 'course_id' },
     { table: 'travel_course_region', column: 'course_id' },

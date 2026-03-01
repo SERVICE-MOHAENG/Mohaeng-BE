@@ -1,4 +1,10 @@
-import { Entity, Column, ManyToOne, JoinColumn, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { CourseSurvey } from './CourseSurvey.entity';
 import { Region } from '../../country/entity/Region.entity';
 
@@ -29,7 +35,12 @@ export class CourseSurveyDestination {
   @Column({ type: 'uuid', name: 'region_id' })
   regionId: string;
 
-  @Column({ type: 'varchar', length: 100, name: 'region_name', nullable: false })
+  @Column({
+    type: 'varchar',
+    length: 100,
+    name: 'region_name',
+    nullable: false,
+  })
   regionName: string;
 
   @Column({ type: 'date', name: 'start_day', nullable: false })

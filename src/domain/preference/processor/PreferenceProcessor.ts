@@ -37,7 +37,9 @@ export class PreferenceProcessor extends WorkerHost {
 
   async process(job: Job<PreferenceJobData>): Promise<void> {
     const { jobId, preferenceId } = job.data;
-    this.logger.log(`추천 작업 처리 시작: jobId=${jobId}, preferenceId=${preferenceId}`);
+    this.logger.log(
+      `추천 작업 처리 시작: jobId=${jobId}, preferenceId=${preferenceId}`,
+    );
 
     // 1. PreferenceJob PROCESSING 상태로 변경
     const preferenceJob = await this.preferenceJobRepository.findById(jobId);
@@ -63,7 +65,10 @@ export class PreferenceProcessor extends WorkerHost {
 
     if (!preference) {
       this.logger.error(`UserPreference not found: ${preferenceId}`);
-      preferenceJob.markFailed('PREFERENCE_NOT_FOUND', '선호도 데이터를 찾을 수 없습니다');
+      preferenceJob.markFailed(
+        'PREFERENCE_NOT_FOUND',
+        '선호도 데이터를 찾을 수 없습니다',
+      );
       await this.preferenceJobRepository.save(preferenceJob);
       return;
     }
@@ -95,9 +100,13 @@ export class PreferenceProcessor extends WorkerHost {
           },
         ),
       );
-      this.logger.log(`Python 서버 응답: status=${response.status}, jobId=${jobId}`);
+      this.logger.log(
+        `Python 서버 응답: status=${response.status}, jobId=${jobId}`,
+      );
     } catch (error) {
-      this.logger.error(`Python 서버 호출 실패: jobId=${jobId}, error=${error.message}`);
+      this.logger.error(
+        `Python 서버 호출 실패: jobId=${jobId}, error=${error.message}`,
+      );
       throw error; // BullMQ 자동 재시도
     }
   }
@@ -118,8 +127,10 @@ export class PreferenceProcessor extends WorkerHost {
       travel_range: preference.travelRanges?.[0]?.travelRange ?? null,
       travel_style: preference.travelStyles?.[0]?.travelStyle ?? null,
       budget_level: preference.budgets?.[0]?.budgetLevel ?? null,
-      food_personality: preference.foodPersonalities?.map((f) => f.foodPersonality) ?? [],
-      main_interests: preference.mainInterests?.map((i) => i.mainInterest) ?? [],
+      food_personality:
+        preference.foodPersonalities?.map((f) => f.foodPersonality) ?? [],
+      main_interests:
+        preference.mainInterests?.map((i) => i.mainInterest) ?? [],
     };
   }
 }

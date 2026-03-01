@@ -11,9 +11,13 @@ import { FoodPersonality } from './FoodPersonality.enum';
  */
 @Entity('user_preference_food_personality')
 export class UserPreferenceFoodPersonality extends BaseEntity {
-  @ManyToOne(() => UserPreference, (preference) => preference.foodPersonalities, {
-    onDelete: 'CASCADE',
-  })
+  @ManyToOne(
+    () => UserPreference,
+    (preference) => preference.foodPersonalities,
+    {
+      onDelete: 'CASCADE',
+    },
+  )
   @JoinColumn({ name: 'user_preference_id' })
   preference: UserPreference;
 

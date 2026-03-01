@@ -17,9 +17,7 @@ type ColumnMetadataRow = {
  *   created_at/updated_at이 NOT NULL인데 DEFAULT가 없는 컬럼을 보정
  * - OAuth/일반 회원가입 등 INSERT 시 "created_at doesn't have a default value" 방지
  */
-export class EnsureAuditTimestampDefaults1771100000000
-  implements MigrationInterface
-{
+export class EnsureAuditTimestampDefaults1771100000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     if (queryRunner.connection.options.type !== 'mysql') {
       return;

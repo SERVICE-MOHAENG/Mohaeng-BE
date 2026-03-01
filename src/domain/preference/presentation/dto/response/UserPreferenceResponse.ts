@@ -28,10 +28,18 @@ export class UserPreferenceResponse {
   @ApiProperty({ enum: TravelStyle, description: '여행 스타일 (단일)' })
   travelStyle: TravelStyle;
 
-  @ApiProperty({ enum: FoodPersonality, isArray: true, description: '음식 성향 (다중)' })
+  @ApiProperty({
+    enum: FoodPersonality,
+    isArray: true,
+    description: '음식 성향 (다중)',
+  })
   foodPersonality: FoodPersonality[];
 
-  @ApiProperty({ enum: MainInterest, isArray: true, description: '핵심 관심사 (다중)' })
+  @ApiProperty({
+    enum: MainInterest,
+    isArray: true,
+    description: '핵심 관심사 (다중)',
+  })
   mainInterests: MainInterest[];
 
   @ApiProperty({ enum: BudgetLevel, description: '예산 규모 (단일)' })
@@ -44,8 +52,10 @@ export class UserPreferenceResponse {
     res.weather = preference.weatherPreferences?.[0]?.weather;
     res.travelRange = preference.travelRanges?.[0]?.travelRange;
     res.travelStyle = preference.travelStyles?.[0]?.travelStyle;
-    res.foodPersonality = preference.foodPersonalities?.map((f) => f.foodPersonality) ?? [];
-    res.mainInterests = preference.mainInterests?.map((i) => i.mainInterest) ?? [];
+    res.foodPersonality =
+      preference.foodPersonalities?.map((f) => f.foodPersonality) ?? [];
+    res.mainInterests =
+      preference.mainInterests?.map((i) => i.mainInterest) ?? [];
     res.budgetLevel = preference.budgets?.[0]?.budgetLevel;
     return res;
   }

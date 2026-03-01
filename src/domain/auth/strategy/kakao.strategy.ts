@@ -49,7 +49,8 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
     // 카카오 프로필 데이터 추출
     const email = profile._json?.kakao_account?.email;
     const nickname = profile._json?.kakao_account?.profile?.nickname;
-    const profileImage = profile._json?.kakao_account?.profile?.profile_image_url;
+    const profileImage =
+      profile._json?.kakao_account?.profile?.profile_image_url;
     const providerId = profile.id;
 
     // 필수 필드 검증: 이메일, 이름, providerId가 없으면 인증 실패

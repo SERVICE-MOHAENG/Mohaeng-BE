@@ -57,7 +57,9 @@ export class ItineraryService {
     const roadmapStart = this.parseDateOnly(request.start_date);
     const roadmapEnd = this.parseDateOnly(request.end_date);
     if (roadmapStart > roadmapEnd) {
-      throw new BadRequestException('start_date는 end_date보다 늦을 수 없습니다');
+      throw new BadRequestException(
+        'start_date는 end_date보다 늦을 수 없습니다',
+      );
     }
 
     const regionNames = request.regions.map((r) => r.region);

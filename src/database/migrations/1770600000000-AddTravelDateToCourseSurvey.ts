@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddTravelDateToCourseSurvey1770600000000
-  implements MigrationInterface
-{
+export class AddTravelDateToCourseSurvey1770600000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await this.addColumnsIfMissing(queryRunner, 'course_survey_table');
     await this.addColumnsIfMissing(queryRunner, 'roadmap_survey_table');

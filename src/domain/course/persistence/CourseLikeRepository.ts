@@ -89,7 +89,9 @@ export class CourseLikeRepository {
     }
 
     const message = typeof error.message === 'string' ? error.message : '';
-    return message.includes('course_day_id') && message.includes('does not exist');
+    return (
+      message.includes('course_day_id') && message.includes('does not exist')
+    );
   }
 
   /**

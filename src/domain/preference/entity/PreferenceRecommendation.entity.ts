@@ -19,11 +19,20 @@ export class PreferenceRecommendation extends BaseEntity {
   @Column({ type: 'uuid', name: 'job_id' })
   jobId: string;
 
-  @ManyToOne(() => Region, { nullable: true, onDelete: 'SET NULL', eager: false })
+  @ManyToOne(() => Region, {
+    nullable: true,
+    onDelete: 'SET NULL',
+    eager: false,
+  })
   @JoinColumn({ name: 'region_id' })
   region: Region | null;
 
-  @Column({ type: 'uuid', name: 'region_id', nullable: true, comment: 'Region FK (DB에 없으면 null)' })
+  @Column({
+    type: 'uuid',
+    name: 'region_id',
+    nullable: true,
+    comment: 'Region FK (DB에 없으면 null)',
+  })
   regionId: string | null;
 
   @Column({

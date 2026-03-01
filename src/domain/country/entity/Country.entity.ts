@@ -68,7 +68,13 @@ export class Country extends BaseEntity {
   /**
    * 국가 생성 팩토리 메서드
    */
-  static create(name: string, code: string, countryCode: CountryCode, continent: Continent, imageUrl?: string): Country {
+  static create(
+    name: string,
+    code: string,
+    countryCode: CountryCode,
+    continent: Continent,
+    imageUrl?: string,
+  ): Country {
     const country = new Country();
     country.name = name;
     country.code = code.toUpperCase();

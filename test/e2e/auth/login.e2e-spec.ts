@@ -19,8 +19,7 @@ import { AuthErrorCode } from '../../../src/domain/auth/exception/code';
 import { UserErrorCode } from '../../../src/domain/user/exception/code';
 
 describe('POST /v1/auth/login', () => {
-  const getServer = (app: INestApplication): App =>
-    app.getHttpServer() as App;
+  const getServer = (app: INestApplication): App => app.getHttpServer() as App;
 
   type JwtPayload = {
     userId: string;
@@ -109,7 +108,10 @@ describe('POST /v1/auth/login', () => {
         })
         .expect(200);
 
-      const body = response.body as { accessToken: string; refreshToken: string };
+      const body = response.body as {
+        accessToken: string;
+        refreshToken: string;
+      };
       expect(body).toHaveProperty('accessToken');
       expect(body).toHaveProperty('refreshToken');
       expect(typeof body.accessToken).toBe('string');
@@ -139,9 +141,7 @@ describe('POST /v1/auth/login', () => {
         .update(tokens.refreshToken)
         .digest('hex');
 
-      const storedToken = await redisService.get(
-        `refresh:valid:${tokenHash}`,
-      );
+      const storedToken = await redisService.get(`refresh:valid:${tokenHash}`);
 
       expect(storedToken).toBeDefined();
       const tokenData = JSON.parse(storedToken!);

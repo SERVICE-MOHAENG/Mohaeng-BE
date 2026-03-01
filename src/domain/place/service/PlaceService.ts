@@ -34,7 +34,10 @@ export class PlaceService {
   /**
    * 모든 장소 조회 (페이징)
    */
-  async findAll(page: number = 1, limit: number = 20): Promise<[Place[], number]> {
+  async findAll(
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<[Place[], number]> {
     return this.placeRepository.findAll(page, limit);
   }
 

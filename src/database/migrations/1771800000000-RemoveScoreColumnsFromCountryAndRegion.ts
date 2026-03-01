@@ -6,9 +6,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * - country_table: popularity_score 컬럼 및 CHECK 제약 제거
  * - region_table: popularity_score, ai_score 컬럼 및 CHECK 제약 제거
  */
-export class RemoveScoreColumnsFromCountryAndRegion1771800000000
-  implements MigrationInterface
-{
+export class RemoveScoreColumnsFromCountryAndRegion1771800000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // country_table CHECK 제약 제거 후 컬럼 삭제
     await queryRunner.query(`

@@ -7,9 +7,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * - nullable: 기존 데이터 호환성 유지
  * - 이후 각 지역별 regionCode 값은 별도 DML로 세팅 필요
  */
-export class AddRegionCodeToRegionTable1771500000000
-  implements MigrationInterface
-{
+export class AddRegionCodeToRegionTable1771500000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       ALTER TABLE region_table

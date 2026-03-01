@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateCourseAiChatTable1769900000000
-  implements MigrationInterface
-{
+export class CreateCourseAiChatTable1769900000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       CREATE TABLE course_ai_chat_table (

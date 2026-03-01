@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class RemoveRegionEnvironmentTable1769300000000
-  implements MigrationInterface
-{
+export class RemoveRegionEnvironmentTable1769300000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // =============================================
     // 1. region_environment_table 백업 후 삭제
@@ -39,6 +37,8 @@ export class RemoveRegionEnvironmentTable1769300000000
       FROM region_environment_table_backup
     `);
 
-    await queryRunner.query(`DROP TABLE IF EXISTS region_environment_table_backup`);
+    await queryRunner.query(
+      `DROP TABLE IF EXISTS region_environment_table_backup`,
+    );
   }
 }

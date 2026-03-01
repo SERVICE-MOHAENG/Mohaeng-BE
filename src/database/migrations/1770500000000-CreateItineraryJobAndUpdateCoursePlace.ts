@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateItineraryJobAndUpdateCoursePlace1770500000000
-  implements MigrationInterface
-{
+export class CreateItineraryJobAndUpdateCoursePlace1770500000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // 1. itinerary_job_table 생성
     await queryRunner.query(`
@@ -38,7 +36,8 @@ export class CreateItineraryJobAndUpdateCoursePlace1770500000000
       `);
     }
 
-    const travelCourseColumn = await this.resolveTravelCoursePkColumn(queryRunner);
+    const travelCourseColumn =
+      await this.resolveTravelCoursePkColumn(queryRunner);
     if (travelCourseColumn) {
       await queryRunner.query(`
         ALTER TABLE itinerary_job_table
@@ -155,9 +154,16 @@ export class CreateItineraryJobAndUpdateCoursePlace1770500000000
   ): Promise<{ tableName: string; columnName: string } | null> {
     if (
       (await this.hasTable(queryRunner, 'course_survey_table')) &&
-      (await this.hasColumn(queryRunner, 'course_survey_table', 'course_survay_id'))
+      (await this.hasColumn(
+        queryRunner,
+        'course_survey_table',
+        'course_survay_id',
+      ))
     ) {
-      return { tableName: 'course_survey_table', columnName: 'course_survay_id' };
+      return {
+        tableName: 'course_survey_table',
+        columnName: 'course_survay_id',
+      };
     }
 
     if (

@@ -16,8 +16,7 @@ import { GlobalRedisService } from '../../../src/global/redis/GlobalRedisService
 import { AuthErrorCode } from '../../../src/domain/auth/exception/code';
 
 describe('POST /v1/auth/refresh', () => {
-  const getServer = (app: INestApplication): App =>
-    app.getHttpServer() as App;
+  const getServer = (app: INestApplication): App => app.getHttpServer() as App;
 
   type AuthTokensBody = {
     accessToken: string;
@@ -184,8 +183,7 @@ describe('POST /v1/auth/refresh', () => {
       await AuthHelper.signupAndLogin(app);
 
       // Use a random token not stored in Redis
-      const fakeToken =
-        'a'.repeat(64); // 64자 hex string (랜덤 토큰과 같은 형식)
+      const fakeToken = 'a'.repeat(64); // 64자 hex string (랜덤 토큰과 같은 형식)
 
       const response = await request(getServer(app))
         .post('/api/v1/auth/refresh')

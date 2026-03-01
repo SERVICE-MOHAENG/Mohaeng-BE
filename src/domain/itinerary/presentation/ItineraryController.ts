@@ -92,10 +92,7 @@ export class ItineraryController {
   @ApiParam({ name: 'jobId', description: '작업 ID' })
   @ApiResponse({ status: 200, type: ItineraryJobStatusResponse })
   @UserApiBearerAuth()
-  async getStatus(
-    @UserId() userId: string,
-    @Param('jobId') jobId: string,
-  ) {
+  async getStatus(@UserId() userId: string, @Param('jobId') jobId: string) {
     const result = await this.itineraryService.getJobStatus(userId, jobId);
     return { status: result };
   }
@@ -108,10 +105,7 @@ export class ItineraryController {
   @ApiParam({ name: 'jobId', description: '작업 ID' })
   @ApiResponse({ status: 200, type: ItineraryResultResponse })
   @UserApiBearerAuth()
-  async getResult(
-    @UserId() userId: string,
-    @Param('jobId') jobId: string,
-  ) {
+  async getResult(@UserId() userId: string, @Param('jobId') jobId: string) {
     const result = await this.itineraryService.getJobResult(userId, jobId);
     return { result };
   }
@@ -135,14 +129,10 @@ export class ItineraryController {
     @Body() body: ItineraryCallbackRequest,
   ) {
     if (body.status === 'SUCCESS' && !body.data) {
-      throw new BadRequestException(
-        'SUCCESS 콜백에는 data가 필수입니다',
-      );
+      throw new BadRequestException('SUCCESS 콜백에는 data가 필수입니다');
     }
     if (body.status === 'FAILED' && !body.error) {
-      throw new BadRequestException(
-        'FAILED 콜백에는 error가 필수입니다',
-      );
+      throw new BadRequestException('FAILED 콜백에는 error가 필수입니다');
     }
 
     if (body.status === 'SUCCESS' && body.data) {

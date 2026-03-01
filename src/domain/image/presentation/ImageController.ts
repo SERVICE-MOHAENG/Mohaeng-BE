@@ -51,7 +51,8 @@ export class ImageController {
         file: {
           type: 'string',
           format: 'binary',
-          description: '업로드할 이미지 파일 (jpg, jpeg, png, webp / 최대 10MB)',
+          description:
+            '업로드할 이미지 파일 (jpg, jpeg, png, webp / 최대 10MB)',
         },
       },
     },
@@ -91,7 +92,8 @@ export class ImageController {
         file: {
           type: 'string',
           format: 'binary',
-          description: '업로드할 이미지 파일 (jpg, jpeg, png, webp / 최대 10MB)',
+          description:
+            '업로드할 이미지 파일 (jpg, jpeg, png, webp / 최대 10MB)',
         },
       },
     },
