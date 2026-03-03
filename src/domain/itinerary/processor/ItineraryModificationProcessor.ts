@@ -9,6 +9,8 @@ import { firstValueFrom } from 'rxjs';
 import { ItineraryJobRepository } from '../persistence/ItineraryJobRepository';
 import { TravelCourse } from '../../course/entity/TravelCourse.entity';
 import { CourseAiChat } from '../../course/entity/CourseAiChat.entity';
+import { RoadmapSurvey } from '../../course/entity/RoadmapSurvey.entity';
+import { CourseSurvey } from '../../course/entity/CourseSurvey.entity';
 
 interface ModificationJobData {
   jobId: string;
@@ -36,6 +38,10 @@ export class ItineraryModificationProcessor extends WorkerHost {
     private readonly travelCourseRepository: Repository<TravelCourse>,
     @InjectRepository(CourseAiChat)
     private readonly chatRepository: Repository<CourseAiChat>,
+    @InjectRepository(RoadmapSurvey)
+    private readonly roadmapSurveyRepository: Repository<RoadmapSurvey>,
+    @InjectRepository(CourseSurvey)
+    private readonly courseSurveyRepository: Repository<CourseSurvey>,
   ) {
     super();
   }
@@ -86,7 +92,21 @@ export class ItineraryModificationProcessor extends WorkerHost {
     });
     const sessionHistory = this.buildSessionHistory(chatHistory);
 
-    // 5. Python payload 구성
+    // 5. 설문 컨텍스트 조회 (Python 수정 API 필수 필드)
+    const surveyPreferences = await this.loadSurveyPreferences(travelCourseId);
+    if (!surveyPreferences) {
+      this.logger.error(
+        `Survey context not found: travelCourseId=${travelCourseId}`,
+      );
+      itineraryJob.markFailed(
+        'SURVEY_CONTEXT_NOT_FOUND',
+        '수정에 필요한 설문 컨텍스트를 찾을 수 없습니다',
+      );
+      await this.itineraryJobRepository.save(itineraryJob);
+      return;
+    }
+
+    // 6. Python payload 구성
     const pythonBaseUrl = this.configService.get<string>('PYTHON_LLM_BASE_URL');
     const serviceSecret = this.configService.get<string>('SERVICE_SECRET');
     const callbackBaseUrl =
@@ -97,12 +117,16 @@ export class ItineraryModificationProcessor extends WorkerHost {
     const requestBody = {
       job_id: jobId,
       callback_url: callbackUrl,
-      current_itinerary: currentItinerary,
+      current_itinerary: {
+        ...currentItinerary,
+        planning_preference: surveyPreferences.planning_preference,
+      },
+      ...surveyPreferences,
       user_query: userMessage,
       session_history: sessionHistory,
     };
 
-    // 6. Python LLM 서버 호출
+    // 7. Python LLM 서버 호출
     this.logger.log(
       `Python 서버 요청 시작: jobId=${jobId}, url=${pythonBaseUrl}/api/v1/chat, callbackUrl=${callbackUrl}`,
     );
@@ -132,6 +156,64 @@ export class ItineraryModificationProcessor extends WorkerHost {
       // throw하여 BullMQ가 자동 재시도하도록 함
       throw error;
     }
+  }
+
+  /**
+   * travelCourseId 기준 설문 컨텍스트 로드
+   * - roadmap_survey_table 우선
+   * - 없으면 course_survey_table fallback
+   */
+  private async loadSurveyPreferences(
+    travelCourseId: string,
+  ): Promise<{
+    companion_type: string[];
+    travel_themes: string[];
+    pace_preference: string;
+    planning_preference: string;
+    destination_preference: string;
+    activity_preference: string;
+    priority_preference: string;
+    budget_range: string;
+  } | null> {
+    const roadmapSurvey = await this.roadmapSurveyRepository.findOne({
+      where: { travelCourseId },
+      relations: ['companions', 'themes'],
+    });
+
+    if (roadmapSurvey) {
+      return {
+        companion_type: (roadmapSurvey.companions || []).map(
+          (c) => c.companion,
+        ),
+        travel_themes: (roadmapSurvey.themes || []).map((t) => t.theme),
+        pace_preference: roadmapSurvey.pacePreference,
+        planning_preference: roadmapSurvey.planningPreference,
+        destination_preference: roadmapSurvey.destinationPreference,
+        activity_preference: roadmapSurvey.activityPreference,
+        priority_preference: roadmapSurvey.priorityPreference,
+        budget_range: roadmapSurvey.budget,
+      };
+    }
+
+    const courseSurvey = await this.courseSurveyRepository.findOne({
+      where: { travelCourseId },
+      relations: ['companions', 'themes'],
+    });
+
+    if (!courseSurvey) {
+      return null;
+    }
+
+    return {
+      companion_type: (courseSurvey.companions || []).map((c) => c.companion),
+      travel_themes: (courseSurvey.themes || []).map((t) => t.theme),
+      pace_preference: courseSurvey.pacePreference,
+      planning_preference: courseSurvey.planningPreference,
+      destination_preference: courseSurvey.destinationPreference,
+      activity_preference: courseSurvey.activityPreference,
+      priority_preference: courseSurvey.priorityPreference,
+      budget_range: courseSurvey.budget,
+    };
   }
 
   /**
