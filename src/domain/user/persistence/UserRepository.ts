@@ -82,6 +82,15 @@ export class UserRepository {
   }
 
   /**
+   * 사용자 계정 활성화 (소프트 삭제 복구)
+   * @param id - 사용자 ID
+   * @returns Promise<void>
+   */
+  async reactivate(id: string): Promise<void> {
+    await this.repository.update(id, { isActivate: true });
+  }
+
+  /**
    * 사용자 영구 삭제
    * @param id - 사용자 ID
    * @returns Promise<void>
