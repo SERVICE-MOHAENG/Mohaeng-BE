@@ -25,10 +25,6 @@ import { PreferenceCallbackRequest } from './dto/request/PreferenceCallbackReque
 import { UserPreferenceResponse } from './dto/response/UserPreferenceResponse';
 import { PreferenceRecommendationResponse } from './dto/response/PreferenceRecommendationResponse';
 import { PreferenceJobData } from '../processor/PreferenceProcessor';
-import {
-  MissingCallbackDataException,
-  MissingCallbackErrorException,
-} from '../exception/InvalidPreferenceCallbackException';
 
 /**
  * UserPreferenceController
@@ -169,15 +165,9 @@ export class UserPreferenceController {
     @Body() body: PreferenceCallbackRequest,
   ): Promise<void> {
     if (body.status === 'SUCCESS') {
-      if (!body.data) {
-        throw new MissingCallbackDataException();
-      }
-      await this.preferenceCallbackService.handleSuccess(jobId, body.data);
+      await this.preferenceCallbackService.handleSuccess(jobId, body.data!);
     } else {
-      if (!body.error) {
-        throw new MissingCallbackErrorException();
-      }
-      await this.preferenceCallbackService.handleFailure(jobId, body.error);
+      await this.preferenceCallbackService.handleFailure(jobId, body.error!);
     }
   }
 }

@@ -4,7 +4,6 @@ import {
   Get,
   Param,
   Body,
-  BadRequestException,
   HttpCode,
   HttpStatus,
   UseGuards,
@@ -128,13 +127,6 @@ export class ItineraryController {
     @Param('jobId') jobId: string,
     @Body() body: ItineraryCallbackRequest,
   ) {
-    if (body.status === 'SUCCESS' && !body.data) {
-      throw new BadRequestException('SUCCESS 콜백에는 data가 필수입니다');
-    }
-    if (body.status === 'FAILED' && !body.error) {
-      throw new BadRequestException('FAILED 콜백에는 error가 필수입니다');
-    }
-
     if (body.status === 'SUCCESS' && body.data) {
       await this.itineraryCallbackService.handleSuccess(
         jobId,
@@ -207,12 +199,9 @@ export class ItineraryController {
     @Body() body: ItineraryModificationCallbackRequest,
   ) {
     if (body.status === 'FAILED') {
-      if (!body.error) {
-        throw new BadRequestException('FAILED 콜백에는 error가 필수입니다');
-      }
       await this.itineraryModificationCallbackService.handleFailure(
         jobId,
-        body.error,
+        body.error!,
       );
     } else {
       // SUCCESS, ASK_CLARIFICATION, GENERAL_CHAT, REJECTED
@@ -220,7 +209,7 @@ export class ItineraryController {
         jobId,
         body.user_query || '',
         body.status,
-        body.message,
+        body.message || '',
         body.modified_itinerary,
         body.diff_keys,
       );

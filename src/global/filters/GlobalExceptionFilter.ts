@@ -5,7 +5,7 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { QueryFailedError, EntityNotFoundError, TypeORMError } from 'typeorm';
 import { ApiResponseDto } from '../dto/ApiResponseDto';
 import { LogInterceptorService } from '../logger/LogInterceptorService';
@@ -20,6 +20,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
    */
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
+    const request = ctx.getRequest<Request>();
     const response = ctx.getResponse<Response>();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -59,7 +60,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       // ValidationPipe 에러 감지 및 변환
       if (this.isValidationError(exceptionResponse)) {
         errorResponse = this.convertValidationError(exceptionResponse);
-        // Validation 에러는 로깅하지 않음 (클라이언트 책임)
+        const message = this.extractValidationMessage(exceptionResponse);
+        this.logger.warn(
+          `[VALIDATION_ERROR] ${request?.method ?? 'UNKNOWN'} ${request?.originalUrl ?? request?.url ?? 'UNKNOWN_URL'} - ${message}`,
+        );
       }
       // 기존 커스텀 예외 처리
       else {
@@ -270,5 +274,20 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const combinedMessage = messages.join(', ');
 
     return ApiResponseDto.error('VALIDATION_ERROR', combinedMessage);
+  }
+
+  private extractValidationMessage(response: unknown): string {
+    if (!response || typeof response !== 'object') {
+      return 'Validation failed';
+    }
+    const record = response as Record<string, unknown>;
+    const messages = record.message as unknown;
+    if (Array.isArray(messages)) {
+      return messages.join(', ');
+    }
+    if (typeof messages === 'string') {
+      return messages;
+    }
+    return 'Validation failed';
   }
 }
