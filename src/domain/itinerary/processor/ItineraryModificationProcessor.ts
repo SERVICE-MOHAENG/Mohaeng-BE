@@ -9,7 +9,6 @@ import { firstValueFrom } from 'rxjs';
 import { ItineraryJobRepository } from '../persistence/ItineraryJobRepository';
 import { TravelCourse } from '../../course/entity/TravelCourse.entity';
 import { CourseAiChat } from '../../course/entity/CourseAiChat.entity';
-import { RoadmapSurvey } from '../../course/entity/RoadmapSurvey.entity';
 
 interface ModificationJobData {
   jobId: string;
@@ -37,8 +36,6 @@ export class ItineraryModificationProcessor extends WorkerHost {
     private readonly travelCourseRepository: Repository<TravelCourse>,
     @InjectRepository(CourseAiChat)
     private readonly chatRepository: Repository<CourseAiChat>,
-    @InjectRepository(RoadmapSurvey)
-    private readonly surveyRepository: Repository<RoadmapSurvey>,
   ) {
     super();
   }
@@ -78,16 +75,10 @@ export class ItineraryModificationProcessor extends WorkerHost {
       return;
     }
 
-    // 3. RoadmapSurvey 조회 (여행 스타일 정보)
-    const survey = await this.surveyRepository.findOne({
-      where: { travelCourseId },
-      relations: ['companions', 'themes'],
-    });
-
-    // 4. 현재 로드맵 JSON 구성
+    // 3. 현재 로드맵 JSON 구성
     const currentItinerary = this.buildCurrentItineraryJson(course);
 
-    // 5. 대화 이력 조회 (최근 10개)
+    // 4. 대화 이력 조회 (최근 10개)
     const chatHistory = await this.chatRepository.find({
       where: { travelCourse: { id: travelCourseId } },
       order: { createdAt: 'DESC' },
@@ -95,7 +86,7 @@ export class ItineraryModificationProcessor extends WorkerHost {
     });
     const sessionHistory = this.buildSessionHistory(chatHistory);
 
-    // 6. Python payload 구성
+    // 5. Python payload 구성
     const pythonBaseUrl = this.configService.get<string>('PYTHON_LLM_BASE_URL');
     const serviceSecret = this.configService.get<string>('SERVICE_SECRET');
     const callbackBaseUrl =
@@ -103,26 +94,24 @@ export class ItineraryModificationProcessor extends WorkerHost {
       `http://localhost:${this.configService.get<string>('PORT') || '8080'}`;
     const callbackUrl = `${callbackBaseUrl}/api/v1/itineraries/${jobId}/chat-result`;
 
-    // 7. Python LLM 서버 호출
+    const requestBody = {
+      job_id: jobId,
+      callback_url: callbackUrl,
+      current_itinerary: currentItinerary,
+      user_query: userMessage,
+      session_history: sessionHistory,
+    };
+
+    // 6. Python LLM 서버 호출
+    this.logger.log(
+      `Python 서버 요청 시작: jobId=${jobId}, url=${pythonBaseUrl}/api/v1/chat, callbackUrl=${callbackUrl}`,
+    );
+    this.logger.log(`Python 서버 요청 payload: ${JSON.stringify(requestBody)}`);
     try {
       const response = await firstValueFrom(
         this.httpService.post(
           `${pythonBaseUrl}/api/v1/chat`,
-          {
-            job_id: jobId,
-            callback_url: callbackUrl,
-            current_itinerary: currentItinerary,
-            companion_type: survey?.companions?.map((c) => c.companion) || [],
-            travel_themes: survey?.themes?.map((t) => t.theme) || [],
-            pace_preference: survey?.pacePreference || null,
-            planning_preference: survey?.planningPreference || null,
-            destination_preference: survey?.destinationPreference || null,
-            activity_preference: survey?.activityPreference || null,
-            priority_preference: survey?.priorityPreference || null,
-            budget_range: survey?.budget || null,
-            user_query: userMessage,
-            session_history: sessionHistory,
-          },
+          requestBody,
           {
             headers: {
               'x-service-secret': serviceSecret,
@@ -138,7 +127,7 @@ export class ItineraryModificationProcessor extends WorkerHost {
       );
     } catch (error) {
       this.logger.error(
-        `Python 서버 호출 실패: jobId=${jobId}, error=${error.message}`,
+        `Python 서버 호출 실패: jobId=${jobId}, error=${error.message}, response=${JSON.stringify(error.response?.data)}`,
       );
       // throw하여 BullMQ가 자동 재시도하도록 함
       throw error;
