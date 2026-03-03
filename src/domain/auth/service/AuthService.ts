@@ -18,6 +18,7 @@ import { AuthEmailOtpCooldownException } from '../exception/AuthEmailOtpCooldown
 import { AuthEmailOtpTooManyRequestsException } from '../exception/AuthEmailOtpTooManyRequestsException';
 import { AuthInvalidEmailOtpException } from '../exception/AuthInvalidEmailOtpException';
 import { AuthEmailOtpMaxAttemptsExceededException } from '../exception/AuthEmailOtpMaxAttemptsExceededException';
+import { AuthEmailNotVerifiedException } from '../exception/AuthEmailNotVerifiedException';
 import { LoginRequest } from '../presentation/dto/request/LoginRequest';
 import { OAuthCodeRepository } from '../persistence/OAuthCodeRepository';
 import { GlobalJwtService } from '../../../global/jwt/GlobalJwtService';
@@ -84,14 +85,17 @@ export class AuthService {
     return this.issueTokens(user);
   }
 
-  async sendEmailOtp(email: string): Promise<boolean> {
+  async sendEmailOtp(
+    email: string,
+  ): Promise<{ sent: boolean; isActivate: boolean }> {
     const normalizedEmail = this.normalizeEmail(email);
 
-    // 이메일 중복 확인 (이미 가입된 이메일은 OTP 발송 차단)
+    // 이메일 중복 확인 (활성 계정은 OTP 발송 차단, 비활성 계정은 복구 흐름으로 허용)
     const existingUser = await this.userRepository.findByEmail(normalizedEmail);
-    if (existingUser) {
+    if (existingUser && existingUser.isActivate) {
       throw new EmailAlreadyExistsException();
     }
+    const isActivate = !(existingUser && !existingUser.isActivate);
 
     const otpKey = this.getOtpKey(normalizedEmail);
     const cooldownKey = this.getOtpCooldownKey(normalizedEmail);
@@ -136,7 +140,7 @@ export class AuthService {
       );
     }
 
-    return true;
+    return { sent: true, isActivate };
   }
 
   async verifyEmailOtp(email: string, otp: string): Promise<boolean> {
@@ -235,6 +239,35 @@ export class AuthService {
 
     // 5. 같은 jti로 새 토큰 발급 (같은 디바이스 슬롯 유지, LRU 구현)
     return this.issueTokens(user, jti);
+  }
+
+  async reactivate(email: string): Promise<AuthTokens> {
+    const normalizedEmail = this.normalizeEmail(email);
+
+    // OTP 인증 완료 확인
+    const verifiedKey = this.getOtpVerifiedKey(normalizedEmail);
+    const isVerified = await this.redisService.get(verifiedKey);
+    if (!isVerified) {
+      throw new AuthEmailNotVerifiedException();
+    }
+
+    // 비활성 유저 조회
+    const user = await this.userRepository.findByEmail(normalizedEmail);
+    if (!user) {
+      throw new UserNotFoundException();
+    }
+    if (user.isActivate) {
+      throw new EmailAlreadyExistsException();
+    }
+
+    // 계정 활성화
+    await this.userRepository.reactivate(user.id);
+    user.isActivate = true;
+
+    // 인증 완료 플래그 삭제 (일회용)
+    await this.redisService.delete(verifiedKey);
+
+    return this.issueTokens(user);
   }
 
   async issueTokens(user: User, existingJti?: string): Promise<AuthTokens> {
