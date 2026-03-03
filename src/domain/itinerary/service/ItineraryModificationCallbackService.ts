@@ -112,13 +112,16 @@ export class ItineraryModificationCallbackService {
     }
 
     const intentStatus = this.mapIntentStatus(status);
+    const resolvedUserMessage = userMessage?.trim()
+      ? userMessage
+      : (job.userQuery ?? '');
 
     // Intent에 따라 다른 처리
     if (intentStatus === IntentStatus.SUCCESS && modifiedItinerary) {
       // TravelCourse 업데이트 + 대화 저장
       await this.updateTravelCourse(
         job,
-        userMessage,
+        resolvedUserMessage,
         modifiedItinerary,
         message,
         diffKeys,
@@ -127,7 +130,7 @@ export class ItineraryModificationCallbackService {
       // TravelCourse 업데이트 없이 대화만 저장
       await this.saveChatHistoryOnly(
         job,
-        userMessage,
+        resolvedUserMessage,
         message,
         intentStatus,
         diffKeys,

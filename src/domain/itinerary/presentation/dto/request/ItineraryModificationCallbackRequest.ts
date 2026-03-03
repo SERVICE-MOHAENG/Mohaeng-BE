@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsDefined,
   IsIn,
   IsInt,
   IsNumber,
@@ -9,7 +10,7 @@ import {
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 class CallbackErrorRequest {
   @ApiProperty({ description: '오류 코드', example: 'LLM_PROVIDER_ERROR' })
@@ -141,36 +142,37 @@ export class ItineraryModificationCallbackRequest {
 
   @ApiProperty({
     description: '수정된 로드맵 데이터 (status가 SUCCESS일 때만)',
-    required: false,
+    required: true,
     type: ModifiedItineraryRequest,
   })
   @ValidateIf((o) => o.status === 'SUCCESS')
-  @IsOptional()
+  @IsDefined()
   @ValidateNested()
   @Type(() => ModifiedItineraryRequest)
   modified_itinerary?: ModifiedItineraryRequest;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: '사용자 원본 질문',
     example: '1일차 2번째 장소를 카페 말고 미술관으로 바꿔줘',
   })
+  @IsOptional()
   @IsString()
-  user_query: string;
+  user_query?: string;
 
   @ApiProperty({
-    description: 'AI 응답 메시지',
+    description: 'AI 응답 메시지 (status가 FAILED가 아닐 때)',
     example: '1일차 2번째 장소를 도쿄 국립 박물관으로 변경했습니다.',
   })
+  @ValidateIf((o) => o.status !== 'FAILED')
   @IsString()
-  message: string;
+  message?: string;
 
   @ApiProperty({
-    description: '변경된 노드 ID 목록 (status가 SUCCESS일 때)',
+    description: '변경된 노드 ID 목록 (status가 FAILED가 아닐 때)',
     type: [String],
-    required: false,
+    required: true,
   })
-  @ValidateIf((o) => o.status === 'SUCCESS')
-  @IsOptional()
+  @ValidateIf((o) => o.status !== 'FAILED')
   @IsArray()
   @IsString({ each: true })
   diff_keys?: string[];
@@ -181,7 +183,7 @@ export class ItineraryModificationCallbackRequest {
     type: CallbackErrorRequest,
   })
   @ValidateIf((o) => o.status === 'FAILED')
-  @IsOptional()
+  @IsDefined()
   @ValidateNested()
   @Type(() => CallbackErrorRequest)
   error?: CallbackErrorRequest;

@@ -1,9 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  IsDefined,
   IsIn,
-  IsOptional,
   IsArray,
   IsString,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -45,13 +46,15 @@ export class PreferenceCallbackRequest {
   status: 'SUCCESS' | 'FAILED';
 
   @ApiProperty({ required: false, type: PreferenceCallbackDataDto })
-  @IsOptional()
+  @ValidateIf((o) => o.status === 'SUCCESS')
+  @IsDefined()
   @ValidateNested()
   @Type(() => PreferenceCallbackDataDto)
   data?: PreferenceCallbackDataDto;
 
   @ApiProperty({ required: false, type: PreferenceCallbackErrorDto })
-  @IsOptional()
+  @ValidateIf((o) => o.status === 'FAILED')
+  @IsDefined()
   @ValidateNested()
   @Type(() => PreferenceCallbackErrorDto)
   error?: PreferenceCallbackErrorDto;
