@@ -99,8 +99,8 @@ export class ItineraryModificationProcessor extends WorkerHost {
         `Survey context not found: travelCourseId=${travelCourseId}`,
       );
       itineraryJob.markFailed(
-        'SURVEY_CONTEXT_NOT_FOUND',
-        '수정에 필요한 설문 컨텍스트를 찾을 수 없습니다',
+        'INVALID_SURVEY_CONTEXT',
+        '수정에 필요한 설문 컨텍스트(동행 유형 포함)를 찾을 수 없습니다',
       );
       await this.itineraryJobRepository.save(itineraryJob);
       return;
@@ -166,7 +166,7 @@ export class ItineraryModificationProcessor extends WorkerHost {
   private async loadSurveyPreferences(
     travelCourseId: string,
   ): Promise<{
-    companion_type: string[];
+    companion_type: string;
     travel_themes: string[];
     pace_preference: string;
     planning_preference: string;
@@ -181,10 +181,12 @@ export class ItineraryModificationProcessor extends WorkerHost {
     });
 
     if (roadmapSurvey) {
+      const companionType = (roadmapSurvey.companions || [])[0]?.companion;
+      if (!companionType?.trim()) {
+        return null;
+      }
       return {
-        companion_type: (roadmapSurvey.companions || []).map(
-          (c) => c.companion,
-        ),
+        companion_type: companionType,
         travel_themes: (roadmapSurvey.themes || []).map((t) => t.theme),
         pace_preference: roadmapSurvey.pacePreference,
         planning_preference: roadmapSurvey.planningPreference,
@@ -204,8 +206,13 @@ export class ItineraryModificationProcessor extends WorkerHost {
       return null;
     }
 
+    const companionType = (courseSurvey.companions || [])[0]?.companion;
+    if (!companionType?.trim()) {
+      return null;
+    }
+
     return {
-      companion_type: (courseSurvey.companions || []).map((c) => c.companion),
+      companion_type: companionType,
       travel_themes: (courseSurvey.themes || []).map((t) => t.theme),
       pace_preference: courseSurvey.pacePreference,
       planning_preference: courseSurvey.planningPreference,
