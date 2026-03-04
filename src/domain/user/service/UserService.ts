@@ -21,7 +21,7 @@ export class UserService {
     private readonly redisService: GlobalRedisService,
   ) {}
 
-  async signup(request: SignupRequest): Promise<UserResponse> {
+  async signup(request: SignupRequest): Promise<User> {
     // 이메일 인증 확인
     const normalizedEmail = request.email.trim().toLowerCase();
     const verifiedKey = `auth:email-verified:${normalizedEmail}`;
@@ -32,26 +32,36 @@ export class UserService {
       throw new AuthEmailNotVerifiedException();
     }
 
-    // 이메일 중복 방지
-    const existingUser = await this.userRepository.findByEmail(request.email);
-    if (existingUser) {
-      throw new EmailAlreadyExistsException();
-    }
-
     // 비밀번호 확인 일치 검증
     if (request.password !== request.passwordConfirm) {
       throw new PasswordMismatchException();
     }
 
-    // 비밀번호 해싱 후 user 저장
     const hashedPassword = await this.hashPassword(request.password);
+
+    // 이메일 중복 방지
+    const existingUser = await this.userRepository.findByEmail(request.email);
+    if (existingUser) {
+      if (existingUser.isActivate) {
+        throw new EmailAlreadyExistsException();
+      }
+      // 비활성 계정: 이름/비밀번호 업데이트 후 재활성화
+      existingUser.name = request.name;
+      existingUser.passwordHash = hashedPassword;
+      existingUser.isActivate = true;
+      const savedUser = await this.userRepository.save(existingUser);
+      await this.redisService.delete(verifiedKey);
+      return savedUser;
+    }
+
+    // 신규 사용자 생성
     const user = User.create(request.name, request.email, hashedPassword);
     const savedUser = await this.userRepository.save(user);
 
     // 인증 완료 플래그 삭제 (일회용)
     await this.redisService.delete(verifiedKey);
 
-    return UserResponse.fromEntity(savedUser);
+    return savedUser;
   }
 
   async deactivate(userId: string): Promise<void> {

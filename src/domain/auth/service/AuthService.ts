@@ -20,6 +20,8 @@ import { AuthInvalidEmailOtpException } from '../exception/AuthInvalidEmailOtpEx
 import { AuthEmailOtpMaxAttemptsExceededException } from '../exception/AuthEmailOtpMaxAttemptsExceededException';
 import { AuthEmailNotVerifiedException } from '../exception/AuthEmailNotVerifiedException';
 import { LoginRequest } from '../presentation/dto/request/LoginRequest';
+import { SignupRequest } from '../../user/presentation/dto/request/SignupRequest';
+import { UserResponse } from '../../user/presentation/dto/response/UserResponse';
 import { OAuthCodeRepository } from '../persistence/OAuthCodeRepository';
 import { GlobalJwtService } from '../../../global/jwt/GlobalJwtService';
 import { GlobalRedisService } from '../../../global/redis/GlobalRedisService';
@@ -83,6 +85,14 @@ export class AuthService {
     }
 
     return this.issueTokens(user);
+  }
+
+  async signup(
+    request: SignupRequest,
+  ): Promise<{ user: UserResponse } & AuthTokens> {
+    const savedUser = await this.userService.signup(request);
+    const tokens = await this.issueTokens(savedUser);
+    return { user: UserResponse.fromEntity(savedUser), ...tokens };
   }
 
   async sendEmailOtp(
