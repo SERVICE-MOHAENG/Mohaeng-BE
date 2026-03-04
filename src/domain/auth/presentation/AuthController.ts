@@ -24,8 +24,10 @@ import { CurrentUserResponse } from './dto/response/CurrentUserResponse';
 import { SendEmailOtpRequest } from './dto/request/SendEmailOtpRequest';
 import { VerifyEmailOtpRequest } from './dto/request/VerifyEmailOtpRequest';
 import { ReactivateRequest } from './dto/request/ReactivateRequest';
+import { SignupRequest } from '../../user/presentation/dto/request/SignupRequest';
 import { SendEmailOtpResponse } from './dto/response/SendEmailOtpResponse';
 import { VerifyEmailOtpResponse } from './dto/response/VerifyEmailOtpResponse';
+import { SignupResponse } from './dto/response/SignupResponse';
 import { GoogleAuthGuard } from '../guard/google-auth.guard';
 import { NaverAuthGuard } from '../guard/naver-auth.guard';
 import { KakaoAuthGuard } from '../guard/kakao-auth.guard';
@@ -38,6 +40,18 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
   ) {}
+
+  @Post('signup')
+  @ApiOperation({ summary: '회원가입' })
+  @ApiResponse({
+    status: 201,
+    description: '회원가입 성공 (유저 정보 + 토큰 반환)',
+    type: SignupResponse,
+  })
+  @ApiResponse({ status: 400, description: '잘못된 요청 (이메일 중복 등)' })
+  async signup(@Body() request: SignupRequest): Promise<SignupResponse> {
+    return this.authService.signup(request);
+  }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
