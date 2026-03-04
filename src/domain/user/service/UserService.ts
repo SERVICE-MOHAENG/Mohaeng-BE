@@ -32,19 +32,29 @@ export class UserService {
       throw new AuthEmailNotVerifiedException();
     }
 
-    // 이메일 중복 방지
-    const existingUser = await this.userRepository.findByEmail(request.email);
-    if (existingUser) {
-      throw new EmailAlreadyExistsException();
-    }
-
     // 비밀번호 확인 일치 검증
     if (request.password !== request.passwordConfirm) {
       throw new PasswordMismatchException();
     }
 
-    // 비밀번호 해싱 후 user 저장
     const hashedPassword = await this.hashPassword(request.password);
+
+    // 이메일 중복 방지
+    const existingUser = await this.userRepository.findByEmail(request.email);
+    if (existingUser) {
+      if (existingUser.isActivate) {
+        throw new EmailAlreadyExistsException();
+      }
+      // 비활성 계정: 이름/비밀번호 업데이트 후 재활성화
+      existingUser.name = request.name;
+      existingUser.passwordHash = hashedPassword;
+      existingUser.isActivate = true;
+      const savedUser = await this.userRepository.save(existingUser);
+      await this.redisService.delete(verifiedKey);
+      return savedUser;
+    }
+
+    // 신규 사용자 생성
     const user = User.create(request.name, request.email, hashedPassword);
     const savedUser = await this.userRepository.save(user);
 
