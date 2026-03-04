@@ -21,7 +21,7 @@ export class UserService {
     private readonly redisService: GlobalRedisService,
   ) {}
 
-  async signup(request: SignupRequest): Promise<UserResponse> {
+  async signup(request: SignupRequest): Promise<User> {
     // 이메일 인증 확인
     const normalizedEmail = request.email.trim().toLowerCase();
     const verifiedKey = `auth:email-verified:${normalizedEmail}`;
@@ -51,7 +51,7 @@ export class UserService {
     // 인증 완료 플래그 삭제 (일회용)
     await this.redisService.delete(verifiedKey);
 
-    return UserResponse.fromEntity(savedUser);
+    return savedUser;
   }
 
   async deactivate(userId: string): Promise<void> {
