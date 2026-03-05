@@ -1,12 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PreferenceJobRepository } from '../persistence/PreferenceJobRepository';
 import { PreferenceRecommendation } from '../entity/PreferenceRecommendation.entity';
 import { PreferenceJobStatus } from '../entity/PreferenceJob.entity';
-import { PreferenceJobData } from '../processor/PreferenceProcessor';
 import { RegionRepository } from '../../country/persistence/RegionRepository';
 
 export interface PreferenceSuccessPayload {
@@ -26,14 +23,10 @@ export interface PreferenceErrorPayload {
 export class PreferenceCallbackService {
   private readonly logger = new Logger(PreferenceCallbackService.name);
 
-  private static readonly MAX_RETRY_COUNT = 1;
-
   constructor(
     private readonly preferenceJobRepository: PreferenceJobRepository,
     @InjectRepository(PreferenceRecommendation)
     private readonly recommendationRepository: Repository<PreferenceRecommendation>,
-    @InjectQueue('preference-recommendation')
-    private readonly preferenceQueue: Queue,
     private readonly regionRepository: RegionRepository,
   ) {}
 
@@ -74,8 +67,6 @@ export class PreferenceCallbackService {
 
   /**
    * 추천 실패 콜백 처리
-   * - retryCount < MAX_RETRY_COUNT(1): PENDING으로 리셋 후 재enqueue
-   * - retryCount >= MAX_RETRY_COUNT: 최종 FAILED 확정
    */
   async handleFailure(
     jobId: string,
@@ -98,32 +89,12 @@ export class PreferenceCallbackService {
       return;
     }
 
-    if (job.retryCount < PreferenceCallbackService.MAX_RETRY_COUNT) {
-      // 1회 재시도: PENDING으로 리셋 후 재enqueue
-      job.resetForRetry();
-      await this.preferenceJobRepository.save(job);
+    job.markFailed(error.code, error.message);
+    await this.preferenceJobRepository.save(job);
 
-      const jobData: PreferenceJobData = {
-        jobId: job.id,
-        preferenceId: job.preferenceId,
-      };
-      await this.preferenceQueue.add('recommend', jobData, {
-        attempts: 3,
-        backoff: { type: 'exponential', delay: 5000 },
-      });
-
-      this.logger.warn(
-        `추천 실패 재시도: jobId=${jobId}, retryCount=${job.retryCount}, code=${error.code}`,
-      );
-    } else {
-      // 최종 FAILED 확정
-      job.markFailed(error.code, error.message);
-      await this.preferenceJobRepository.save(job);
-
-      this.logger.warn(
-        `추천 최종 실패: jobId=${jobId}, code=${error.code}, message=${error.message}`,
-      );
-    }
+    this.logger.warn(
+      `추천 실패: jobId=${jobId}, code=${error.code}, message=${error.message}`,
+    );
   }
 
   /**

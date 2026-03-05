@@ -97,7 +97,7 @@ export class ItineraryProcessor extends WorkerHost {
               'x-service-secret': serviceSecret,
               'Content-Type': 'application/json',
             },
-            timeout: 60000,
+            timeout: 10000, // 10초
           },
         ),
       );

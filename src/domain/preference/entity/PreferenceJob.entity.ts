@@ -63,15 +63,6 @@ export class PreferenceJob extends BaseEntity {
   errorMessage: string | null;
 
   @Column({
-    type: 'int',
-    name: 'retry_count',
-    nullable: false,
-    default: 0,
-    comment: 'FAILED 콜백 재시도 횟수 (최대 1회)',
-  })
-  retryCount: number;
-
-  @Column({
     type: 'timestamp',
     name: 'started_at',
     nullable: true,
@@ -92,24 +83,11 @@ export class PreferenceJob extends BaseEntity {
     job.userId = userId;
     job.preferenceId = preferenceId;
     job.status = PreferenceJobStatus.PENDING;
-    job.retryCount = 0;
     job.errorCode = null;
     job.errorMessage = null;
     job.startedAt = null;
     job.completedAt = null;
     return job;
-  }
-
-  /**
-   * PENDING 상태로 리셋 (재시도용)
-   */
-  resetForRetry(): void {
-    this.status = PreferenceJobStatus.PENDING;
-    this.retryCount += 1;
-    this.errorCode = null;
-    this.errorMessage = null;
-    this.startedAt = null;
-    this.completedAt = null;
   }
 
   /**
