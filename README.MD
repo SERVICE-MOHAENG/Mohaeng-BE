@@ -1,108 +1,175 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Mohaeng Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+모행(Mohaeng)은 여행 코스 공유 및 여행지 추천 플랫폼의 백엔드 서버입니다. 사용자가 자신의 여행 코스를 직접 만들고 공유하거나, 취향 기반으로 여행지를 추천받을 수 있는 서비스입니다.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 프로젝트 소개
 
-## Description
+여행을 계획할 때 어디서부터 시작해야 할지 막막한 경험은 누구나 있습니다. 모행은 이런 문제를 해결하기 위해 만들어졌습니다. 사용자가 선호하는 여행 스타일, 환경, 음식 취향 등을 입력하면 그에 맞는 여행 지역을 추천해주고, 다른 사람들이 공유한 여행 코스를 참고해 나만의 여행을 설계할 수 있습니다.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 기술 스택
 
-## Project setup
+- **Runtime**: Node.js
+- **Framework**: NestJS 11
+- **Language**: TypeScript
+- **Database**: MySQL + TypeORM
+- **Cache**: Redis (이메일 OTP, 세션 관리)
+- **Auth**: JWT, OAuth 2.0 (Google, Kakao, Naver)
+- **API Docs**: Swagger (OpenAPI 3.0)
 
-```bash
-$ npm install
+## 주요 기능
+
+**인증**
+- 소셜 로그인 지원 (Google, Kakao, Naver)
+- 이메일 + OTP 인증
+- JWT Access/Refresh Token 기반 인증
+
+**여행 코스**
+- 코스 생성, 수정, 삭제
+- 코스에 여행지(Place), 해시태그, 방문 국가 연결
+- 좋아요 / 북마크 기능
+- 공개/비공개 설정
+
+**여행지 추천**
+- 국가 및 지역 정보 제공
+- 여행 스타일, 환경, 관심사, 음식 취향 등 다차원 속성 기반 추천
+
+**사용자 취향 설정**
+- 선호 대륙, 예산, 날씨, 여행 범위, 음식 취향, 주요 관심사 등 세부 설정 가능
+
+**마이페이지**
+- 내가 만든 코스, 좋아요한 코스, 북마크한 코스 관리
+- 방문한 국가 기록
+
+**블로그**
+- 여행 후기 글 작성 및 좋아요
+
+**알림**
+- 서비스 내 알림 기능
+
+## 시작하기
+
+### 사전 요구사항
+
+- Node.js 18 이상
+- MySQL
+- Redis
+
+### 환경 변수 설정
+
+프로젝트 루트에 `.env` 파일을 생성하고 아래 항목을 설정합니다.
+
+```env
+# 서버
+PORT=8080
+
+# 데이터베이스
+DB_HOST=
+DB_PORT=3306
+DB_USERNAME=
+DB_PASSWORD=
+DB_DATABASE=
+
+# JWT
+JWT_ACCESS_SECRET=
+JWT_REFRESH_SECRET=
+JWT_ACCESS_EXPIRES_IN=
+JWT_REFRESH_EXPIRES_IN=
+
+# Redis
+REDIS_HOST=
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DB=0
+
+# SMTP (이메일 OTP)
+SMTP_HOST=
+SMTP_PORT=
+SMTP_USER=
+SMTP_PASS=
+SMTP_FROM=
+
+# OAuth - Google
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_CALLBACK_URL=
+
+# OAuth - Kakao
+KAKAO_CLIENT_ID=
+KAKAO_CLIENT_SECRET=
+KAKAO_CALLBACK_URL=
+
+# OAuth - Naver
+NAVER_CLIENT_ID=
+NAVER_CLIENT_SECRET=
+NAVER_CALLBACK_URL=
 ```
 
-## Compile and run the project
+### 설치 및 실행
 
 ```bash
-# development
-$ npm run start
+# 패키지 설치
+npm install
 
-# watch mode
-$ npm run start:dev
+# 개발 서버 실행 (hot reload)
+npm run dev
 
-# production mode
-$ npm run start:prod
+# 프로덕션 빌드
+npm run build
+
+# 프로덕션 실행 (마이그레이션 자동 적용)
+npm run start:prod
 ```
 
-## Run tests
+### 데이터베이스 마이그레이션
 
 ```bash
-# unit tests
-$ npm run test
+# 마이그레이션 실행
+npm run migration:run
 
-# e2e tests
-$ npm run test:e2e
+# 마이그레이션 생성
+npm run migration:generate -- src/database/migrations/MigrationName
 
-# test coverage
-$ npm run test:cov
+# 마이그레이션 되돌리기
+npm run migration:revert
 ```
 
-## Email OTP
+## API 문서
 
-Environment variables:
-- `SMTP_HOST` `SMTP_PORT` `SMTP_USER` `SMTP_PASS` `SMTP_FROM`
-- `REDIS_HOST` `REDIS_PORT` `REDIS_PASSWORD` `REDIS_DB`
+서버 실행 후 `/api-docs` 에서 Swagger UI를 통해 전체 API 명세를 확인할 수 있습니다.
 
-Endpoints:
-- `POST /api/v1/auth/email/otp/send` `{ "email": "user@example.com" }`
-- `POST /api/v1/auth/email/otp/verify` `{ "email": "user@example.com", "otp": "123456" }`
+## 프로젝트 구조
 
-## Deployment
+```
+src/
+├── domain/
+│   ├── auth/           # 인증 (소셜 로그인, OTP, JWT)
+│   ├── user/           # 사용자 관리
+│   ├── course/         # 여행 코스 (좋아요, 북마크 포함)
+│   ├── place/          # 여행지
+│   ├── country/        # 국가 및 지역 정보
+│   ├── preference/     # 사용자 취향 설정
+│   ├── visited-country/ # 방문 국가 기록
+│   ├── blog/           # 여행 블로그
+│   ├── notification/   # 알림
+│   ├── admin/          # 관리자
+│   └── logging/        # 로깅
+├── global/
+│   ├── filters/        # 전역 예외 처리
+│   └── interceptors/   # 전역 응답 인터셉터
+└── database/
+    ├── migrations/     # TypeORM 마이그레이션
+    └── data-source.ts  # 데이터소스 설정
+```
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## 테스트
 
 ```bash
-$ npm install -g mau
-$ mau deploy
+# 단위 테스트
+npm run test
+
+# E2E 테스트
+npm run test:e2e
+
+# 커버리지 확인
+npm run test:cov
 ```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
