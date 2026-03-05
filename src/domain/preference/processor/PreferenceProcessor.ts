@@ -96,7 +96,7 @@ export class PreferenceProcessor extends WorkerHost {
               'x-service-secret': serviceSecret,
               'Content-Type': 'application/json',
             },
-            timeout: 5000, // 5초 연결 확인용
+            timeout: 10000, // 10초
           },
         ),
       );
