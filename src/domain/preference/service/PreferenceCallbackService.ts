@@ -144,4 +144,17 @@ export class PreferenceCallbackService {
       order: { createdAt: 'ASC' },
     });
   }
+
+  /**
+   * 사용자 ID로 최신 추천 결과 조회
+   */
+  async getRecommendationsByUserId(
+    userId: string,
+  ): Promise<PreferenceRecommendation[]> {
+    const job = await this.preferenceJobRepository.findByUserId(userId);
+    if (!job || job.status !== PreferenceJobStatus.SUCCESS) {
+      return [];
+    }
+    return this.getRecommendations(job.id);
+  }
 }

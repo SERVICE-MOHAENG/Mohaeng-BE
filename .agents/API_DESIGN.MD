@@ -292,6 +292,35 @@ const config = new DocumentBuilder()
 })
 ```
 
+## me 기반 리소스 조회 패턴
+
+인증된 사용자 본인의 리소스를 조회할 때는 `me`를 경로에 사용합니다.
+
+```
+GET /api/v1/{resource}/me          → 내 {resource} 조회
+GET /api/v1/{resource}/me/result   → 내 {resource}의 결과 조회
+```
+
+**예시: 추천 여행지 결과 조회**
+
+```typescript
+@Get('me/result')
+@UserApiBearerAuth()
+@ApiOperation({ summary: '내 추천 여행지 결과 조회' })
+async getMyResult(
+  @UserId() userId: string,
+): Promise<{ destinations: PreferenceRecommendationResponse[] }> {
+  const recommendations =
+    await this.preferenceCallbackService.getRecommendationsByUserId(userId);
+  return {
+    destinations: recommendations.map(PreferenceRecommendationResponse.from),
+  };
+}
+```
+
+- jobId 없이 토큰만으로 최신 결과 조회 가능
+- 결과가 없거나 처리 중이면 빈 배열 반환
+
 ## 보안 헤더
 
 Helmet이 적용되어 있으며 다음 헤더가 설정됩니다:
