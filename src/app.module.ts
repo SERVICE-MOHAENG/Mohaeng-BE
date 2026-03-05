@@ -23,7 +23,6 @@ import { CoursePlace } from './domain/course/entity/CoursePlace.entity';
 import { CourseDay } from './domain/course/entity/CourseDay.entity';
 import { CourseHashTag } from './domain/course/entity/CourseHashTag.entity';
 import { CourseLike } from './domain/course/entity/CourseLike.entity';
-import { CourseBookmark } from './domain/course/entity/CourseBookmark.entity';
 import { CourseCountry } from './domain/course/entity/CourseCountry.entity';
 import { CourseRegion } from './domain/course/entity/CourseRegion.entity';
 import { CourseSurvey } from './domain/course/entity/CourseSurvey.entity';
@@ -90,7 +89,6 @@ import { CourseAiChat } from './domain/course/entity/CourseAiChat.entity';
           CourseDay,
           CourseHashTag,
           CourseLike,
-          CourseBookmark,
           CourseCountry,
           CourseRegion,
           CourseSurvey,

@@ -12,7 +12,6 @@ import { User } from '../../user/entity/User.entity';
 import { Country } from '../../country/entity/Country.entity';
 import { CourseHashTag } from './CourseHashTag.entity';
 import { CourseLike } from './CourseLike.entity';
-import { CourseBookmark } from './CourseBookmark.entity';
 import { CourseCountry } from './CourseCountry.entity';
 import { CourseDay } from './CourseDay.entity';
 import { CourseRegion } from './CourseRegion.entity';
@@ -125,12 +124,12 @@ export class TravelCourse {
 
   @Column({
     type: 'int',
-    name: 'bookmark_count',
+    name: 'modification_count',
     nullable: false,
     default: 0,
-    comment: '북마크 수',
+    comment: 'AI 자연어 수정 요청 횟수 (최대 5회)',
   })
-  bookmarkCount: number;
+  modificationCount: number;
 
   @ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
@@ -157,9 +156,6 @@ export class TravelCourse {
   @OneToMany(() => CourseLike, (like) => like.travelCourse)
   likes: CourseLike[];
 
-  @OneToMany(() => CourseBookmark, (bookmark) => bookmark.travelCourse)
-  bookmarks: CourseBookmark[];
-
   /**
    * 여행 코스 생성 팩토리 메서드
    */
@@ -184,7 +180,7 @@ export class TravelCourse {
     course.isPublic = isPublic;
     course.viewCount = 0;
     course.likeCount = 0;
-    course.bookmarkCount = 0;
+    course.modificationCount = 0;
     const now = new Date();
     course.travelStartDay = now;
     course.travelFinishDay = now;
@@ -194,23 +190,14 @@ export class TravelCourse {
     return course;
   }
 
-  /**
-   * 조회수 증가
-   */
   incrementViewCount(): void {
     this.viewCount += 1;
   }
 
-  /**
-   * 좋아요 수 증가
-   */
   incrementLikeCount(): void {
     this.likeCount += 1;
   }
 
-  /**
-   * 좋아요 수 감소
-   */
   decrementLikeCount(): void {
     if (this.likeCount > 0) {
       this.likeCount -= 1;
@@ -218,18 +205,18 @@ export class TravelCourse {
   }
 
   /**
-   * 북마크 수 증가
+   * AI 자연어 수정 횟수 증가
+   * @returns 증가 후 횟수
    */
-  incrementBookmarkCount(): void {
-    this.bookmarkCount += 1;
+  incrementModificationCount(): number {
+    this.modificationCount += 1;
+    return this.modificationCount;
   }
 
   /**
-   * 북마크 수 감소
+   * 자연어 수정 가능 여부 확인 (최대 5회)
    */
-  decrementBookmarkCount(): void {
-    if (this.bookmarkCount > 0) {
-      this.bookmarkCount -= 1;
-    }
+  canModify(): boolean {
+    return this.modificationCount < 5;
   }
 }
