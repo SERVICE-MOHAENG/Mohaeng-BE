@@ -112,6 +112,27 @@ export class UserPreferenceController {
   }
 
   /**
+   * 내 최신 추천 결과 조회 (사용자 ID 기반)
+   */
+  @Get('me/result')
+  @UserApiBearerAuth()
+  @ApiOperation({ summary: '내 추천 여행지 결과 조회' })
+  @ApiResponse({
+    status: 200,
+    type: PreferenceRecommendationResponse,
+    isArray: true,
+  })
+  async getMyResult(
+    @UserId() userId: string,
+  ): Promise<{ destinations: PreferenceRecommendationResponse[] }> {
+    const recommendations =
+      await this.preferenceCallbackService.getRecommendationsByUserId(userId);
+    return {
+      destinations: recommendations.map(PreferenceRecommendationResponse.from),
+    };
+  }
+
+  /**
    * 추천 작업 상태 polling
    */
   @Get('jobs/:jobId/status')
