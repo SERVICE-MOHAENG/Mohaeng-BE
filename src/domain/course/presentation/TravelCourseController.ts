@@ -1,12 +1,10 @@
 import {
-  Body,
   Controller,
   Delete,
   Get,
   HttpCode,
   HttpStatus,
   Param,
-  Patch,
   Post,
   Query,
 } from '@nestjs/common';
@@ -22,7 +20,6 @@ import { UserId } from '../../../global/decorators/UserId';
 import { TravelCourseService } from '../service/TravelCourseService';
 import { CourseLikeService } from '../service/CourseLikeService';
 import { GetMyCoursesRequest } from './dto/request/GetMyCoursesRequest';
-import { ReorderCoursePlacesRequest } from './dto/request/ReorderCoursePlacesRequest';
 import { GetCoursesRequest } from './dto/request/GetCoursesRequest';
 import { CourseResponse } from './dto/response/CourseResponse';
 import { CoursesResponse } from './dto/response/CoursesResponse';
@@ -32,7 +29,7 @@ import { CourseLikesResponse } from './dto/response/CourseLikesResponse';
  * TravelCourseController
  * @description
  * - 여행 코스 관련 HTTP 요청 처리
- * - 라우트 순서: literal 라우트 (mainpage, me, me/likes, days)를 parameterized 라우트 (:id) 앞에 배치
+ * - 라우트 순서: literal 라우트 (mainpage, me, me/likes)를 parameterized 라우트 (:id) 앞에 배치
  */
 @ApiTags('courses')
 @Controller('v1/courses')
@@ -105,43 +102,6 @@ export class TravelCourseController {
       limit,
     );
     return CourseLikesResponse.from(likes, total, page, limit);
-  }
-
-  /**
-   * 특정 day 장소 방문 순서 변경
-   * @description
-   * - placeIds 순서대로 visitOrder 재배정
-   * - 순서 변경 시 해당 day의 모든 visitTime이 null로 초기화됨
-   *   (방문 시간을 유지하려면 자연어 수정 요청을 사용할 것)
-   * - 자연어 수정 요청은 로드맵 당 최대 5회 가능
-   * - placeIds는 해당 day의 모든 course_place_id를 포함해야 함
-   */
-  @Patch('days/:dayId/places/reorder')
-  @UserApiBearerAuth()
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({
-    summary: '특정 day 장소 방문 순서 변경',
-    description:
-      '드래그로 순서 변경 시 visitTime이 초기화됩니다. ' +
-      '방문 시간을 유지하려면 자연어 수정 요청을 사용하세요. ' +
-      '자연어 수정 요청은 로드맵 당 최대 5회 가능합니다.',
-  })
-  @ApiParam({ name: 'dayId', description: 'day ID' })
-  @ApiResponse({ status: 204, description: '순서 변경 성공 (visitTime 초기화됨)' })
-  @ApiResponse({ status: 400, description: '유효하지 않은 장소 ID' })
-  @ApiResponse({ status: 401, description: '인증 실패' })
-  @ApiResponse({ status: 403, description: '권한 없음' })
-  @ApiResponse({ status: 404, description: 'day를 찾을 수 없음' })
-  async reorderCoursePlaces(
-    @Param('dayId') dayId: string,
-    @UserId() userId: string,
-    @Body() request: ReorderCoursePlacesRequest,
-  ): Promise<void> {
-    await this.travelCourseService.reorderCoursePlaces(
-      dayId,
-      userId,
-      request.placeIds,
-    );
   }
 
   /**
