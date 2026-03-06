@@ -8,7 +8,6 @@ import { CourseLike } from './entity/CourseLike.entity';
 import { CourseCountry } from './entity/CourseCountry.entity';
 import { TravelCourseRepository } from './persistence/TravelCourseRepository';
 import { CourseLikeRepository } from './persistence/CourseLikeRepository';
-import { CourseDayRepository } from './persistence/CourseDayRepository';
 import { TravelCourseService } from './service/TravelCourseService';
 import { CourseLikeService } from './service/CourseLikeService';
 import { TravelCourseController } from './presentation/TravelCourseController';
@@ -35,7 +34,6 @@ import { UserModule } from '../user/UserModule';
   providers: [
     TravelCourseRepository,
     CourseLikeRepository,
-    CourseDayRepository,
     TravelCourseService,
     CourseLikeService,
   ],

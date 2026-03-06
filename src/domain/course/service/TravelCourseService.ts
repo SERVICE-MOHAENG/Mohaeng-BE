@@ -1,12 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { TravelCourseRepository } from '../persistence/TravelCourseRepository';
 import { CourseLikeRepository } from '../persistence/CourseLikeRepository';
-import { CourseDayRepository } from '../persistence/CourseDayRepository';
 import { TravelCourse } from '../entity/TravelCourse.entity';
 import { CourseNotFoundException } from '../exception/CourseNotFoundException';
 import { CourseAccessDeniedException } from '../exception/CourseAccessDeniedException';
-import { CourseDayNotFoundException } from '../exception/CourseDayNotFoundException';
-import { InvalidPlaceIdsException } from '../exception/InvalidPlaceIdsException';
 import { User } from '../../user/entity/User.entity';
 import { Country } from '../../country/entity/Country.entity';
 import { UserRepository } from '../../user/persistence/UserRepository';
@@ -28,7 +25,6 @@ export class TravelCourseService {
     private readonly travelCourseRepository: TravelCourseRepository,
     private readonly userRepository: UserRepository,
     private readonly courseLikeRepository: CourseLikeRepository,
-    private readonly courseDayRepository: CourseDayRepository,
   ) {}
 
   /**
@@ -211,48 +207,6 @@ export class TravelCourseService {
     }
 
     await this.travelCourseRepository.delete(course.id);
-  }
-
-  /**
-   * 특정 day의 장소 방문 순서 변경
-   * @description
-   * - placeIds 순서대로 visitOrder 재배정
-   * - 순서 변경 시 모든 visitTime을 null로 초기화
-   * - 방문 시간 유지를 원하면 자연어 수정 요청 사용 (로드맵 당 최대 5회)
-   * - placeIds가 해당 day의 장소 목록과 정확히 일치해야 함
-   */
-  async reorderCoursePlaces(
-    dayId: string,
-    userId: string,
-    placeIds: string[],
-  ): Promise<void> {
-    const courseDay =
-      await this.courseDayRepository.findByIdWithPlacesAndCourse(dayId);
-    if (!courseDay) {
-      throw new CourseDayNotFoundException();
-    }
-
-    if (courseDay.travelCourse.user.id !== userId) {
-      throw new CourseAccessDeniedException();
-    }
-
-    const existingIds = courseDay.coursePlaces.map((cp) => cp.id).sort();
-    const requestedIds = [...placeIds].sort();
-    const isSameSet =
-      existingIds.length === requestedIds.length &&
-      existingIds.every((id, i) => id === requestedIds[i]);
-    if (!isSameSet) {
-      throw new InvalidPlaceIdsException();
-    }
-
-    const updated = placeIds.map((placeId, index) => {
-      const place = courseDay.coursePlaces.find((cp) => cp.id === placeId)!;
-      place.visitOrder = index + 1;
-      place.visitTime = null;
-      return place;
-    });
-
-    await this.courseDayRepository.saveCoursePlaces(updated);
   }
 
   /**
