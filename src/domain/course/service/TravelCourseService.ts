@@ -218,16 +218,18 @@ export class TravelCourseService {
   }
 
   /**
-   * 메인페이지용 인기 코스 조회
+   * 메인페이지용 코스 조회
    */
   async getCoursesForMainPage(
+    sortBy: 'latest' | 'popular' = 'latest',
     countryCode?: string,
     page: number = 1,
     limit: number = 10,
     userId?: string,
   ): Promise<CoursesResponse> {
     const [courses, total] =
-      await this.travelCourseRepository.findPopularCoursesForMainPage(
+      await this.travelCourseRepository.findCoursesForMainPage(
+        sortBy,
         countryCode,
         page,
         limit,

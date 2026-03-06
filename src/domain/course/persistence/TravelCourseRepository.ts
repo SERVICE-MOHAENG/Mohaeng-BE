@@ -92,14 +92,15 @@ export class TravelCourseRepository {
   }
 
   /**
-   * 메인페이지용 인기 코스 조회
+   * 메인페이지용 코스 조회
    * @description
    * - 공개 코스만 조회
-   * - 좋아요순 정렬
+   * - latest: 최신순 (createdAt DESC), popular: 인기순 (likeCount DESC)
    * - 국가 필터링 옵션 (ISO 3166-1 alpha-2 코드)
    * - 최대 10개까지 조회
    */
-  async findPopularCoursesForMainPage(
+  async findCoursesForMainPage(
+    sortBy: 'latest' | 'popular' = 'latest',
     countryCode?: string,
     page: number = 1,
     limit: number = 10,
@@ -119,10 +120,13 @@ export class TravelCourseRepository {
 
     // Postgres + pagination + getManyAndCount 조합에서 발생하는 별칭 오류를 피하기 위해
     // ID 목록은 raw 쿼리로 분리 조회한다.
+    const orderColumn =
+      sortBy === 'popular' ? 'course.likeCount' : 'course.createdAt';
+
     const pagedIds = await baseQuery
       .clone()
       .select('course.id', 'id')
-      .orderBy('course.likeCount', 'DESC')
+      .orderBy(orderColumn, 'DESC')
       .skip((page - 1) * limit)
       .take(limit)
       .getRawMany<{ id: string }>();
@@ -134,6 +138,9 @@ export class TravelCourseRepository {
     }
 
     // 2단계: ID 기반으로 relation 별도 로딩
+    const orderField: keyof TravelCourse =
+      sortBy === 'popular' ? 'likeCount' : 'createdAt';
+
     const courses = await this.repository.find({
       where: courseIds.map((id) => ({ id })),
       relations: [
@@ -146,7 +153,7 @@ export class TravelCourseRepository {
         'hashTags',
       ],
       relationLoadStrategy: 'query',
-      order: { likeCount: 'DESC' },
+      order: { [orderField]: 'DESC' },
     });
 
     return [courses, total];

@@ -20,7 +20,7 @@ import { UserId } from '../../../global/decorators/UserId';
 import { TravelCourseService } from '../service/TravelCourseService';
 import { CourseLikeService } from '../service/CourseLikeService';
 import { GetMyCoursesRequest } from './dto/request/GetMyCoursesRequest';
-import { GetCoursesRequest } from './dto/request/GetCoursesRequest';
+import { GetCoursesRequest, CourseSortType } from './dto/request/GetCoursesRequest';
 import { CourseResponse } from './dto/response/CourseResponse';
 import { CoursesResponse } from './dto/response/CoursesResponse';
 import { CourseLikesResponse } from './dto/response/CourseLikesResponse';
@@ -44,6 +44,7 @@ export class TravelCourseController {
    */
   @Get('mainpage')
   @ApiOperation({ summary: '여행 코스 목록 조회 (메인페이지)' })
+  @ApiQuery({ name: 'sortBy', required: false, enum: CourseSortType, example: CourseSortType.LATEST })
   @ApiQuery({ name: 'countryCode', required: false, example: 'JP' })
   @ApiQuery({ name: 'page', required: false, example: 1 })
   @ApiQuery({ name: 'limit', required: false, example: 10 })
@@ -53,6 +54,7 @@ export class TravelCourseController {
     @Query() request: GetCoursesRequest,
   ): Promise<CoursesResponse> {
     return this.travelCourseService.getCoursesForMainPage(
+      request.sortBy,
       request.countryCode,
       request.page,
       request.limit,
