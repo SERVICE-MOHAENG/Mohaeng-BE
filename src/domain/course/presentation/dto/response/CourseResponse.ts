@@ -6,6 +6,7 @@ import { CoursePlaceResponse } from './CoursePlaceResponse';
  * CourseResponse DTO
  * @description
  * - 여행 코스 응답
+ * - modificationCount: AI 자연어 수정 요청 횟수 (최대 5회)
  */
 export class CourseResponse {
   @ApiProperty({ description: '코스 ID' })
@@ -32,8 +33,11 @@ export class CourseResponse {
   @ApiProperty({ description: '좋아요 수' })
   likeCount: number;
 
-  @ApiProperty({ description: '북마크 수' })
-  bookmarkCount: number;
+  @ApiProperty({
+    description: 'AI 자연어 수정 요청 횟수 (최대 5회)',
+    example: 0,
+  })
+  modificationCount: number;
 
   @ApiProperty({ description: '작성자 ID' })
   userId: string;
@@ -62,9 +66,6 @@ export class CourseResponse {
   @ApiProperty({ description: '현재 사용자의 좋아요 여부', required: false })
   isLiked?: boolean;
 
-  @ApiProperty({ description: '현재 사용자의 북마크 여부', required: false })
-  isBookmarked?: boolean;
-
   /**
    * Entity -> DTO 변환
    */
@@ -78,7 +79,7 @@ export class CourseResponse {
     response.nights = course.nights;
     response.days = course.days;
     response.likeCount = course.likeCount;
-    response.bookmarkCount = course.bookmarkCount;
+    response.modificationCount = course.modificationCount;
     response.userId = course.user.id;
     response.userName = course.user.name;
     response.countries =
@@ -95,16 +96,14 @@ export class CourseResponse {
   }
 
   /**
-   * Entity -> DTO 변환 (좋아요/북마크 상태 포함)
+   * Entity -> DTO 변환 (좋아요 상태 포함)
    */
   static fromEntityWithUserStatus(
     course: TravelCourse,
     isLiked: boolean,
-    isBookmarked: boolean,
   ): CourseResponse {
     const response = CourseResponse.fromEntity(course);
     response.isLiked = isLiked;
-    response.isBookmarked = isBookmarked;
     return response;
   }
 }

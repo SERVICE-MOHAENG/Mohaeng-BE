@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { TravelCourseRepository } from '../persistence/TravelCourseRepository';
 import { CourseLikeRepository } from '../persistence/CourseLikeRepository';
-import { CourseBookmarkRepository } from '../persistence/CourseBookmarkRepository';
+import { CourseDayRepository } from '../persistence/CourseDayRepository';
 import { TravelCourse } from '../entity/TravelCourse.entity';
 import { CourseNotFoundException } from '../exception/CourseNotFoundException';
 import { CourseAccessDeniedException } from '../exception/CourseAccessDeniedException';
+import { CourseDayNotFoundException } from '../exception/CourseDayNotFoundException';
+import { InvalidPlaceIdsException } from '../exception/InvalidPlaceIdsException';
 import { User } from '../../user/entity/User.entity';
 import { Country } from '../../country/entity/Country.entity';
 import { UserRepository } from '../../user/persistence/UserRepository';
@@ -26,7 +28,7 @@ export class TravelCourseService {
     private readonly travelCourseRepository: TravelCourseRepository,
     private readonly userRepository: UserRepository,
     private readonly courseLikeRepository: CourseLikeRepository,
-    private readonly courseBookmarkRepository: CourseBookmarkRepository,
+    private readonly courseDayRepository: CourseDayRepository,
   ) {}
 
   /**
@@ -41,7 +43,7 @@ export class TravelCourseService {
   }
 
   /**
-   * ID로 여행 코스 조회 (사용자 상태 포함)
+   * ID로 여행 코스 조회 (사용자 좋아요 상태 포함)
    */
   async findByIdWithUserStatus(
     id: string,
@@ -49,21 +51,16 @@ export class TravelCourseService {
   ): Promise<CourseResponse> {
     const course = await this.findById(id);
 
-    // 비공개 코스 접근 검증
     if (!course.isPublic && course.user.id !== userId) {
       throw new CourseAccessDeniedException();
     }
 
-    const [isLiked, isBookmarked] = await Promise.all([
-      this.courseLikeRepository.existsByUserIdAndCourseId(userId, id),
-      this.courseBookmarkRepository.existsByUserIdAndCourseId(userId, id),
-    ]);
-
-    return CourseResponse.fromEntityWithUserStatus(
-      course,
-      isLiked,
-      isBookmarked,
+    const isLiked = await this.courseLikeRepository.existsByUserIdAndCourseId(
+      userId,
+      id,
     );
+
+    return CourseResponse.fromEntityWithUserStatus(course, isLiked);
   }
 
   /**
@@ -150,27 +147,15 @@ export class TravelCourseService {
   ): Promise<CourseResponse> {
     const course = await this.findById(courseId);
 
-    // 소유권 검증
     if (course.user.id !== userId) {
       throw new CourseAccessDeniedException();
     }
 
-    // 필드 업데이트
-    if (request.title !== undefined) {
-      course.title = request.title;
-    }
-    if (request.description !== undefined) {
-      course.description = request.description;
-    }
-    if (request.nights !== undefined) {
-      course.nights = request.nights;
-    }
-    if (request.days !== undefined) {
-      course.days = request.days;
-    }
-    if (request.isPublic !== undefined) {
-      course.isPublic = request.isPublic;
-    }
+    if (request.title !== undefined) course.title = request.title;
+    if (request.description !== undefined) course.description = request.description;
+    if (request.nights !== undefined) course.nights = request.nights;
+    if (request.days !== undefined) course.days = request.days;
+    if (request.isPublic !== undefined) course.isPublic = request.isPublic;
 
     const updatedCourse = await this.travelCourseRepository.save(course);
     return CourseResponse.fromEntity(updatedCourse);
@@ -188,21 +173,12 @@ export class TravelCourseService {
 
     const coursesWithStatus = await Promise.all(
       courses.map(async (course) => {
-        const [isLiked, isBookmarked] = await Promise.all([
-          this.courseLikeRepository.existsByUserIdAndCourseId(
+        const isLiked =
+          await this.courseLikeRepository.existsByUserIdAndCourseId(
             userId,
             course.id,
-          ),
-          this.courseBookmarkRepository.existsByUserIdAndCourseId(
-            userId,
-            course.id,
-          ),
-        ]);
-        return CourseResponse.fromEntityWithUserStatus(
-          course,
-          isLiked,
-          isBookmarked,
-        );
+          );
+        return CourseResponse.fromEntityWithUserStatus(course, isLiked);
       }),
     );
 
@@ -230,12 +206,53 @@ export class TravelCourseService {
   async deleteCourse(courseId: string, userId: string): Promise<void> {
     const course = await this.findById(courseId);
 
-    // 소유권 검증
     if (course.user.id !== userId) {
       throw new CourseAccessDeniedException();
     }
 
     await this.travelCourseRepository.delete(course.id);
+  }
+
+  /**
+   * 특정 day의 장소 방문 순서 변경
+   * @description
+   * - placeIds 순서대로 visitOrder 재배정
+   * - 순서 변경 시 모든 visitTime을 null로 초기화
+   * - 방문 시간 유지를 원하면 자연어 수정 요청 사용 (로드맵 당 최대 5회)
+   * - placeIds가 해당 day의 장소 목록과 정확히 일치해야 함
+   */
+  async reorderCoursePlaces(
+    dayId: string,
+    userId: string,
+    placeIds: string[],
+  ): Promise<void> {
+    const courseDay =
+      await this.courseDayRepository.findByIdWithPlacesAndCourse(dayId);
+    if (!courseDay) {
+      throw new CourseDayNotFoundException();
+    }
+
+    if (courseDay.travelCourse.user.id !== userId) {
+      throw new CourseAccessDeniedException();
+    }
+
+    const existingIds = courseDay.coursePlaces.map((cp) => cp.id).sort();
+    const requestedIds = [...placeIds].sort();
+    const isSameSet =
+      existingIds.length === requestedIds.length &&
+      existingIds.every((id, i) => id === requestedIds[i]);
+    if (!isSameSet) {
+      throw new InvalidPlaceIdsException();
+    }
+
+    const updated = placeIds.map((placeId, index) => {
+      const place = courseDay.coursePlaces.find((cp) => cp.id === placeId)!;
+      place.visitOrder = index + 1;
+      place.visitTime = null;
+      return place;
+    });
+
+    await this.courseDayRepository.saveCoursePlaces(updated);
   }
 
   /**
@@ -248,12 +265,6 @@ export class TravelCourseService {
 
   /**
    * 메인페이지용 인기 코스 조회
-   * @description
-   * - 공개 코스만 조회
-   * - 좋아요순 정렬
-   * - 국가별 필터링 가능 (ISO 3166-1 alpha-2 코드)
-   * - 최대 10개까지 조회
-   * - userId가 제공되면 좋아요/북마크 상태 포함
    */
   async getCoursesForMainPage(
     countryCode?: string,
@@ -273,19 +284,13 @@ export class TravelCourseService {
     if (userId) {
       courseResponses = await Promise.all(
         courses.map(async (course) => {
-          const [isLiked, isBookmarked] = await Promise.all([
-            this.courseLikeRepository.existsByUserIdAndCourseId(
+          const isLiked =
+            await this.courseLikeRepository.existsByUserIdAndCourseId(
               userId,
               course.id,
-            ),
-            this.courseBookmarkRepository.existsByUserIdAndCourseId(
-              userId,
-              course.id,
-            ),
-          ]);
+            );
           const response = this.mapToCourseResponse(course);
           response.isLiked = isLiked;
-          response.isBookmarked = isBookmarked;
           return response;
         }),
       );
@@ -317,7 +322,7 @@ export class TravelCourseService {
       nights: course.nights,
       days: course.days,
       likeCount: course.likeCount,
-      bookmarkCount: course.bookmarkCount,
+      modificationCount: course.modificationCount,
       userId: course.user.id,
       userName: course.user.name,
       countries: course.courseCountries?.map((cc) => cc.country.name) || [],
