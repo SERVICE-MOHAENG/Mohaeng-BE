@@ -138,7 +138,7 @@ export class ItineraryCallbackService {
       course.isPublic = false;
       course.viewCount = 0;
       course.likeCount = 0;
-      course.bookmarkCount = 0;
+      course.modificationCount = 0;
       course.createdAt = new Date();
       course.updatedAt = new Date();
       const savedCourse = await manager.save(TravelCourse, course);

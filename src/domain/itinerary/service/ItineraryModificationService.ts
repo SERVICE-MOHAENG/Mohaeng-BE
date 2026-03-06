@@ -5,9 +5,7 @@ import { Repository } from 'typeorm';
 import { Queue } from 'bullmq';
 import { ItineraryJobRepository } from '../persistence/ItineraryJobRepository';
 import { ItineraryJob } from '../entity/ItineraryJob.entity';
-import { ItineraryStatus } from '../entity/ItineraryStatus.enum';
 import { TravelCourse } from '../../course/entity/TravelCourse.entity';
-import { CourseAiChat } from '../../course/entity/CourseAiChat.entity';
 import { ChatWithItineraryResponse } from '../presentation/dto/response/ChatWithItineraryResponse';
 import { ItineraryModificationJobStatusResponse } from '../presentation/dto/response/ItineraryModificationJobStatusResponse';
 import { ItineraryNotFoundException } from '../exception/ItineraryNotFoundException';
@@ -25,15 +23,12 @@ import { ChatLimitExceededException } from '../exception/ChatLimitExceededExcept
  */
 @Injectable()
 export class ItineraryModificationService {
-  private static readonly MAX_CHAT_COUNT = 10;
   private readonly logger = new Logger(ItineraryModificationService.name);
 
   constructor(
     private readonly itineraryJobRepository: ItineraryJobRepository,
     @InjectRepository(TravelCourse)
     private readonly travelCourseRepository: Repository<TravelCourse>,
-    @InjectRepository(CourseAiChat)
-    private readonly chatRepository: Repository<CourseAiChat>,
     @InjectQueue('itinerary-modification')
     private readonly modificationQueue: Queue,
   ) {}
@@ -65,12 +60,8 @@ export class ItineraryModificationService {
       throw new UnauthorizedItineraryAccessException();
     }
 
-    // 3. 대화 개수 확인
-    const chatCount = await this.chatRepository.count({
-      where: { travelCourse: { id: itineraryId } },
-    });
-
-    if (chatCount >= ItineraryModificationService.MAX_CHAT_COUNT) {
+    // 3. AI 자연어 수정 횟수 확인 (최대 5회)
+    if (!course.canModify()) {
       throw new ChatLimitExceededException();
     }
 
@@ -90,7 +81,11 @@ export class ItineraryModificationService {
     );
     const savedJob = await this.itineraryJobRepository.save(job);
 
-    // 6. BullMQ 큐에 작업 추가
+    // 6. modificationCount 증가 (최대 5회 제한 추적용)
+    course.incrementModificationCount();
+    await this.travelCourseRepository.save(course);
+
+    // 7. BullMQ 큐에 작업 추가
     try {
       await this.modificationQueue.add(
         'modify-itinerary',
