@@ -38,6 +38,31 @@ export class TravelCourseRepository {
     }
   }
 
+  async findByIdWithAllRelations(id: string): Promise<TravelCourse | null> {
+    try {
+      return await this.repository.findOne({
+        where: { id },
+        relations: [
+          'user',
+          'courseCountries',
+          'courseCountries.country',
+          'courseDays',
+          'courseDays.coursePlaces',
+          'courseDays.coursePlaces.place',
+          'courseRegions',
+          'courseRegions.region',
+          'hashTags',
+        ],
+        relationLoadStrategy: 'query',
+      });
+    } catch (error) {
+      if (error instanceof QueryFailedError) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
   async findByUserId(
     userId: string,
     page: number = 1,

@@ -1,7 +1,13 @@
 import { Injectable } from '@nestjs/common';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import { TravelCourseRepository } from '../persistence/TravelCourseRepository';
 import { CourseLikeRepository } from '../persistence/CourseLikeRepository';
 import { TravelCourse } from '../entity/TravelCourse.entity';
+import { CourseDay } from '../entity/CourseDay.entity';
+import { CoursePlace } from '../entity/CoursePlace.entity';
+import { CourseCountry } from '../entity/CourseCountry.entity';
+import { CourseRegion } from '../entity/CourseRegion.entity';
 import { CourseNotFoundException } from '../exception/CourseNotFoundException';
 import { CourseAccessDeniedException } from '../exception/CourseAccessDeniedException';
 import { User } from '../../user/entity/User.entity';
@@ -25,6 +31,7 @@ export class TravelCourseService {
     private readonly travelCourseRepository: TravelCourseRepository,
     private readonly userRepository: UserRepository,
     private readonly courseLikeRepository: CourseLikeRepository,
+    @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
   /**
@@ -207,6 +214,79 @@ export class TravelCourseService {
     }
 
     await this.travelCourseRepository.delete(course.id);
+  }
+
+  /**
+   * 다른 사용자의 로드맵 복사
+   */
+  async copyRoadmap(sourceId: string, userId: string): Promise<CourseResponse> {
+    const source =
+      await this.travelCourseRepository.findByIdWithAllRelations(sourceId);
+    if (!source) {
+      throw new CourseNotFoundException();
+    }
+
+    if (!source.isPublic && source.user.id !== userId) {
+      throw new CourseAccessDeniedException();
+    }
+
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new UserNotFoundException();
+    }
+
+    const newCourse = await this.dataSource.transaction(async (manager) => {
+      const course = new TravelCourse();
+      course.title = source.title;
+      course.user = user;
+      course.nights = source.nights;
+      course.days = source.days;
+      course.description = source.description;
+      course.imageUrl = source.imageUrl;
+      course.isPublic = true;
+      course.viewCount = 0;
+      course.likeCount = 0;
+      course.modificationCount = 0;
+      course.peopleCount = source.peopleCount;
+      course.travelStartDay = source.travelStartDay;
+      course.travelFinishDay = source.travelFinishDay;
+      course.sourceCourseId = source.id;
+      const savedCourse = await manager.save(TravelCourse, course);
+
+      for (const cc of source.courseCountries || []) {
+        await manager.save(CourseCountry, CourseCountry.create(savedCourse, cc.country));
+      }
+
+      for (const day of source.courseDays || []) {
+        const newDay = await manager.save(
+          CourseDay,
+          CourseDay.create(savedCourse, day.dayNumber, day.date),
+        );
+        for (const cp of day.coursePlaces || []) {
+          await manager.save(
+            CoursePlace,
+            CoursePlace.create(newDay, cp.place, cp.visitOrder, cp.memo ?? undefined, cp.visitTime ?? undefined, cp.description ?? undefined),
+          );
+        }
+      }
+
+      for (const region of source.courseRegions || []) {
+        const newRegion = new CourseRegion();
+        newRegion.travelCourse = savedCourse;
+        newRegion.travelCourseId = savedCourse.id;
+        newRegion.region = region.region;
+        newRegion.regionId = region.regionId;
+        newRegion.regionName = region.regionName;
+        newRegion.startDate = region.startDate;
+        newRegion.endDate = region.endDate;
+        await manager.save(CourseRegion, newRegion);
+      }
+
+      return savedCourse;
+    });
+
+    const result = await this.travelCourseRepository.findById(newCourse.id);
+    return CourseResponse.fromEntity(result!);
   }
 
   /**
