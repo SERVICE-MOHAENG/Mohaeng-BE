@@ -9,6 +9,7 @@ import * as cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './global/filters/GlobalExceptionFilter';
 import { ResponseInterceptor } from './global/interceptors/ResponseInterceptor';
+import { DiscordService } from './global/logger/DiscordService';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -61,6 +62,9 @@ async function bootstrap() {
   const port = process.env.PORT ?? 8080;
   await app.listen(port);
   console.log(`Server started on port: ${port}`);
+
+  const discordService = app.get(DiscordService);
+  await discordService.sendInfo('Mohaeng Core SERVER INIT OK', 'Bootstrap');
 }
 
 bootstrap().catch((error) => {
