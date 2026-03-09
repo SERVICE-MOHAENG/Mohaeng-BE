@@ -131,6 +131,14 @@ export class TravelCourse {
   })
   modificationCount: number;
 
+  @Column({
+    type: 'uuid',
+    name: 'source_course_id',
+    nullable: true,
+    comment: '복사 원본 코스 ID',
+  })
+  sourceCourseId: string | null;
+
   @ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
