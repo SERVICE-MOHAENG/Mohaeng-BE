@@ -63,6 +63,9 @@ export class CourseResponse {
   @ApiProperty({ description: '수정일시' })
   updatedAt: Date;
 
+  @ApiProperty({ description: '복사 원본 코스 ID', nullable: true, required: false })
+  sourceCourseId?: string | null;
+
   @ApiProperty({ description: '현재 사용자의 좋아요 여부', required: false })
   isLiked?: boolean;
 
@@ -90,6 +93,7 @@ export class CourseResponse {
         ?.flatMap((day) => day.coursePlaces || [])
         .map((cp) => CoursePlaceResponse.fromEntity(cp)) || [];
     response.isPublic = course.isPublic;
+    response.sourceCourseId = course.sourceCourseId ?? null;
     response.createdAt = course.createdAt;
     response.updatedAt = course.updatedAt;
     return response;

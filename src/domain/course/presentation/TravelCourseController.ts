@@ -124,6 +124,25 @@ export class TravelCourseController {
   }
 
   /**
+   * 다른 사용자의 로드맵 복사
+   */
+  @Post(':id/copy')
+  @UserApiBearerAuth()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: '로드맵 복사 (내 로드맵으로 가져오기)' })
+  @ApiParam({ name: 'id', description: '복사할 코스 ID' })
+  @ApiResponse({ status: 201, description: '복사 성공', type: CourseResponse })
+  @ApiResponse({ status: 401, description: '인증 실패' })
+  @ApiResponse({ status: 403, description: '비공개 코스 접근 불가' })
+  @ApiResponse({ status: 404, description: '코스를 찾을 수 없음' })
+  async copyCourse(
+    @Param('id') id: string,
+    @UserId() userId: string,
+  ): Promise<CourseResponse> {
+    return this.travelCourseService.copyRoadmap(id, userId);
+  }
+
+  /**
    * 여행 코스 좋아요 추가
    */
   @Post(':id/like')
