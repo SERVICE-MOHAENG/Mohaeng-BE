@@ -44,10 +44,17 @@ export class DiscordService {
   }
 
   /**
+   * Discord로 정보 로그 전송 (서버 시작 등)
+   */
+  async sendInfo(message: string, context?: string): Promise<void> {
+    await this.sendLog('INFO', message, context);
+  }
+
+  /**
    * Discord 웹훅으로 로그 전송
    */
   private async sendLog(
-    level: 'ERROR' | 'WARN',
+    level: 'ERROR' | 'WARN' | 'INFO',
     message: string,
     context?: string,
     stack?: string,
@@ -71,7 +78,7 @@ export class DiscordService {
    * Discord Embed 객체 생성
    */
   private createEmbed(
-    level: 'ERROR' | 'WARN',
+    level: 'ERROR' | 'WARN' | 'INFO',
     message: string,
     context?: string,
     stack?: string,
@@ -124,7 +131,7 @@ export class DiscordService {
   /**
    * 로그 레벨별 설정 반환
    */
-  private getLogConfig(level: 'ERROR' | 'WARN') {
+  private getLogConfig(level: 'ERROR' | 'WARN' | 'INFO') {
     const configs = {
       ERROR: {
         emoji: '🚨',
@@ -133,6 +140,10 @@ export class DiscordService {
       WARN: {
         emoji: '⚠️',
         color: 16776960,
+      },
+      INFO: {
+        emoji: '💡',
+        color: 3447003,
       },
     };
 
