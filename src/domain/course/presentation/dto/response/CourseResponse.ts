@@ -48,6 +48,9 @@ export class CourseResponse {
   @ApiProperty({ description: '국가 목록', type: [String] })
   countries: string[];
 
+  @ApiProperty({ description: '지역 목록', type: [String] })
+  regionNames: string[];
+
   @ApiProperty({ description: '해시태그 목록', type: [String] })
   hashTags: string[];
 
@@ -63,7 +66,11 @@ export class CourseResponse {
   @ApiProperty({ description: '수정일시' })
   updatedAt: Date;
 
-  @ApiProperty({ description: '복사 원본 코스 ID', nullable: true, required: false })
+  @ApiProperty({
+    description: '복사 원본 코스 ID',
+    nullable: true,
+    required: false,
+  })
   sourceCourseId?: string | null;
 
   @ApiProperty({ description: '현재 사용자의 좋아요 여부', required: false })
@@ -87,6 +94,8 @@ export class CourseResponse {
     response.userName = course.user.name;
     response.countries =
       course.courseCountries?.map((cc) => cc.country.name) || [];
+    response.regionNames =
+      course.courseRegions?.map((region) => region.regionName) || [];
     response.hashTags = course.hashTags?.map((ht) => ht.tagName) || [];
     response.places =
       course.courseDays
