@@ -32,6 +32,7 @@ describe('ItineraryModificationCallbackRequest', () => {
         tags: ['도심'],
         title: '서울 당일치기',
         summary: '요약',
+        planning_preference: 'PLANNED',
         itinerary: [
           {
             day_number: 1,
@@ -60,6 +61,9 @@ describe('ItineraryModificationCallbackRequest', () => {
       forbidNonWhitelisted: true,
     });
 
+    expect(flattenValidationErrors(errors)).toContain(
+      'modified_itinerary.planning_preference: property planning_preference should not exist',
+    );
     expect(flattenValidationErrors(errors)).toContain(
       'modified_itinerary.itinerary.0.places.0.duration_minutes: property duration_minutes should not exist',
     );

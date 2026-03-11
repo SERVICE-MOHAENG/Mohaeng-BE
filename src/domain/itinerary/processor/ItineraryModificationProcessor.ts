@@ -117,10 +117,7 @@ export class ItineraryModificationProcessor extends WorkerHost {
     const requestBody = {
       job_id: jobId,
       callback_url: callbackUrl,
-      current_itinerary: {
-        ...currentItinerary,
-        planning_preference: surveyPreferences.planning_preference,
-      },
+      current_itinerary: currentItinerary,
       ...surveyPreferences,
       user_query: userMessage,
       session_history: sessionHistory,
@@ -166,7 +163,7 @@ export class ItineraryModificationProcessor extends WorkerHost {
   private async loadSurveyPreferences(
     travelCourseId: string,
   ): Promise<{
-    companion_type: string;
+    companion_type: string[];
     travel_themes: string[];
     pace_preference: string;
     planning_preference: string;
@@ -181,12 +178,14 @@ export class ItineraryModificationProcessor extends WorkerHost {
     });
 
     if (roadmapSurvey) {
-      const companionType = (roadmapSurvey.companions || [])[0]?.companion;
-      if (!companionType?.trim()) {
+      const companionTypes = (roadmapSurvey.companions || [])
+        .map((companion) => companion.companion?.trim())
+        .filter((companion): companion is string => Boolean(companion));
+      if (companionTypes.length === 0) {
         return null;
       }
       return {
-        companion_type: companionType,
+        companion_type: companionTypes,
         travel_themes: (roadmapSurvey.themes || []).map((t) => t.theme),
         pace_preference: roadmapSurvey.pacePreference,
         planning_preference: roadmapSurvey.planningPreference,
@@ -206,13 +205,15 @@ export class ItineraryModificationProcessor extends WorkerHost {
       return null;
     }
 
-    const companionType = (courseSurvey.companions || [])[0]?.companion;
-    if (!companionType?.trim()) {
+    const companionTypes = (courseSurvey.companions || [])
+      .map((companion) => companion.companion?.trim())
+      .filter((companion): companion is string => Boolean(companion));
+    if (companionTypes.length === 0) {
       return null;
     }
 
     return {
-      companion_type: companionType,
+      companion_type: companionTypes,
       travel_themes: (courseSurvey.themes || []).map((t) => t.theme),
       pace_preference: courseSurvey.pacePreference,
       planning_preference: courseSurvey.planningPreference,
