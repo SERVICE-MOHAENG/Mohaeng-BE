@@ -12,7 +12,6 @@ import { CoursePlace } from '../../course/entity/CoursePlace.entity';
 import { CourseHashTag } from '../../course/entity/CourseHashTag.entity';
 import { CourseAiChat } from '../../course/entity/CourseAiChat.entity';
 import { ChatRole } from '../../course/entity/ChatRole.enum';
-import { PlanningPreference } from '../../course/entity/PlanningPreference.enum';
 import { Place } from '../../place/entity/Place.entity';
 import { ItineraryJobNotFoundException } from '../exception/ItineraryJobNotFoundException';
 
@@ -43,7 +42,6 @@ export interface ModifiedItineraryPayload {
   tags: string[];
   title: string;
   summary: string;
-  planning_preference?: PlanningPreference;
   itinerary: CallbackDayData[];
 }
 
