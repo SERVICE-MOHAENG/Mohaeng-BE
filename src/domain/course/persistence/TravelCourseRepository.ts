@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, QueryFailedError } from 'typeorm';
+import { EntityManager, Repository, QueryFailedError } from 'typeorm';
 import { TravelCourse } from '../entity/TravelCourse.entity';
 
 /**
@@ -117,6 +117,27 @@ export class TravelCourseRepository {
 
   async delete(id: string): Promise<void> {
     await this.repository.delete({ id });
+  }
+
+  async countDistinctCompletedCountriesByUserId(
+    userId: string,
+    manager?: EntityManager,
+  ): Promise<number> {
+    const repository = manager
+      ? manager.getRepository(TravelCourse)
+      : this.repository;
+
+    const result = await repository
+      .createQueryBuilder('course')
+      .innerJoin('course.user', 'user')
+      .innerJoin('course.courseCountries', 'courseCountry')
+      .innerJoin('courseCountry.country', 'country')
+      .select('COUNT(DISTINCT country.id)', 'count')
+      .where('user.id = :userId', { userId })
+      .andWhere('course.isCompleted = :isCompleted', { isCompleted: true })
+      .getRawOne<{ count: string }>();
+
+    return Number(result?.count ?? 0);
   }
 
   /**

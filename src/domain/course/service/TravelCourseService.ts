@@ -18,7 +18,6 @@ import { CreateCourseRequest } from '../presentation/dto/request/CreateCourseReq
 import { UpdateCourseRequest } from '../presentation/dto/request/UpdateCourseRequest';
 import { CourseResponse } from '../presentation/dto/response/CourseResponse';
 import { CoursesResponse } from '../presentation/dto/response/CoursesResponse';
-import { CoursePlaceResponse } from '../presentation/dto/response/CoursePlaceResponse';
 
 /**
  * TravelCourse Service
@@ -166,6 +165,42 @@ export class TravelCourseService {
   }
 
   /**
+   * 여행 코스 완료 여부 변경
+   */
+  async updateCompletionStatus(
+    courseId: string,
+    userId: string,
+    isCompleted: boolean,
+  ): Promise<CourseResponse> {
+    await this.dataSource.transaction(async (manager) => {
+      const course = await manager.findOne(TravelCourse, {
+        where: { id: courseId },
+        relations: ['user'],
+      });
+
+      if (!course) {
+        throw new CourseNotFoundException();
+      }
+
+      if (course.user.id !== userId) {
+        throw new CourseAccessDeniedException();
+      }
+
+      course.isCompleted = isCompleted;
+      await manager.save(TravelCourse, course);
+
+      const visitedCountries =
+        await this.travelCourseRepository.countDistinctCompletedCountriesByUserId(
+          userId,
+          manager,
+        );
+      await manager.update(User, userId, { visitedCountries });
+    });
+
+    return CourseResponse.fromEntity(await this.findById(courseId));
+  }
+
+  /**
    * 내 여행 코스 목록 조회
    */
   async getMyCourses(
@@ -208,13 +243,33 @@ export class TravelCourseService {
    * 여행 코스 삭제 (소유권 검증 포함)
    */
   async deleteCourse(courseId: string, userId: string): Promise<void> {
-    const course = await this.findById(courseId);
+    await this.dataSource.transaction(async (manager) => {
+      const course = await manager.findOne(TravelCourse, {
+        where: { id: courseId },
+        relations: ['user'],
+      });
 
-    if (course.user.id !== userId) {
-      throw new CourseAccessDeniedException();
-    }
+      if (!course) {
+        throw new CourseNotFoundException();
+      }
 
-    await this.travelCourseRepository.delete(course.id);
+      if (course.user.id !== userId) {
+        throw new CourseAccessDeniedException();
+      }
+
+      const shouldSyncVisitedCountries = course.isCompleted;
+
+      await manager.delete(TravelCourse, course.id);
+
+      if (shouldSyncVisitedCountries) {
+        const visitedCountries =
+          await this.travelCourseRepository.countDistinctCompletedCountriesByUserId(
+            userId,
+            manager,
+          );
+        await manager.update(User, userId, { visitedCountries });
+      }
+    });
   }
 
   /**
@@ -252,6 +307,7 @@ export class TravelCourseService {
       course.travelStartDay = source.travelStartDay;
       course.travelFinishDay = source.travelFinishDay;
       course.sourceCourseId = source.id;
+      course.isCompleted = false;
       const savedCourse = await manager.save(TravelCourse, course);
 
       for (const cc of source.courseCountries || []) {
@@ -405,29 +461,6 @@ export class TravelCourseService {
    * TravelCourse 엔티티를 CourseResponse DTO로 변환
    */
   private mapToCourseResponse(course: TravelCourse): CourseResponse {
-    return {
-      id: course.id,
-      title: course.title,
-      description: course.description,
-      imageUrl: course.imageUrl,
-      viewCount: course.viewCount,
-      nights: course.nights,
-      days: course.days,
-      likeCount: course.likeCount,
-      modificationCount: course.modificationCount,
-      userId: course.user.id,
-      userName: course.user.name,
-      countries: course.courseCountries?.map((cc) => cc.country.name) || [],
-      regionNames:
-        course.courseRegions?.map((region) => region.regionName) || [],
-      hashTags: course.hashTags?.map((ht) => ht.tagName) || [],
-      places:
-        course.courseDays
-          ?.flatMap((day) => day.coursePlaces || [])
-          .map((cp) => CoursePlaceResponse.fromEntity(cp)) || [],
-      isPublic: course.isPublic,
-      createdAt: course.createdAt,
-      updatedAt: course.updatedAt,
-    };
+    return CourseResponse.fromEntity(course);
   }
 }

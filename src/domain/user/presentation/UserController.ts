@@ -18,6 +18,9 @@ import { MainpageResponse } from './dto/response/MainPageResponse';
 import { UserLikeService } from '../service/UserLikeService';
 import { GetMyLikesOverviewRequest } from './dto/request/GetMyLikesOverviewRequest';
 import { MyLikesResponse } from './dto/response/MyLikesResponse';
+import { GetMyPageOverviewRequest } from './dto/request/GetMyPageOverviewRequest';
+import { MyPageOverviewResponse } from './dto/response/MyPageOverviewResponse';
+import { UserMyPageService } from '../service/UserMyPageService';
 
 /**
  * UserController
@@ -31,7 +34,23 @@ export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly userLikeService: UserLikeService,
+    private readonly userMyPageService: UserMyPageService,
   ) {}
+
+  @Get('me')
+  @UserApiBearerAuth()
+  @ApiOperation({ summary: '마이페이지 통합 정보 조회' })
+  @ApiResponse({
+    status: 200,
+    description: '프로필, 내 로드맵, 내 블로그, 찜 목록 조회 성공',
+    type: MyPageOverviewResponse,
+  })
+  async getMyPageOverview(
+    @UserId() userId: string,
+    @Query() request: GetMyPageOverviewRequest,
+  ): Promise<MyPageOverviewResponse> {
+    return this.userMyPageService.getMyPageOverview(userId, request.limit);
+  }
 
   @Get('me/likes')
   @UserApiBearerAuth()

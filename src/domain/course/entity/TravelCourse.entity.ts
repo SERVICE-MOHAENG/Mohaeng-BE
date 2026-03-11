@@ -114,6 +114,15 @@ export class TravelCourse {
   isPublic: boolean;
 
   @Column({
+    type: 'boolean',
+    name: 'is_completed',
+    nullable: false,
+    default: false,
+    comment: '여행 완료 여부',
+  })
+  isCompleted: boolean;
+
+  @Column({
     type: 'int',
     name: 'like_count',
     nullable: false,
@@ -186,6 +195,7 @@ export class TravelCourse {
     course.description = description || null;
     course.imageUrl = imageUrl || null;
     course.isPublic = isPublic;
+    course.isCompleted = false;
     course.viewCount = 0;
     course.likeCount = 0;
     course.modificationCount = 0;
