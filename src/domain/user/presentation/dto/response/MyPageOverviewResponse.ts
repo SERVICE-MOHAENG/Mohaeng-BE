@@ -21,6 +21,9 @@ export class MyPageStatsResponse {
   @ApiProperty({ description: '총 여행 횟수' })
   totalTrips: number;
 
+  @ApiProperty({ description: '방문한 국가 수' })
+  visitedCountries: number;
+
   @ApiProperty({ description: '작성한 여행 기록 수' })
   writtenBlogs: number;
 

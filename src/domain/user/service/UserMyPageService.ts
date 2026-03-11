@@ -71,6 +71,7 @@ export class UserMyPageService {
       },
       stats: {
         totalTrips: totalCourses,
+        visitedCountries: user.visitedCountries,
         writtenBlogs: totalBlogs,
         likedRegions: likes.likedRegions.total,
       },

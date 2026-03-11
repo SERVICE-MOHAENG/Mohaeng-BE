@@ -8,6 +8,7 @@ describe('UserMyPageService', () => {
         name: '홍길동',
         email: 'hong@example.com',
         profileImage: null,
+        visitedCountries: 16,
       }),
     };
 
@@ -24,6 +25,7 @@ describe('UserMyPageService', () => {
             days: 2,
             likeCount: 3,
             modificationCount: 0,
+            isCompleted: false,
             user: { id: 'user-id', name: '홍길동' },
             courseCountries: [],
             courseRegions: [],
@@ -94,6 +96,7 @@ describe('UserMyPageService', () => {
     });
     expect(result.stats).toEqual({
       totalTrips: 4,
+      visitedCountries: 16,
       writtenBlogs: 7,
       likedRegions: 3,
     });

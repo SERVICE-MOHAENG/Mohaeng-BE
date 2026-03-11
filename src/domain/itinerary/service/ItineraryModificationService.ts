@@ -13,6 +13,7 @@ import { UnauthorizedItineraryAccessException } from '../exception/UnauthorizedI
 import { ItineraryJobNotFoundException } from '../exception/ItineraryJobNotFoundException';
 import { ItineraryJobAlreadyProcessingException } from '../exception/ItineraryJobAlreadyProcessingException';
 import { ChatLimitExceededException } from '../exception/ChatLimitExceededException';
+import { CompletedItineraryEditLockedException } from '../exception/CompletedItineraryEditLockedException';
 
 /**
  * ItineraryModificationService
@@ -60,12 +61,17 @@ export class ItineraryModificationService {
       throw new UnauthorizedItineraryAccessException();
     }
 
-    // 3. AI 자연어 수정 횟수 확인 (최대 5회)
+    // 3. 완료된 로드맵 수정 잠금
+    if (course.isCompleted) {
+      throw new CompletedItineraryEditLockedException();
+    }
+
+    // 4. AI 자연어 수정 횟수 확인 (최대 5회)
     if (!course.canModify()) {
       throw new ChatLimitExceededException();
     }
 
-    // 4. 동시 수정 방지: PENDING/PROCESSING 상태의 작업이 있는지 확인
+    // 5. 동시 수정 방지: PENDING/PROCESSING 상태의 작업이 있는지 확인
     const pendingJob =
       await this.itineraryJobRepository.findActiveByTravelCourseId(itineraryId);
 
@@ -73,7 +79,7 @@ export class ItineraryModificationService {
       throw new ItineraryJobAlreadyProcessingException();
     }
 
-    // 5. ItineraryJob 생성 (MODIFICATION)
+    // 6. ItineraryJob 생성 (MODIFICATION)
     const job = ItineraryJob.createModificationJob(
       userId,
       itineraryId,
@@ -81,11 +87,11 @@ export class ItineraryModificationService {
     );
     const savedJob = await this.itineraryJobRepository.save(job);
 
-    // 6. modificationCount 증가 (최대 5회 제한 추적용)
+    // 7. modificationCount 증가 (최대 5회 제한 추적용)
     course.incrementModificationCount();
     await this.travelCourseRepository.save(course);
 
-    // 7. BullMQ 큐에 작업 추가
+    // 8. BullMQ 큐에 작업 추가
     try {
       await this.modificationQueue.add(
         'modify-itinerary',

@@ -9,6 +9,7 @@ export enum ItineraryErrorCode {
   INVALID_CALLBACK_SECRET = 'TRIP_CORE_HE_ITI_V001',
   ITINERARY_JOB_ALREADY_PROCESSING = 'TRIP_CORE_HE_ITI_V002',
   CHAT_LIMIT_EXCEEDED = 'TRIP_CORE_HE_ITI_V003',
+  COMPLETED_ITINERARY_EDIT_LOCKED = 'TRIP_CORE_HE_ITI_V004',
 
   // 권한 관련 (A - Authorization)
   UNAUTHORIZED_ITINERARY_ACCESS = 'TRIP_CORE_HE_ITI_A001',
@@ -27,6 +28,8 @@ export const ItineraryErrorMessage = {
     '이미 처리 중인 일정 생성 작업이 있습니다',
   [ItineraryErrorCode.CHAT_LIMIT_EXCEEDED]:
     '이 로드맵은 최대 대화 횟수(5회)에 도달했습니다. 더 이상 수정할 수 없습니다.',
+  [ItineraryErrorCode.COMPLETED_ITINERARY_EDIT_LOCKED]:
+    '완료된 로드맵은 더 이상 수정할 수 없습니다',
   [ItineraryErrorCode.UNAUTHORIZED_ITINERARY_ACCESS]:
     '이 로드맵에 접근할 권한이 없습니다',
 } as const;

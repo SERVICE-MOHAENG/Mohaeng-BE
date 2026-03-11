@@ -60,6 +60,9 @@ export class CourseResponse {
   @ApiProperty({ description: '공개 여부' })
   isPublic: boolean;
 
+  @ApiProperty({ description: '여행 완료 여부' })
+  isCompleted: boolean;
+
   @ApiProperty({ description: '생성일시' })
   createdAt: Date;
 
@@ -102,6 +105,7 @@ export class CourseResponse {
         ?.flatMap((day) => day.coursePlaces || [])
         .map((cp) => CoursePlaceResponse.fromEntity(cp)) || [];
     response.isPublic = course.isPublic;
+    response.isCompleted = course.isCompleted ?? false;
     response.sourceCourseId = course.sourceCourseId ?? null;
     response.createdAt = course.createdAt;
     response.updatedAt = course.updatedAt;
