@@ -117,6 +117,15 @@ class ModifiedItineraryRequest {
   itinerary: CallbackDayRequest[];
 }
 
+type ModificationCallbackCondition = {
+  status?:
+    | 'SUCCESS'
+    | 'ASK_CLARIFICATION'
+    | 'GENERAL_CHAT'
+    | 'REJECTED'
+    | 'FAILED';
+};
+
 /**
  * ItineraryModificationCallbackRequest
  * @description Python LLM 서버로부터의 수정 콜백 요청 DTO
@@ -145,7 +154,9 @@ export class ItineraryModificationCallbackRequest {
     required: true,
     type: ModifiedItineraryRequest,
   })
-  @ValidateIf((o) => o.status === 'SUCCESS')
+  @ValidateIf(
+    (payload: ModificationCallbackCondition) => payload.status === 'SUCCESS',
+  )
   @IsDefined()
   @ValidateNested()
   @Type(() => ModifiedItineraryRequest)
@@ -163,16 +174,18 @@ export class ItineraryModificationCallbackRequest {
     description: 'AI 응답 메시지 (status가 FAILED가 아닐 때)',
     example: '1일차 2번째 장소를 도쿄 국립 박물관으로 변경했습니다.',
   })
-  @ValidateIf((o) => o.status !== 'FAILED')
+  @ValidateIf(
+    (payload: ModificationCallbackCondition) => payload.status !== 'FAILED',
+  )
   @IsString()
   message?: string;
 
-  @ApiProperty({
-    description: '변경된 노드 ID 목록 (status가 FAILED가 아닐 때)',
+  @ApiPropertyOptional({
+    description:
+      '변경된 노드 ID 목록 (있을 때만 전달, 미전달 시 변경 추적 없음으로 처리)',
     type: [String],
-    required: true,
   })
-  @ValidateIf((o) => o.status !== 'FAILED')
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   diff_keys?: string[];
@@ -182,7 +195,9 @@ export class ItineraryModificationCallbackRequest {
     required: false,
     type: CallbackErrorRequest,
   })
-  @ValidateIf((o) => o.status === 'FAILED')
+  @ValidateIf(
+    (payload: ModificationCallbackCondition) => payload.status === 'FAILED',
+  )
   @IsDefined()
   @ValidateNested()
   @Type(() => CallbackErrorRequest)
