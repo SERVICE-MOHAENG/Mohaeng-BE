@@ -37,6 +37,7 @@ import { TravelBlog } from './domain/blog/entity/TravelBlog.entity';
 import { BlogLike } from './domain/blog/entity/BlogLike.entity';
 import { Country } from './domain/country/entity/Country.entity';
 import { Region } from './domain/country/entity/Region.entity';
+import { RegionLike } from './domain/country/entity/RegionLike.entity';
 import { Place } from './domain/place/entity/Place.entity';
 import { UserVisitedCountry } from './domain/visited-country/entity/UserVisitedCountry.entity';
 import { Notification } from './domain/notification/entity/Notification.entity';
@@ -105,6 +106,7 @@ import { CourseAiChat } from './domain/course/entity/CourseAiChat.entity';
           BlogLike,
           Country,
           Region,
+          RegionLike,
           Place,
           UserVisitedCountry,
           Notification,
