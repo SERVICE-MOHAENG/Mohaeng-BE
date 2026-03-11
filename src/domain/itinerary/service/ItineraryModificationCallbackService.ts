@@ -317,15 +317,16 @@ export class ItineraryModificationCallbackService {
       }
 
       // 5. TravelCourse 메타데이터 업데이트
-      course.title = (modifiedData.title ?? '').slice(0, 200);
-      course.description = modifiedData.summary;
-      course.nights = modifiedData.nights;
-      course.days = modifiedData.trip_days;
-      course.peopleCount = modifiedData.people_count;
-      course.travelStartDay = new Date(modifiedData.start_date);
-      course.travelFinishDay = new Date(modifiedData.end_date);
-      course.updatedAt = new Date();
-      await manager.save(TravelCourse, course);
+      await manager.update(TravelCourse, course.id, {
+        title: (modifiedData.title ?? '').slice(0, 200),
+        description: modifiedData.summary,
+        nights: modifiedData.nights,
+        days: modifiedData.trip_days,
+        peopleCount: modifiedData.people_count,
+        travelStartDay: new Date(modifiedData.start_date),
+        travelFinishDay: new Date(modifiedData.end_date),
+        updatedAt: new Date(),
+      });
 
       // 6. ItineraryJob 업데이트
       job.markSuccessWithIntent(
