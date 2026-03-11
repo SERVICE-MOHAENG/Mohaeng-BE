@@ -1,10 +1,12 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Query,
 } from '@nestjs/common';
@@ -21,6 +23,7 @@ import { TravelCourseService } from '../service/TravelCourseService';
 import { CourseLikeService } from '../service/CourseLikeService';
 import { GetMyCoursesRequest } from './dto/request/GetMyCoursesRequest';
 import { GetCoursesRequest, CourseSortType } from './dto/request/GetCoursesRequest';
+import { UpdateCourseCompletionRequest } from './dto/request/UpdateCourseCompletionRequest';
 import { CourseResponse } from './dto/response/CourseResponse';
 import { CoursesResponse } from './dto/response/CoursesResponse';
 import { CourseLikesResponse } from './dto/response/CourseLikesResponse';
@@ -104,6 +107,29 @@ export class TravelCourseController {
       limit,
     );
     return CourseLikesResponse.from(likes, total, page, limit);
+  }
+
+  /**
+   * 여행 코스 완료 여부 변경
+   */
+  @Patch(':id/completion')
+  @UserApiBearerAuth()
+  @ApiOperation({ summary: '여행 코스 완료 여부 변경' })
+  @ApiParam({ name: 'id', description: '코스 ID' })
+  @ApiResponse({ status: 200, description: '변경 성공', type: CourseResponse })
+  @ApiResponse({ status: 401, description: '인증 실패' })
+  @ApiResponse({ status: 403, description: '접근 권한 없음' })
+  @ApiResponse({ status: 404, description: '코스를 찾을 수 없음' })
+  async updateCompletionStatus(
+    @Param('id') id: string,
+    @UserId() userId: string,
+    @Body() request: UpdateCourseCompletionRequest,
+  ): Promise<CourseResponse> {
+    return this.travelCourseService.updateCompletionStatus(
+      id,
+      userId,
+      request.isCompleted,
+    );
   }
 
   /**

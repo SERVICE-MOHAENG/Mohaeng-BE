@@ -11,6 +11,11 @@ import { CourseLikeRepository } from '../course/persistence/CourseLikeRepository
 import { BlogLikeRepository } from '../blog/persistence/BlogLikeRepository';
 import { RegionLikeRepository } from '../country/persistence/RegionLikeRepository';
 import { UserLikeService } from './service/UserLikeService';
+import { TravelCourse } from '../course/entity/TravelCourse.entity';
+import { TravelBlog } from '../blog/entity/TravelBlog.entity';
+import { TravelCourseRepository } from '../course/persistence/TravelCourseRepository';
+import { TravelBlogRepository } from '../blog/persistence/TravelBlogRepository';
+import { UserMyPageService } from './service/UserMyPageService';
 
 /**
  * UserModule
@@ -19,12 +24,24 @@ import { UserLikeService } from './service/UserLikeService';
  * - 회원가입, 사용자 정보 관리
  */
 @Module({
-  imports: [TypeOrmModule.forFeature([User, CourseLike, BlogLike, RegionLike])],
+  imports: [
+    TypeOrmModule.forFeature([
+      User,
+      CourseLike,
+      BlogLike,
+      RegionLike,
+      TravelCourse,
+      TravelBlog,
+    ]),
+  ],
   controllers: [UserController],
   providers: [
     UserService,
     UserLikeService,
+    UserMyPageService,
     UserRepository,
+    TravelCourseRepository,
+    TravelBlogRepository,
     CourseLikeRepository,
     BlogLikeRepository,
     RegionLikeRepository,

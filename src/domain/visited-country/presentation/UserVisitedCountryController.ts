@@ -18,6 +18,7 @@ import { AddVisitedCountryRequest } from './dto/request/AddVisitedCountryRequest
 import { GetMyVisitedCountriesRequest } from './dto/request/GetMyVisitedCountriesRequest';
 import { VisitedCountryResponse } from './dto/response/VisitedCountryResponse';
 import { VisitedCountriesResponse } from './dto/response/VisitedCountriesResponse';
+import { VisitedCountryCountResponse } from './dto/response/VisitedCountryCountResponse';
 
 /**
  * UserVisitedCountryController
@@ -31,6 +32,27 @@ export class UserVisitedCountryController {
     private readonly visitedCountryService: UserVisitedCountryService,
     private readonly countryService: CountryService,
   ) {}
+
+  /**
+   * 내 방문 국가 수 조회
+   */
+  @Get('me/count')
+  @UserApiBearerAuth()
+  @ApiOperation({ summary: '내 방문 국가 수 조회' })
+  @ApiResponse({
+    status: 200,
+    description: '조회 성공',
+    type: VisitedCountryCountResponse,
+  })
+  @ApiResponse({ status: 401, description: '인증되지 않음' })
+  async getMyVisitedCountryCount(
+    @UserId() userId: string,
+  ): Promise<VisitedCountryCountResponse> {
+    const count = await this.visitedCountryService.getVisitedCountryCount(
+      userId,
+    );
+    return VisitedCountryCountResponse.from(count);
+  }
 
   /**
    * 내 방문 국가 목록 조회

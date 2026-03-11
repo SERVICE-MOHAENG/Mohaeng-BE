@@ -136,6 +136,7 @@ export class ItineraryCallbackService {
       course.travelFinishDay = new Date(data.end_date);
       course.user = userRef;
       course.isPublic = false;
+      course.isCompleted = false;
       course.viewCount = 0;
       course.likeCount = 0;
       course.modificationCount = 0;
