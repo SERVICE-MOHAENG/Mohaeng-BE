@@ -2,6 +2,7 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsDefined,
+  IsEnum,
   IsIn,
   IsInt,
   IsNumber,
@@ -11,6 +12,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { PlanningPreference } from '../../../../course/entity/PlanningPreference.enum';
 
 class CallbackErrorRequest {
   @ApiProperty({ description: '오류 코드', example: 'LLM_PROVIDER_ERROR' })
@@ -109,6 +111,15 @@ class ModifiedItineraryRequest {
   @ApiProperty({ description: '여행 요약' })
   @IsString()
   summary: string;
+
+  @ApiPropertyOptional({
+    description: '여행 계획 선호',
+    enum: PlanningPreference,
+    example: PlanningPreference.PLANNED,
+  })
+  @IsOptional()
+  @IsEnum(PlanningPreference)
+  planning_preference?: PlanningPreference;
 
   @ApiProperty({ description: '일자별 일정', type: [CallbackDayRequest] })
   @IsArray()

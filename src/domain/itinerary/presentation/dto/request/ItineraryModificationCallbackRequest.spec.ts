@@ -2,6 +2,7 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { ItineraryModificationCallbackRequest } from './ItineraryModificationCallbackRequest';
 import { flattenValidationErrors } from '../../../../../global/validation/flattenValidationErrors';
+import { PlanningPreference } from '../../../../course/entity/PlanningPreference.enum';
 
 describe('ItineraryModificationCallbackRequest', () => {
   it('accepts ASK_CLARIFICATION without diff_keys', async () => {
@@ -32,6 +33,7 @@ describe('ItineraryModificationCallbackRequest', () => {
         tags: ['도심'],
         title: '서울 당일치기',
         summary: '요약',
+        planning_preference: PlanningPreference.PLANNED,
         itinerary: [
           {
             day_number: 1,
@@ -60,8 +62,37 @@ describe('ItineraryModificationCallbackRequest', () => {
       forbidNonWhitelisted: true,
     });
 
+    expect(flattenValidationErrors(errors)).not.toContain(
+      'modified_itinerary.planning_preference: property planning_preference should not exist',
+    );
     expect(flattenValidationErrors(errors)).toContain(
       'modified_itinerary.itinerary.0.places.0.duration_minutes: property duration_minutes should not exist',
     );
+  });
+
+  it('accepts SUCCESS when modified_itinerary includes planning_preference only', async () => {
+    const payload = plainToInstance(ItineraryModificationCallbackRequest, {
+      status: 'SUCCESS',
+      message: '요청한 일정으로 변경했어요.',
+      modified_itinerary: {
+        start_date: '2026-02-11',
+        end_date: '2026-02-11',
+        trip_days: 1,
+        nights: 0,
+        people_count: 2,
+        tags: ['도심'],
+        title: '서울 당일치기',
+        summary: '요약',
+        planning_preference: PlanningPreference.SPONTANEOUS,
+        itinerary: [],
+      },
+    });
+
+    const errors = await validate(payload, {
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    });
+
+    expect(errors).toHaveLength(0);
   });
 });

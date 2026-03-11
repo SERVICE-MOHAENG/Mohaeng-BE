@@ -148,7 +148,9 @@ export class ItineraryProcessor extends WorkerHost {
         end_date: this.formatDate(new Date(d.endDate)),
       })),
       people_count: survey.paxCount,
-      companion_type: (survey.companions || [])[0]?.companion ?? null,
+      companion_type: (survey.companions || [])
+        .map((companion) => companion.companion?.trim())
+        .filter((companion): companion is string => Boolean(companion)),
       travel_themes: (survey.themes || []).map((t) => t.theme),
       pace_preference: survey.pacePreference,
       planning_preference: survey.planningPreference,
