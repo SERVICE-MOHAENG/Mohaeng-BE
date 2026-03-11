@@ -10,6 +10,7 @@ import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './global/filters/GlobalExceptionFilter';
 import { ResponseInterceptor } from './global/interceptors/ResponseInterceptor';
 import { DiscordService } from './global/logger/DiscordService';
+import { flattenValidationErrors } from './global/validation/flattenValidationErrors';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -29,9 +30,7 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
       transform: true,
       exceptionFactory: (errors: ValidationError[]) => {
-        const messages = errors.flatMap((error) =>
-          Object.values(error.constraints ?? {}),
-        );
+        const messages = flattenValidationErrors(errors);
         return new UnprocessableEntityException(messages);
       },
       transformOptions: {
