@@ -21,6 +21,7 @@ import { PreferenceJobCleanupService } from './service/PreferenceJobCleanupServi
 import { PreferenceProcessor } from './processor/PreferenceProcessor';
 import { UserPreferenceController } from './presentation/UserPreferenceController';
 import { UserModule } from '../user/UserModule';
+import { CountryModule } from '../country/CountryModule';
 
 /**
  * PreferenceModule
@@ -47,6 +48,7 @@ import { UserModule } from '../user/UserModule';
     }),
     HttpModule,
     UserModule,
+    CountryModule,
   ],
   controllers: [UserPreferenceController],
   providers: [

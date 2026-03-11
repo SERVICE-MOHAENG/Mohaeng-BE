@@ -23,6 +23,7 @@ export class TravelCourseRepository {
           'user',
           'courseCountries',
           'courseCountries.country',
+          'courseRegions',
           'courseDays',
           'courseDays.coursePlaces',
           'courseDays.coursePlaces.place',
@@ -74,6 +75,7 @@ export class TravelCourseRepository {
         'user',
         'courseCountries',
         'courseCountries.country',
+        'courseRegions',
         'courseDays',
         'courseDays.coursePlaces',
         'courseDays.coursePlaces.place',
@@ -96,6 +98,7 @@ export class TravelCourseRepository {
         'user',
         'courseCountries',
         'courseCountries.country',
+        'courseRegions',
         'courseDays',
         'courseDays.coursePlaces',
         'courseDays.coursePlaces.place',
@@ -172,6 +175,65 @@ export class TravelCourseRepository {
         'user',
         'courseCountries',
         'courseCountries.country',
+        'courseRegions',
+        'courseDays',
+        'courseDays.coursePlaces',
+        'courseDays.coursePlaces.place',
+        'hashTags',
+      ],
+      relationLoadStrategy: 'query',
+      order: { [orderField]: 'DESC' },
+    });
+
+    return [courses, total];
+  }
+
+  async findPublicCoursesByRegion(
+    regionId: string,
+    sortBy: 'latest' | 'popular' = 'latest',
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<[TravelCourse[], number]> {
+    const baseQuery = this.repository
+      .createQueryBuilder('course')
+      .innerJoin('course.courseRegions', 'courseRegion')
+      .where('course.isPublic = :isPublic', { isPublic: true })
+      .andWhere('courseRegion.regionId = :regionId', { regionId });
+
+    const totalRow = await baseQuery
+      .clone()
+      .select('COUNT(DISTINCT course.id)', 'count')
+      .getRawOne<{ count: string }>();
+
+    const total = Number(totalRow?.count ?? 0);
+
+    const orderColumn =
+      sortBy === 'popular' ? 'course.likeCount' : 'course.createdAt';
+
+    const pagedIds = await baseQuery
+      .clone()
+      .select('DISTINCT course.id', 'id')
+      .orderBy(orderColumn, 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getRawMany<{ id: string }>();
+
+    const courseIds = pagedIds.map((row) => row.id);
+
+    if (courseIds.length === 0) {
+      return [[], total];
+    }
+
+    const orderField: keyof TravelCourse =
+      sortBy === 'popular' ? 'likeCount' : 'createdAt';
+
+    const courses = await this.repository.find({
+      where: courseIds.map((id) => ({ id })),
+      relations: [
+        'user',
+        'courseCountries',
+        'courseCountries.country',
+        'courseRegions',
         'courseDays',
         'courseDays.coursePlaces',
         'courseDays.coursePlaces.place',

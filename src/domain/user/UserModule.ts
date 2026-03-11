@@ -4,6 +4,13 @@ import { User } from './entity/User.entity';
 import { UserService } from './service/UserService';
 import { UserController } from './presentation/UserController';
 import { UserRepository } from './persistence/UserRepository';
+import { CourseLike } from '../course/entity/CourseLike.entity';
+import { BlogLike } from '../blog/entity/BlogLike.entity';
+import { RegionLike } from '../country/entity/RegionLike.entity';
+import { CourseLikeRepository } from '../course/persistence/CourseLikeRepository';
+import { BlogLikeRepository } from '../blog/persistence/BlogLikeRepository';
+import { RegionLikeRepository } from '../country/persistence/RegionLikeRepository';
+import { UserLikeService } from './service/UserLikeService';
 
 /**
  * UserModule
@@ -12,12 +19,16 @@ import { UserRepository } from './persistence/UserRepository';
  * - 회원가입, 사용자 정보 관리
  */
 @Module({
-  imports: [TypeOrmModule.forFeature([User])],
+  imports: [TypeOrmModule.forFeature([User, CourseLike, BlogLike, RegionLike])],
   controllers: [UserController],
   providers: [
     UserService,
-    UserRepository, // Repository 추가
+    UserLikeService,
+    UserRepository,
+    CourseLikeRepository,
+    BlogLikeRepository,
+    RegionLikeRepository,
   ],
-  exports: [UserService, UserRepository], // 다른 모듈에서 UserService, UserRepository 사용 가능
+  exports: [UserService, UserRepository],
 })
 export class UserModule {}

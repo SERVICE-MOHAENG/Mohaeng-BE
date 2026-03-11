@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Get,
   Patch,
+  Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UserApiBearerAuth } from '../../../global/decorators/UserApiBearerAuth';
@@ -14,6 +15,9 @@ import { UserService } from '../service/UserService';
 import { UpdateProfileRequest } from './dto/request/UpdateProfileRequest';
 import { UserResponse } from './dto/response/UserResponse';
 import { MainpageResponse } from './dto/response/MainPageResponse';
+import { UserLikeService } from '../service/UserLikeService';
+import { GetMyLikesOverviewRequest } from './dto/request/GetMyLikesOverviewRequest';
+import { MyLikesResponse } from './dto/response/MyLikesResponse';
 
 /**
  * UserController
@@ -24,7 +28,25 @@ import { MainpageResponse } from './dto/response/MainPageResponse';
 @ApiTags('users')
 @Controller('v1/users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly userLikeService: UserLikeService,
+  ) {}
+
+  @Get('me/likes')
+  @UserApiBearerAuth()
+  @ApiOperation({ summary: '마이페이지 통합 찜 목록 조회' })
+  @ApiResponse({
+    status: 200,
+    description: '좋아요한 로드맵, 블로그, 지역 조회 성공',
+    type: MyLikesResponse,
+  })
+  async getMyLikes(
+    @UserId() userId: string,
+    @Query() request: GetMyLikesOverviewRequest,
+  ): Promise<MyLikesResponse> {
+    return this.userLikeService.getMyLikesOverview(userId, request.limit);
+  }
 
   @Get('mainpage/me')
   @UserApiBearerAuth()

@@ -24,11 +24,21 @@ export class PreferenceRecommendationResponse {
   })
   regionId: string | null;
 
+  @ApiProperty({ description: '좋아요 수', default: 0 })
+  likeCount: number;
+
+  @ApiProperty({ description: '현재 사용자의 좋아요 여부', default: false })
+  isLiked: boolean;
+
   static from(
     recommendation: PreferenceRecommendation,
+    likeCount: number = 0,
+    isLiked: boolean = false,
   ): PreferenceRecommendationResponse {
     const dto = new PreferenceRecommendationResponse();
     dto.regionId = recommendation.regionId ?? null;
+    dto.likeCount = likeCount;
+    dto.isLiked = isLiked;
 
     if (recommendation.region) {
       // Region 조인 성공 → DB의 한글명 + 이미지 + 설명 사용

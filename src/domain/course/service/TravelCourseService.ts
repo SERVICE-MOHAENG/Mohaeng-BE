@@ -155,7 +155,8 @@ export class TravelCourseService {
     }
 
     if (request.title !== undefined) course.title = request.title;
-    if (request.description !== undefined) course.description = request.description;
+    if (request.description !== undefined)
+      course.description = request.description;
     if (request.nights !== undefined) course.nights = request.nights;
     if (request.days !== undefined) course.days = request.days;
     if (request.isPublic !== undefined) course.isPublic = request.isPublic;
@@ -254,7 +255,10 @@ export class TravelCourseService {
       const savedCourse = await manager.save(TravelCourse, course);
 
       for (const cc of source.courseCountries || []) {
-        await manager.save(CourseCountry, CourseCountry.create(savedCourse, cc.country));
+        await manager.save(
+          CourseCountry,
+          CourseCountry.create(savedCourse, cc.country),
+        );
       }
 
       for (const day of source.courseDays || []) {
@@ -265,7 +269,14 @@ export class TravelCourseService {
         for (const cp of day.coursePlaces || []) {
           await manager.save(
             CoursePlace,
-            CoursePlace.create(newDay, cp.place, cp.visitOrder, cp.memo ?? undefined, cp.visitTime ?? undefined, cp.description ?? undefined),
+            CoursePlace.create(
+              newDay,
+              cp.place,
+              cp.visitOrder,
+              cp.memo ?? undefined,
+              cp.visitTime ?? undefined,
+              cp.description ?? undefined,
+            ),
           );
         }
       }
@@ -345,6 +356,51 @@ export class TravelCourseService {
     };
   }
 
+  async getPublicCoursesByRegion(
+    regionId: string,
+    sortBy: 'latest' | 'popular' = 'latest',
+    page: number = 1,
+    limit: number = 10,
+    userId?: string,
+  ): Promise<CoursesResponse> {
+    const [courses, total] =
+      await this.travelCourseRepository.findPublicCoursesByRegion(
+        regionId,
+        sortBy,
+        page,
+        limit,
+      );
+
+    let courseResponses: CourseResponse[];
+
+    if (userId) {
+      courseResponses = await Promise.all(
+        courses.map(async (course) => {
+          const isLiked =
+            await this.courseLikeRepository.existsByUserIdAndCourseId(
+              userId,
+              course.id,
+            );
+          const response = this.mapToCourseResponse(course);
+          response.isLiked = isLiked;
+          return response;
+        }),
+      );
+    } else {
+      courseResponses = courses.map((course) =>
+        this.mapToCourseResponse(course),
+      );
+    }
+
+    return {
+      courses: courseResponses,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
   /**
    * TravelCourse 엔티티를 CourseResponse DTO로 변환
    */
@@ -362,6 +418,8 @@ export class TravelCourseService {
       userId: course.user.id,
       userName: course.user.name,
       countries: course.courseCountries?.map((cc) => cc.country.name) || [],
+      regionNames:
+        course.courseRegions?.map((region) => region.regionName) || [],
       hashTags: course.hashTags?.map((ht) => ht.tagName) || [],
       places:
         course.courseDays

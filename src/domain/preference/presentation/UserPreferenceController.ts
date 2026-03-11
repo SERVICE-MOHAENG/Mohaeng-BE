@@ -20,6 +20,7 @@ import { UserPreferenceService } from '../service/UserPreferenceService';
 import { PreferenceCallbackService } from '../service/PreferenceCallbackService';
 import { PreferenceJobRepository } from '../persistence/PreferenceJobRepository';
 import { PreferenceJob } from '../entity/PreferenceJob.entity';
+import { RegionLikeService } from '../../country/service/RegionLikeService';
 import { CreateUserPreferenceRequest } from './dto/request/CreateUserPreferenceRequest';
 import { PreferenceCallbackRequest } from './dto/request/PreferenceCallbackRequest';
 import { UserPreferenceResponse } from './dto/response/UserPreferenceResponse';
@@ -43,6 +44,7 @@ export class UserPreferenceController {
     private readonly userPreferenceService: UserPreferenceService,
     private readonly preferenceCallbackService: PreferenceCallbackService,
     private readonly preferenceJobRepository: PreferenceJobRepository,
+    private readonly regionLikeService: RegionLikeService,
     @InjectQueue('preference-recommendation')
     private readonly preferenceQueue: Queue,
   ) {}
@@ -127,8 +129,26 @@ export class UserPreferenceController {
   ): Promise<{ destinations: PreferenceRecommendationResponse[] }> {
     const recommendations =
       await this.preferenceCallbackService.getRecommendationsByUserId(userId);
+    const regionIds = recommendations
+      .map((recommendation) => recommendation.regionId)
+      .filter((regionId): regionId is string => !!regionId);
+    const [likeCounts, likedRegionIds] = await Promise.all([
+      this.regionLikeService.getLikeCounts(regionIds),
+      this.regionLikeService.getLikedRegionIds(userId, regionIds),
+    ]);
+
     return {
-      destinations: recommendations.map(PreferenceRecommendationResponse.from),
+      destinations: recommendations.map((recommendation) =>
+        PreferenceRecommendationResponse.from(
+          recommendation,
+          recommendation.regionId
+            ? (likeCounts[recommendation.regionId] ?? 0)
+            : 0,
+          recommendation.regionId
+            ? likedRegionIds.has(recommendation.regionId)
+            : false,
+        ),
+      ),
     };
   }
 
@@ -164,11 +184,30 @@ export class UserPreferenceController {
   })
   async getJobResult(
     @Param('jobId') jobId: string,
+    @UserId() userId: string,
   ): Promise<{ destinations: PreferenceRecommendationResponse[] }> {
     const recommendations =
       await this.preferenceCallbackService.getRecommendations(jobId);
+    const regionIds = recommendations
+      .map((recommendation) => recommendation.regionId)
+      .filter((regionId): regionId is string => !!regionId);
+    const [likeCounts, likedRegionIds] = await Promise.all([
+      this.regionLikeService.getLikeCounts(regionIds),
+      this.regionLikeService.getLikedRegionIds(userId, regionIds),
+    ]);
+
     return {
-      destinations: recommendations.map(PreferenceRecommendationResponse.from),
+      destinations: recommendations.map((recommendation) =>
+        PreferenceRecommendationResponse.from(
+          recommendation,
+          recommendation.regionId
+            ? (likeCounts[recommendation.regionId] ?? 0)
+            : 0,
+          recommendation.regionId
+            ? likedRegionIds.has(recommendation.regionId)
+            : false,
+        ),
+      ),
     };
   }
 
