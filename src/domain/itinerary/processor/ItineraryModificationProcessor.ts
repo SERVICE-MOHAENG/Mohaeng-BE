@@ -117,7 +117,10 @@ export class ItineraryModificationProcessor extends WorkerHost {
     const requestBody = {
       job_id: jobId,
       callback_url: callbackUrl,
-      current_itinerary: currentItinerary,
+      current_itinerary: {
+        ...currentItinerary,
+        planning_preference: surveyPreferences.planning_preference,
+      },
       ...surveyPreferences,
       user_query: userMessage,
       session_history: sessionHistory,
