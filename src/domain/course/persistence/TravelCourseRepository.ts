@@ -88,6 +88,12 @@ export class TravelCourseRepository {
     });
   }
 
+  async countByUserId(userId: string): Promise<number> {
+    return this.repository.count({
+      where: { user: { id: userId } },
+    });
+  }
+
   async findPublicCourses(
     page: number = 1,
     limit: number = 20,
