@@ -53,6 +53,12 @@ export class RegionLikeRepository {
     return count > 0;
   }
 
+  async countByUserId(userId: string): Promise<number> {
+    return this.repository.count({
+      where: { user: { id: userId } },
+    });
+  }
+
   async countByRegionId(regionId: string): Promise<number> {
     return this.repository.count({ where: { region: { id: regionId } } });
   }

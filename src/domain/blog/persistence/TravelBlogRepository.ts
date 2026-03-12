@@ -36,6 +36,12 @@ export class TravelBlogRepository {
     });
   }
 
+  async countByUserId(userId: string): Promise<number> {
+    return this.repository.count({
+      where: { user: { id: userId } },
+    });
+  }
+
   async findPublicBlogs(
     page: number = 1,
     limit: number = 6,
