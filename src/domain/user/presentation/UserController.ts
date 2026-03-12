@@ -2,9 +2,9 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   HttpCode,
   HttpStatus,
-  Get,
   Patch,
   Query,
 } from '@nestjs/common';
@@ -14,13 +14,13 @@ import { UserId } from '../../../global/decorators/UserId';
 import { UserService } from '../service/UserService';
 import { UpdateProfileRequest } from './dto/request/UpdateProfileRequest';
 import { UserResponse } from './dto/response/UserResponse';
-import { MainpageResponse } from './dto/response/MainPageResponse';
-import { UserLikeService } from '../service/UserLikeService';
-import { GetMyLikesOverviewRequest } from './dto/request/GetMyLikesOverviewRequest';
-import { MyLikesResponse } from './dto/response/MyLikesResponse';
-import { GetMyPageOverviewRequest } from './dto/request/GetMyPageOverviewRequest';
-import { MyPageOverviewResponse } from './dto/response/MyPageOverviewResponse';
-import { UserMyPageService } from '../service/UserMyPageService';
+import { GetMyPageContentRequest } from './dto/request/GetMyPageContentRequest';
+import { MyPageSummaryResponse } from './dto/response/MyPageSummaryResponse';
+import { UserMyPageSummaryService } from '../service/UserMyPageSummaryService';
+import { MyPageRoadmapsResponse } from './dto/response/MyPageRoadmapsResponse';
+import { UserMyPageContentService } from '../service/UserMyPageContentService';
+import { MyPageBlogsResponse } from './dto/response/MyPageBlogsResponse';
+import { MyPageLikedRegionsResponse } from './dto/response/MyPageLikedRegionsResponse';
 
 /**
  * UserController
@@ -33,50 +33,117 @@ import { UserMyPageService } from '../service/UserMyPageService';
 export class UserController {
   constructor(
     private readonly userService: UserService,
-    private readonly userLikeService: UserLikeService,
-    private readonly userMyPageService: UserMyPageService,
+    private readonly userMyPageSummaryService: UserMyPageSummaryService,
+    private readonly userMyPageContentService: UserMyPageContentService,
   ) {}
 
   @Get('me')
   @UserApiBearerAuth()
-  @ApiOperation({ summary: '마이페이지 통합 정보 조회' })
+  @ApiOperation({ summary: '마이페이지 상단 요약 정보 조회' })
   @ApiResponse({
     status: 200,
-    description: '프로필, 내 로드맵, 내 블로그, 찜 목록 조회 성공',
-    type: MyPageOverviewResponse,
+    description: '프로필과 상단 통계 조회 성공',
+    type: MyPageSummaryResponse,
   })
-  async getMyPageOverview(
+  async getMyPageSummary(
     @UserId() userId: string,
-    @Query() request: GetMyPageOverviewRequest,
-  ): Promise<MyPageOverviewResponse> {
-    return this.userMyPageService.getMyPageOverview(userId, request.limit);
+  ): Promise<MyPageSummaryResponse> {
+    return this.userMyPageSummaryService.getSummary(userId);
   }
 
-  @Get('me/likes')
+  @Get('me/roadmaps')
   @UserApiBearerAuth()
-  @ApiOperation({ summary: '마이페이지 통합 찜 목록 조회' })
+  @ApiOperation({ summary: '마이페이지 내 여행 일정 조회' })
   @ApiResponse({
     status: 200,
-    description: '좋아요한 로드맵, 블로그, 지역 조회 성공',
-    type: MyLikesResponse,
+    description: '내 여행 일정 조회 성공',
+    type: MyPageRoadmapsResponse,
   })
-  async getMyLikes(
+  async getMyRoadmaps(
     @UserId() userId: string,
-    @Query() request: GetMyLikesOverviewRequest,
-  ): Promise<MyLikesResponse> {
-    return this.userLikeService.getMyLikesOverview(userId, request.limit);
+    @Query() request: GetMyPageContentRequest,
+  ): Promise<MyPageRoadmapsResponse> {
+    return this.userMyPageContentService.getMyRoadmaps(
+      userId,
+      request.page,
+      request.limit,
+    );
   }
 
-  @Get('mainpage/me')
+  @Get('me/blogs')
   @UserApiBearerAuth()
-  @ApiOperation({ summary: '메인페이지 유저 정보' })
+  @ApiOperation({ summary: '마이페이지 여행 기록 조회' })
   @ApiResponse({
     status: 200,
-    description: '유저 정보 전송',
-    type: UserResponse,
+    description: '내 여행 기록 조회 성공',
+    type: MyPageBlogsResponse,
   })
-  async getUser(@UserId() userId: string): Promise<MainpageResponse> {
-    return this.userService.getMainpageUser(userId);
+  async getMyBlogs(
+    @UserId() userId: string,
+    @Query() request: GetMyPageContentRequest,
+  ): Promise<MyPageBlogsResponse> {
+    return this.userMyPageContentService.getMyBlogs(
+      userId,
+      request.page,
+      request.limit,
+    );
+  }
+
+  @Get('me/liked-roadmaps')
+  @UserApiBearerAuth()
+  @ApiOperation({ summary: '마이페이지 좋아요한 여행 일정 조회' })
+  @ApiResponse({
+    status: 200,
+    description: '좋아요한 여행 일정 조회 성공',
+    type: MyPageRoadmapsResponse,
+  })
+  async getLikedRoadmaps(
+    @UserId() userId: string,
+    @Query() request: GetMyPageContentRequest,
+  ): Promise<MyPageRoadmapsResponse> {
+    return this.userMyPageContentService.getLikedRoadmaps(
+      userId,
+      request.page,
+      request.limit,
+    );
+  }
+
+  @Get('me/liked-blogs')
+  @UserApiBearerAuth()
+  @ApiOperation({ summary: '마이페이지 좋아요한 블로그 조회' })
+  @ApiResponse({
+    status: 200,
+    description: '좋아요한 블로그 조회 성공',
+    type: MyPageBlogsResponse,
+  })
+  async getLikedBlogs(
+    @UserId() userId: string,
+    @Query() request: GetMyPageContentRequest,
+  ): Promise<MyPageBlogsResponse> {
+    return this.userMyPageContentService.getLikedBlogs(
+      userId,
+      request.page,
+      request.limit,
+    );
+  }
+
+  @Get('me/liked-regions')
+  @UserApiBearerAuth()
+  @ApiOperation({ summary: '마이페이지 좋아요한 여행지 조회' })
+  @ApiResponse({
+    status: 200,
+    description: '좋아요한 여행지 조회 성공',
+    type: MyPageLikedRegionsResponse,
+  })
+  async getLikedRegions(
+    @UserId() userId: string,
+    @Query() request: GetMyPageContentRequest,
+  ): Promise<MyPageLikedRegionsResponse> {
+    return this.userMyPageContentService.getLikedRegions(
+      userId,
+      request.page,
+      request.limit,
+    );
   }
 
   @Patch('me')

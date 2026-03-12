@@ -10,12 +10,12 @@ import { RegionLike } from '../country/entity/RegionLike.entity';
 import { CourseLikeRepository } from '../course/persistence/CourseLikeRepository';
 import { BlogLikeRepository } from '../blog/persistence/BlogLikeRepository';
 import { RegionLikeRepository } from '../country/persistence/RegionLikeRepository';
-import { UserLikeService } from './service/UserLikeService';
 import { TravelCourse } from '../course/entity/TravelCourse.entity';
 import { TravelBlog } from '../blog/entity/TravelBlog.entity';
 import { TravelCourseRepository } from '../course/persistence/TravelCourseRepository';
 import { TravelBlogRepository } from '../blog/persistence/TravelBlogRepository';
-import { UserMyPageService } from './service/UserMyPageService';
+import { UserMyPageSummaryService } from './service/UserMyPageSummaryService';
+import { UserMyPageContentService } from './service/UserMyPageContentService';
 
 /**
  * UserModule
@@ -37,8 +37,8 @@ import { UserMyPageService } from './service/UserMyPageService';
   controllers: [UserController],
   providers: [
     UserService,
-    UserLikeService,
-    UserMyPageService,
+    UserMyPageSummaryService,
+    UserMyPageContentService,
     UserRepository,
     TravelCourseRepository,
     TravelBlogRepository,
