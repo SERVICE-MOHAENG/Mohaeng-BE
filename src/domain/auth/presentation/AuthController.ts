@@ -23,7 +23,6 @@ import { AuthTokensResponse } from './dto/response/AuthTokensResponse';
 import { CurrentUserResponse } from './dto/response/CurrentUserResponse';
 import { SendEmailOtpRequest } from './dto/request/SendEmailOtpRequest';
 import { VerifyEmailOtpRequest } from './dto/request/VerifyEmailOtpRequest';
-import { ReactivateRequest } from './dto/request/ReactivateRequest';
 import { SignupRequest } from '../../user/presentation/dto/request/SignupRequest';
 import { SendEmailOtpResponse } from './dto/response/SendEmailOtpResponse';
 import { VerifyEmailOtpResponse } from './dto/response/VerifyEmailOtpResponse';
@@ -102,29 +101,6 @@ export class AuthController {
       request.otp,
     );
     return { verified };
-  }
-
-  @Post('reactivate')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: '탈퇴 계정 복구',
-    description:
-      '비활성화된 계정을 복구합니다. 이메일 OTP 인증 완료 후 호출해야 합니다.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: '계정 복구 성공, 토큰 발급',
-    type: AuthTokensResponse,
-  })
-  @ApiResponse({ status: 400, description: '이메일 인증이 완료되지 않았거나 유효하지 않은 요청' })
-  async reactivate(
-    @Body() request: ReactivateRequest,
-  ): Promise<AuthTokensResponse> {
-    const tokens = await this.authService.reactivate(request.email);
-    return {
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-    };
   }
 
   @Post('refresh')

@@ -251,35 +251,6 @@ export class AuthService {
     return this.issueTokens(user, jti);
   }
 
-  async reactivate(email: string): Promise<AuthTokens> {
-    const normalizedEmail = this.normalizeEmail(email);
-
-    // OTP 인증 완료 확인
-    const verifiedKey = this.getOtpVerifiedKey(normalizedEmail);
-    const isVerified = await this.redisService.get(verifiedKey);
-    if (!isVerified) {
-      throw new AuthEmailNotVerifiedException();
-    }
-
-    // 비활성 유저 조회
-    const user = await this.userRepository.findByEmail(normalizedEmail);
-    if (!user) {
-      throw new UserNotFoundException();
-    }
-    if (user.isActivate) {
-      throw new EmailAlreadyExistsException();
-    }
-
-    // 계정 활성화
-    await this.userRepository.reactivate(user.id);
-    user.isActivate = true;
-
-    // 인증 완료 플래그 삭제 (일회용)
-    await this.redisService.delete(verifiedKey);
-
-    return this.issueTokens(user);
-  }
-
   async issueTokens(user: User, existingJti?: string): Promise<AuthTokens> {
     let jti: string;
 
