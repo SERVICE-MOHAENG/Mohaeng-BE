@@ -61,8 +61,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       if (this.isValidationError(exceptionResponse)) {
         errorResponse = this.convertValidationError(exceptionResponse);
         const message = this.extractValidationMessage(exceptionResponse);
+        // 클라이언트 전송 데이터 포함하여 로그 기록
+        const requestBody = request.body
+          ? JSON.stringify(request.body)
+          : 'undefined';
         this.logger.warn(
-          `[VALIDATION_ERROR] ${request?.method ?? 'UNKNOWN'} ${request?.originalUrl ?? request?.url ?? 'UNKNOWN_URL'} - ${message}`,
+          `[VALIDATION_ERROR] ${request?.method ?? 'UNKNOWN'} ${request?.originalUrl ?? request?.url ?? 'UNKNOWN_URL'} - body: ${requestBody} - ${message}`,
         );
       }
       // 기존 커스텀 예외 처리
