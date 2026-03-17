@@ -17,6 +17,7 @@ import { CountryModule } from './domain/country/CountryModule';
 import { PreferenceModule } from './domain/preference/PreferenceModule';
 import { ImageModule } from './domain/image/ImageModule';
 import { AdminModule } from './domain/admin/AdminModule';
+import { FeedbackModule } from './domain/feedback/FeedbackModule';
 import { User } from './domain/user/entity/User.entity';
 import { TravelCourse } from './domain/course/entity/TravelCourse.entity';
 import { CoursePlace } from './domain/course/entity/CoursePlace.entity';
@@ -184,6 +185,7 @@ import { CourseAiChat } from './domain/course/entity/CourseAiChat.entity';
     PreferenceModule,
     ImageModule,
     AdminModule,
+    FeedbackModule,
   ],
   controllers: [],
   providers: [],

@@ -14,15 +14,25 @@ export interface DiscordEmbed {
   timestamp?: string;
 }
 
+export interface DiscordFeedbackPayload {
+  title: string;
+  content: string;
+  userId: string;
+  userEmail: string;
+}
+
 @Injectable()
 export class DiscordService {
   private readonly webhookUrl: string | undefined;
+  private readonly feedbackWebhookUrl: string | undefined;
 
   constructor(private readonly configService: ConfigService) {
-    const rawWebhookUrl = this.configService.get<string>('DISCORD_WEBHOOK_URL');
-    this.webhookUrl = rawWebhookUrl
-      ? rawWebhookUrl.trim().replace(/,+$/, '')
-      : undefined;
+    this.webhookUrl = this.normalizeWebhookUrl(
+      this.configService.get<string>('DISCORD_WEBHOOK_URL'),
+    );
+    this.feedbackWebhookUrl = this.normalizeWebhookUrl(
+      this.configService.get<string>('FEEDBACK_DISCORD_WEBHOOK_URL'),
+    );
   }
 
   /**
@@ -51,6 +61,18 @@ export class DiscordService {
   }
 
   /**
+   * Discord로 사용자 피드백 전송
+   */
+  async sendFeedback(payload: DiscordFeedbackPayload): Promise<void> {
+    if (!this.feedbackWebhookUrl) {
+      throw new Error('FEEDBACK_DISCORD_WEBHOOK_URL is not configured');
+    }
+
+    const embed = this.createFeedbackEmbed(payload);
+    await this.postWebhook(this.feedbackWebhookUrl, embed);
+  }
+
+  /**
    * Discord 웹훅으로 로그 전송
    */
   private async sendLog(
@@ -65,13 +87,23 @@ export class DiscordService {
 
     try {
       const embed = this.createEmbed(level, message, context, stack);
-
-      await axios.post(this.webhookUrl, { embeds: [embed] }, { timeout: 5000 });
+      await this.postWebhook(this.webhookUrl, embed);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
       console.error('[DiscordService] webhook send failed:', errorMessage);
     }
+  }
+
+  private normalizeWebhookUrl(rawWebhookUrl?: string): string | undefined {
+    return rawWebhookUrl ? rawWebhookUrl.trim().replace(/,+$/, '') : undefined;
+  }
+
+  private async postWebhook(
+    webhookUrl: string,
+    embed: DiscordEmbed,
+  ): Promise<void> {
+    await axios.post(webhookUrl, { embeds: [embed] }, { timeout: 5000 });
   }
 
   /**
@@ -93,15 +125,7 @@ export class DiscordService {
       },
       {
         name: 'Time',
-        value: new Date().toLocaleString('ko-KR', {
-          timeZone: 'Asia/Seoul',
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-        }),
+        value: this.formatTimestamp(),
         inline: true,
       },
       {
@@ -126,6 +150,60 @@ export class DiscordService {
       fields,
       timestamp: new Date().toISOString(),
     };
+  }
+
+  private createFeedbackEmbed(payload: DiscordFeedbackPayload): DiscordEmbed {
+    return {
+      title: 'Feedback - Mohaeng Core',
+      description: this.truncate(payload.content, 4000),
+      color: 5763719,
+      fields: [
+        {
+          name: 'Title',
+          value: this.truncate(payload.title, 1024),
+          inline: false,
+        },
+        {
+          name: 'User',
+          value: this.truncate(
+            `ID: ${payload.userId}\nEmail: ${payload.userEmail}`,
+            1024,
+          ),
+          inline: false,
+        },
+        {
+          name: 'Time',
+          value: this.formatTimestamp(),
+          inline: true,
+        },
+        {
+          name: 'Server',
+          value: `Mohaeng Core (${this.configService.get<string>('NODE_ENV') || 'development'})`,
+          inline: true,
+        },
+      ],
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  private formatTimestamp(): string {
+    return new Date().toLocaleString('ko-KR', {
+      timeZone: 'Asia/Seoul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  }
+
+  private truncate(value: string, maxLength: number): string {
+    if (value.length <= maxLength) {
+      return value;
+    }
+
+    return `${value.slice(0, maxLength - 15)}...(truncated)`;
   }
 
   /**
