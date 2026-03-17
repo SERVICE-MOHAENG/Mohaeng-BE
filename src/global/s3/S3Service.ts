@@ -17,15 +17,35 @@ export class S3Service {
   private readonly baseUrl: string;
 
   constructor(private readonly configService: ConfigService) {
+    const region = this.configService.get<string>('AWS_REGION');
+    const accessKeyId = this.configService.get<string>('AWS_ACCESS_KEY_ID');
+    const secretAccessKey = this.configService.get<string>(
+      'AWS_SECRET_ACCESS_KEY',
+    );
+    const bucketName = this.configService.get<string>('AWS_S3_BUCKET_NAME');
+    const baseUrl = this.configService.get<string>('AWS_S3_BASE_URL');
+
+    if (
+      !region ||
+      !accessKeyId ||
+      !secretAccessKey ||
+      !bucketName ||
+      !baseUrl
+    ) {
+      throw new Error(
+        'AWS S3 환경변수가 설정되지 않았습니다. AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET_NAME, AWS_S3_BASE_URL를 확인해주세요.',
+      );
+    }
+
     this.s3Client = new S3Client({
-      region: configService.get<string>('AWS_REGION')!,
+      region,
       credentials: {
-        accessKeyId: configService.get<string>('AWS_ACCESS_KEY_ID')!,
-        secretAccessKey: configService.get<string>('AWS_SECRET_ACCESS_KEY')!,
+        accessKeyId,
+        secretAccessKey,
       },
     });
-    this.bucketName = configService.get<string>('AWS_S3_BUCKET_NAME')!;
-    this.baseUrl = configService.get<string>('AWS_S3_BASE_URL')!;
+    this.bucketName = bucketName;
+    this.baseUrl = baseUrl;
   }
 
   /**
