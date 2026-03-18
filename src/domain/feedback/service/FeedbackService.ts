@@ -4,11 +4,6 @@ import { DiscordService } from '../../../global/logger/DiscordService';
 import { CreateFeedbackRequest } from '../presentation/dto/request/CreateFeedbackRequest';
 import { SubmitFeedbackResponse } from '../presentation/dto/response/SubmitFeedbackResponse';
 
-export interface FeedbackUser {
-  id: string;
-  email: string;
-}
-
 /**
  * Feedback Service
  * @description
@@ -19,15 +14,16 @@ export class FeedbackService {
   constructor(private readonly discordService: DiscordService) {}
 
   async submitFeedback(
-    user: FeedbackUser,
+    userId: string,
+    userEmail: string,
     request: CreateFeedbackRequest,
   ): Promise<SubmitFeedbackResponse> {
     try {
       await this.discordService.sendFeedback({
         title: request.title.trim(),
         content: request.content.trim(),
-        userId: user.id,
-        userEmail: user.email,
+        userId,
+        userEmail,
       });
     } catch {
       throw new GlobalExternalServiceErrorException();
