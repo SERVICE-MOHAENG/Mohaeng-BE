@@ -44,11 +44,14 @@ export class CoursePlaceResponse {
    * Entity -> DTO 변환
    * @description place relation이 로드되지 않은 경우 방어적으로 처리
    */
-  static fromEntity(coursePlace: CoursePlace): CoursePlaceResponse {
+  static fromEntity(
+    coursePlace: CoursePlace,
+    options?: { dayNumber?: number },
+  ): CoursePlaceResponse {
     const response = new CoursePlaceResponse();
     response.id = coursePlace.id;
     response.visitOrder = coursePlace.visitOrder;
-    response.dayNumber = coursePlace.courseDay?.dayNumber ?? 1;
+    response.dayNumber = options?.dayNumber ?? coursePlace.courseDay?.dayNumber ?? 1;
     response.memo = coursePlace.memo;
 
     const place = coursePlace.place;
