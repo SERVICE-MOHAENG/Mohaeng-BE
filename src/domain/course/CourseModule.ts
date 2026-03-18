@@ -6,6 +6,7 @@ import { CourseDay } from './entity/CourseDay.entity';
 import { CourseHashTag } from './entity/CourseHashTag.entity';
 import { CourseLike } from './entity/CourseLike.entity';
 import { CourseCountry } from './entity/CourseCountry.entity';
+import { ItineraryJob } from '../itinerary/entity/ItineraryJob.entity';
 import { TravelCourseRepository } from './persistence/TravelCourseRepository';
 import { CourseLikeRepository } from './persistence/CourseLikeRepository';
 import { TravelCourseService } from './service/TravelCourseService';
@@ -27,6 +28,7 @@ import { UserModule } from '../user/UserModule';
       CourseHashTag,
       CourseLike,
       CourseCountry,
+      ItineraryJob,
     ]),
     UserModule,
   ],

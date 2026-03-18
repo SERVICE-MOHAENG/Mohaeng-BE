@@ -25,6 +25,8 @@ import { GetMyCoursesRequest } from './dto/request/GetMyCoursesRequest';
 import { GetCoursesRequest, CourseSortType } from './dto/request/GetCoursesRequest';
 import { UpdateCourseCompletionRequest } from './dto/request/UpdateCourseCompletionRequest';
 import { CourseResponse } from './dto/response/CourseResponse';
+import { CourseDetailResponse } from './dto/response/CourseDetailResponse';
+import { CourseDetailListResponse } from './dto/response/CourseDetailListResponse';
 import { CoursesResponse } from './dto/response/CoursesResponse';
 import { CourseLikesResponse } from './dto/response/CourseLikesResponse';
 
@@ -72,12 +74,16 @@ export class TravelCourseController {
   @ApiOperation({ summary: '내 여행 코스 목록 조회' })
   @ApiQuery({ name: 'page', required: false, example: 1 })
   @ApiQuery({ name: 'limit', required: false, example: 20 })
-  @ApiResponse({ status: 200, description: '조회 성공', type: CoursesResponse })
+  @ApiResponse({
+    status: 200,
+    description: '조회 성공',
+    type: CourseDetailListResponse,
+  })
   @ApiResponse({ status: 401, description: '인증 실패' })
   async getMyCourses(
     @UserId() userId: string,
     @Query() request: GetMyCoursesRequest,
-  ): Promise<CoursesResponse> {
+  ): Promise<CourseDetailListResponse> {
     return this.travelCourseService.getMyCourses(
       userId,
       request.page,
@@ -139,14 +145,18 @@ export class TravelCourseController {
   @UserApiBearerAuth()
   @ApiOperation({ summary: '여행 코스 상세 조회' })
   @ApiParam({ name: 'id', description: '코스 ID' })
-  @ApiResponse({ status: 200, description: '조회 성공', type: CourseResponse })
+  @ApiResponse({
+    status: 200,
+    description: '조회 성공',
+    type: CourseDetailResponse,
+  })
   @ApiResponse({ status: 401, description: '인증 실패' })
   @ApiResponse({ status: 404, description: '코스를 찾을 수 없음' })
   async getCourseById(
     @Param('id') id: string,
     @UserId() userId: string,
-  ): Promise<CourseResponse> {
-    return this.travelCourseService.findByIdWithUserStatus(id, userId);
+  ): Promise<CourseDetailResponse> {
+    return this.travelCourseService.findDetailById(id, userId);
   }
 
   /**

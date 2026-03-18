@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { TravelCourseRepository } from '../persistence/TravelCourseRepository';
 import { CourseLikeRepository } from '../persistence/CourseLikeRepository';
 import { TravelCourse } from '../entity/TravelCourse.entity';
@@ -17,7 +18,14 @@ import { UserNotFoundException } from '../../user/exception/UserNotFoundExceptio
 import { CreateCourseRequest } from '../presentation/dto/request/CreateCourseRequest';
 import { UpdateCourseRequest } from '../presentation/dto/request/UpdateCourseRequest';
 import { CourseResponse } from '../presentation/dto/response/CourseResponse';
+import { CourseDetailResponse } from '../presentation/dto/response/CourseDetailResponse';
 import { CoursesResponse } from '../presentation/dto/response/CoursesResponse';
+import { CourseDetailListResponse } from '../presentation/dto/response/CourseDetailListResponse';
+import {
+  ItineraryJob,
+  ItineraryJobType,
+} from '../../itinerary/entity/ItineraryJob.entity';
+import { ItineraryStatus } from '../../itinerary/entity/ItineraryStatus.enum';
 
 /**
  * TravelCourse Service
@@ -30,6 +38,8 @@ export class TravelCourseService {
     private readonly travelCourseRepository: TravelCourseRepository,
     private readonly userRepository: UserRepository,
     private readonly courseLikeRepository: CourseLikeRepository,
+    @InjectRepository(ItineraryJob)
+    private readonly itineraryJobRepository: Repository<ItineraryJob>,
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
@@ -63,6 +73,21 @@ export class TravelCourseService {
     );
 
     return CourseResponse.fromEntityWithUserStatus(course, isLiked);
+  }
+
+  async findDetailById(
+    id: string,
+    userId: string,
+  ): Promise<CourseDetailResponse> {
+    const course = await this.findById(id);
+
+    if (!course.isPublic && course.user.id !== userId) {
+      throw new CourseAccessDeniedException();
+    }
+
+    const latestGenerationJob = await this.findLatestGenerationJobByCourseId(id);
+
+    return CourseDetailResponse.fromEntity(course, latestGenerationJob);
   }
 
   /**
@@ -207,22 +232,20 @@ export class TravelCourseService {
     userId: string,
     page: number = 1,
     limit: number = 20,
-  ): Promise<CoursesResponse> {
+  ): Promise<CourseDetailListResponse> {
     const [courses, total] = await this.findByUserId(userId, page, limit);
-
-    const coursesWithStatus = await Promise.all(
-      courses.map(async (course) => {
-        const isLiked =
-          await this.courseLikeRepository.existsByUserIdAndCourseId(
-            userId,
-            course.id,
-          );
-        return CourseResponse.fromEntityWithUserStatus(course, isLiked);
-      }),
+    const latestGenerationJobs = await this.findLatestGenerationJobsByCourseIds(
+      courses.map((course) => course.id),
+    );
+    const roadmaps = courses.map((course) =>
+      CourseDetailResponse.fromEntity(
+        course,
+        latestGenerationJobs.get(course.id) ?? null,
+      ),
     );
 
     return {
-      courses: coursesWithStatus,
+      courses: roadmaps,
       page,
       limit,
       total,
@@ -462,5 +485,52 @@ export class TravelCourseService {
    */
   private mapToCourseResponse(course: TravelCourse): CourseResponse {
     return CourseResponse.fromEntity(course);
+  }
+
+  private async findLatestGenerationJobByCourseId(
+    courseId: string,
+  ): Promise<ItineraryJob | null> {
+    return this.itineraryJobRepository.findOne({
+      where: {
+        travelCourseId: courseId,
+        status: ItineraryStatus.SUCCESS,
+        jobType: ItineraryJobType.GENERATION,
+      },
+      order: {
+        completedAt: 'DESC',
+        createdAt: 'DESC',
+      },
+    });
+  }
+
+  private async findLatestGenerationJobsByCourseIds(
+    courseIds: string[],
+  ): Promise<Map<string, ItineraryJob>> {
+    if (courseIds.length === 0) {
+      return new Map();
+    }
+
+    const jobs = await this.itineraryJobRepository.find({
+      where: courseIds.map((courseId) => ({
+        travelCourseId: courseId,
+        status: ItineraryStatus.SUCCESS,
+        jobType: ItineraryJobType.GENERATION,
+      })),
+      order: {
+        completedAt: 'DESC',
+        createdAt: 'DESC',
+      },
+    });
+
+    const latestJobs = new Map<string, ItineraryJob>();
+
+    for (const job of jobs) {
+      if (!job.travelCourseId || latestJobs.has(job.travelCourseId)) {
+        continue;
+      }
+      latestJobs.set(job.travelCourseId, job);
+    }
+
+    return latestJobs;
   }
 }
