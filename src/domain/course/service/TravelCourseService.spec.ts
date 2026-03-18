@@ -35,6 +35,7 @@ describe('TravelCourseService', () => {
 
   const createService = (
     travelCourseRepositoryOverrides: Record<string, jest.Mock> = {},
+    itineraryJobRepositoryOverrides: Record<string, jest.Mock> = {},
   ) => {
     const manager = {
       findOne: jest.fn(),
@@ -50,6 +51,12 @@ describe('TravelCourseService', () => {
       ...travelCourseRepositoryOverrides,
     };
 
+    const itineraryJobRepository = {
+      findOne: jest.fn(),
+      find: jest.fn(),
+      ...itineraryJobRepositoryOverrides,
+    };
+
     const dataSource = {
       transaction: jest.fn().mockImplementation(async (callback) =>
         callback(manager),
@@ -60,10 +67,17 @@ describe('TravelCourseService', () => {
       travelCourseRepository as any,
       {} as any,
       {} as any,
+      itineraryJobRepository as any,
       dataSource as any,
     );
 
-    return { service, travelCourseRepository, manager, dataSource };
+    return {
+      service,
+      travelCourseRepository,
+      itineraryJobRepository,
+      manager,
+      dataSource,
+    };
   };
 
   it('defaults isCompleted to false when creating a course entity', () => {
@@ -192,5 +206,67 @@ describe('TravelCourseService', () => {
       travelCourseRepository.countDistinctCompletedCountriesByUserId,
     ).not.toHaveBeenCalled();
     expect(manager.update).not.toHaveBeenCalled();
+  });
+
+  it('returns AI-style roadmap items for my courses', async () => {
+    const course = createCourseEntity({
+      title: '뉴욕 예술 탐험',
+      description: '뉴욕 예술 중심 일정',
+      hashTags: [{ tagName: '#뉴욕' }, { tagName: '#예술' }] as any,
+      courseDays: [
+        {
+          dayNumber: 1,
+          date: new Date('2026-03-11'),
+          coursePlaces: [
+            {
+              visitOrder: 1,
+              visitTime: '09:00',
+              description: '센트럴 파크에서 자연을 만끽하세요.',
+              place: {
+                name: '센트럴 파크',
+                placeId: 'google-place-id',
+                address: '뉴욕',
+                latitude: 40.1,
+                longitude: -73.1,
+                placeUrl: 'https://example.com',
+                description: '장소 설명',
+              } as any,
+            },
+          ],
+        },
+      ] as any,
+    });
+
+    const { service } = createService(
+      {
+        findByUserId: jest.fn().mockResolvedValue([[course], 1]),
+      },
+      {
+        find: jest.fn().mockResolvedValue([
+          {
+            travelCourseId: 'course-id',
+            llmCommentary: '추천 이유',
+            nextActionSuggestions: ['다음 행동'],
+            completedAt: new Date('2026-03-11T12:00:00.000Z'),
+            createdAt: new Date('2026-03-11T11:00:00.000Z'),
+          },
+        ]),
+      },
+    );
+
+    const result = await service.getMyCourses('user-id', 1, 20);
+
+    expect(result.page).toBe(1);
+    expect(result.total).toBe(1);
+    expect(result.courses).toHaveLength(1);
+    expect(result.courses[0].data.title).toBe('뉴욕 예술 탐험');
+    expect(result.courses[0].data.tags).toEqual(['뉴욕', '예술']);
+    expect(result.courses[0].data.itinerary[0].places[0].visit_time).toBe(
+      '09:00',
+    );
+    expect(result.courses[0].data.llm_commentary).toBe('추천 이유');
+    expect(result.courses[0].data.next_action_suggestion).toEqual([
+      '다음 행동',
+    ]);
   });
 });
