@@ -2,7 +2,6 @@ import {
   Controller,
   Post,
   Get,
-  Param,
   Body,
   HttpCode,
   HttpStatus,
@@ -20,6 +19,7 @@ import {
 import { ResponseInterceptor } from '../../../global/interceptors/ResponseInterceptor';
 import { UserApiBearerAuth } from '../../../global/decorators/UserApiBearerAuth';
 import { UserId } from '../../../global/decorators/UserId';
+import { UuidParam } from '../../../global/decorators/UuidParam';
 import { ServiceSecretGuard } from '../guard/ServiceSecretGuard';
 import { ItineraryService } from '../service/ItineraryService';
 import { ItineraryCallbackService } from '../service/ItineraryCallbackService';
@@ -91,7 +91,10 @@ export class ItineraryController {
   @ApiParam({ name: 'jobId', description: '작업 ID' })
   @ApiResponse({ status: 200, type: ItineraryJobStatusResponse })
   @UserApiBearerAuth()
-  async getStatus(@UserId() userId: string, @Param('jobId') jobId: string) {
+  async getStatus(
+    @UserId() userId: string,
+    @UuidParam('jobId') jobId: string,
+  ) {
     const result = await this.itineraryService.getJobStatus(userId, jobId);
     return { status: result };
   }
@@ -104,7 +107,10 @@ export class ItineraryController {
   @ApiParam({ name: 'jobId', description: '작업 ID' })
   @ApiResponse({ status: 200, type: ItineraryResultResponse })
   @UserApiBearerAuth()
-  async getResult(@UserId() userId: string, @Param('jobId') jobId: string) {
+  async getResult(
+    @UserId() userId: string,
+    @UuidParam('jobId') jobId: string,
+  ) {
     const result = await this.itineraryService.getJobResult(userId, jobId);
     return { result };
   }
@@ -124,7 +130,7 @@ export class ItineraryController {
   @UseGuards(ServiceSecretGuard)
   @HttpCode(HttpStatus.OK)
   async handleCallback(
-    @Param('jobId') jobId: string,
+    @UuidParam('jobId') jobId: string,
     @Body() body: ItineraryCallbackRequest,
   ) {
     if (body.status === 'SUCCESS' && body.data) {
@@ -149,7 +155,7 @@ export class ItineraryController {
   @HttpCode(HttpStatus.ACCEPTED)
   async chatWithItinerary(
     @UserId() userId: string,
-    @Param('id') itineraryId: string,
+    @UuidParam() itineraryId: string,
     @Body() request: ChatWithItineraryRequest,
   ) {
     const result = await this.itineraryModificationService.chatWithItinerary(
@@ -170,7 +176,7 @@ export class ItineraryController {
   @UserApiBearerAuth()
   async getModificationJobStatus(
     @UserId() userId: string,
-    @Param('jobId') jobId: string,
+    @UuidParam('jobId') jobId: string,
   ) {
     const result =
       await this.itineraryModificationService.getModificationJobStatus(
@@ -195,7 +201,7 @@ export class ItineraryController {
   @UseGuards(ServiceSecretGuard)
   @HttpCode(HttpStatus.OK)
   async handleModificationCallback(
-    @Param('jobId') jobId: string,
+    @UuidParam('jobId') jobId: string,
     @Body() body: ItineraryModificationCallbackRequest,
   ) {
     if (body.status === 'FAILED') {
