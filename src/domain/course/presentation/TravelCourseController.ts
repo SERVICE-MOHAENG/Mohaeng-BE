@@ -21,11 +21,15 @@ import { UserId } from '../../../global/decorators/UserId';
 import { UuidParam } from '../../../global/decorators/UuidParam';
 import { TravelCourseService } from '../service/TravelCourseService';
 import { CourseLikeService } from '../service/CourseLikeService';
-import { GetCoursesRequest, CourseSortType } from './dto/request/GetCoursesRequest';
+import {
+  GetCoursesRequest,
+  CourseSortType,
+} from './dto/request/GetCoursesRequest';
 import { UpdateCourseCompletionRequest } from './dto/request/UpdateCourseCompletionRequest';
 import { CourseResponse } from './dto/response/CourseResponse';
 import { CourseDetailResponse } from './dto/response/CourseDetailResponse';
-import { CoursesResponse } from './dto/response/CoursesResponse';
+import { CopyRoadmapResponse } from './dto/response/CopyRoadmapResponse';
+import { MainPageCoursesResponse } from './dto/response/MainPageCoursesResponse';
 
 /**
  * TravelCourseController
@@ -46,20 +50,31 @@ export class TravelCourseController {
    */
   @Get('mainpage')
   @ApiOperation({ summary: '여행 코스 목록 조회 (메인페이지)' })
-  @ApiQuery({ name: 'sortBy', required: false, enum: CourseSortType, example: CourseSortType.LATEST })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    enum: CourseSortType,
+    example: CourseSortType.LATEST,
+  })
   @ApiQuery({ name: 'countryCode', required: false, example: 'JP' })
   @ApiQuery({ name: 'page', required: false, example: 1 })
   @ApiQuery({ name: 'limit', required: false, example: 10 })
-  @ApiResponse({ status: 200, description: '조회 성공', type: CoursesResponse })
+  @ApiResponse({
+    status: 200,
+    description: '조회 성공',
+    type: MainPageCoursesResponse,
+  })
   @ApiResponse({ status: 400, description: '잘못된 요청' })
   async getMainpageCourses(
     @Query() request: GetCoursesRequest,
-  ): Promise<CoursesResponse> {
+    @UserId() userId?: string,
+  ): Promise<MainPageCoursesResponse> {
     return this.travelCourseService.getCoursesForMainPage(
       request.sortBy,
       request.countryCode,
       request.page,
       request.limit,
+      userId,
     );
   }
 
@@ -115,14 +130,18 @@ export class TravelCourseController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '로드맵 복사 (내 로드맵으로 가져오기)' })
   @ApiParam({ name: 'id', description: '복사할 코스 ID' })
-  @ApiResponse({ status: 201, description: '복사 성공', type: CourseResponse })
+  @ApiResponse({
+    status: 201,
+    description: '복사 성공',
+    type: CopyRoadmapResponse,
+  })
   @ApiResponse({ status: 401, description: '인증 실패' })
   @ApiResponse({ status: 403, description: '비공개 코스 접근 불가' })
   @ApiResponse({ status: 404, description: '코스를 찾을 수 없음' })
   async copyCourse(
     @UuidParam() id: string,
     @UserId() userId: string,
-  ): Promise<CourseResponse> {
+  ): Promise<CopyRoadmapResponse> {
     return this.travelCourseService.copyRoadmap(id, userId);
   }
 

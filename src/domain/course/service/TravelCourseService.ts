@@ -19,8 +19,11 @@ import { CreateCourseRequest } from '../presentation/dto/request/CreateCourseReq
 import { UpdateCourseRequest } from '../presentation/dto/request/UpdateCourseRequest';
 import { CourseResponse } from '../presentation/dto/response/CourseResponse';
 import { CourseDetailResponse } from '../presentation/dto/response/CourseDetailResponse';
+import { CopyRoadmapResponse } from '../presentation/dto/response/CopyRoadmapResponse';
 import { CoursesResponse } from '../presentation/dto/response/CoursesResponse';
 import { CourseDetailListResponse } from '../presentation/dto/response/CourseDetailListResponse';
+import { MainPageCourseResponse } from '../presentation/dto/response/MainPageCourseResponse';
+import { MainPageCoursesResponse } from '../presentation/dto/response/MainPageCoursesResponse';
 import {
   ItineraryJob,
   ItineraryJobType,
@@ -85,7 +88,8 @@ export class TravelCourseService {
       throw new CourseAccessDeniedException();
     }
 
-    const latestGenerationJob = await this.findLatestGenerationJobByCourseId(id);
+    const latestGenerationJob =
+      await this.findLatestGenerationJobByCourseId(id);
 
     return CourseDetailResponse.fromEntity(course, latestGenerationJob);
   }
@@ -298,7 +302,10 @@ export class TravelCourseService {
   /**
    * 다른 사용자의 로드맵 복사
    */
-  async copyRoadmap(sourceId: string, userId: string): Promise<CourseResponse> {
+  async copyRoadmap(
+    sourceId: string,
+    userId: string,
+  ): Promise<CopyRoadmapResponse> {
     const source =
       await this.travelCourseRepository.findByIdWithAllRelations(sourceId);
     if (!source) {
@@ -375,8 +382,7 @@ export class TravelCourseService {
       return savedCourse;
     });
 
-    const result = await this.travelCourseRepository.findById(newCourse.id);
-    return CourseResponse.fromEntity(result!);
+    return CopyRoadmapResponse.of(newCourse.id);
   }
 
   /**
@@ -396,7 +402,7 @@ export class TravelCourseService {
     page: number = 1,
     limit: number = 10,
     userId?: string,
-  ): Promise<CoursesResponse> {
+  ): Promise<MainPageCoursesResponse> {
     const [courses, total] =
       await this.travelCourseRepository.findCoursesForMainPage(
         sortBy,
@@ -405,7 +411,7 @@ export class TravelCourseService {
         limit,
       );
 
-    let courseResponses: CourseResponse[];
+    let courseResponses: MainPageCourseResponse[];
 
     if (userId) {
       courseResponses = await Promise.all(
@@ -415,14 +421,12 @@ export class TravelCourseService {
               userId,
               course.id,
             );
-          const response = this.mapToCourseResponse(course);
-          response.isLiked = isLiked;
-          return response;
+          return MainPageCourseResponse.fromEntity(course, isLiked);
         }),
       );
     } else {
       courseResponses = courses.map((course) =>
-        this.mapToCourseResponse(course),
+        MainPageCourseResponse.fromEntity(course),
       );
     }
 
