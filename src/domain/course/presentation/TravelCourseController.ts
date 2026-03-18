@@ -21,14 +21,11 @@ import { UserApiBearerAuth } from '../../../global/decorators/UserApiBearerAuth'
 import { UserId } from '../../../global/decorators/UserId';
 import { TravelCourseService } from '../service/TravelCourseService';
 import { CourseLikeService } from '../service/CourseLikeService';
-import { GetMyCoursesRequest } from './dto/request/GetMyCoursesRequest';
 import { GetCoursesRequest, CourseSortType } from './dto/request/GetCoursesRequest';
 import { UpdateCourseCompletionRequest } from './dto/request/UpdateCourseCompletionRequest';
 import { CourseResponse } from './dto/response/CourseResponse';
 import { CourseDetailResponse } from './dto/response/CourseDetailResponse';
-import { CourseDetailListResponse } from './dto/response/CourseDetailListResponse';
 import { CoursesResponse } from './dto/response/CoursesResponse';
-import { CourseLikesResponse } from './dto/response/CourseLikesResponse';
 
 /**
  * TravelCourseController
@@ -64,55 +61,6 @@ export class TravelCourseController {
       request.page,
       request.limit,
     );
-  }
-
-  /**
-   * 내 여행 코스 목록 조회
-   */
-  @Get('me')
-  @UserApiBearerAuth()
-  @ApiOperation({ summary: '내 여행 코스 목록 조회' })
-  @ApiQuery({ name: 'page', required: false, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, example: 20 })
-  @ApiResponse({
-    status: 200,
-    description: '조회 성공',
-    type: CourseDetailListResponse,
-  })
-  @ApiResponse({ status: 401, description: '인증 실패' })
-  async getMyCourses(
-    @UserId() userId: string,
-    @Query() request: GetMyCoursesRequest,
-  ): Promise<CourseDetailListResponse> {
-    return this.travelCourseService.getMyCourses(
-      userId,
-      request.page,
-      request.limit,
-    );
-  }
-
-  /**
-   * 내 좋아요 목록 조회
-   */
-  @Get('me/likes')
-  @UserApiBearerAuth()
-  @ApiOperation({ summary: '내 좋아요 목록 조회' })
-  @ApiQuery({ name: 'page', required: false, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, example: 20 })
-  @ApiResponse({ status: 200, description: '조회 성공', type: CourseLikesResponse })
-  @ApiResponse({ status: 401, description: '인증 실패' })
-  async getMyLikes(
-    @UserId() userId: string,
-    @Query() request: GetMyCoursesRequest,
-  ): Promise<CourseLikesResponse> {
-    const page = request.page ?? 1;
-    const limit = request.limit ?? 20;
-    const [likes, total] = await this.courseLikeService.getMyLikes(
-      userId,
-      page,
-      limit,
-    );
-    return CourseLikesResponse.from(likes, total, page, limit);
   }
 
   /**

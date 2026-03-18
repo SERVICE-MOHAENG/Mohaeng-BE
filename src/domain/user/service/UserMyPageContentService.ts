@@ -1,12 +1,19 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { TravelCourseRepository } from '../../course/persistence/TravelCourseRepository';
 import { TravelBlogRepository } from '../../blog/persistence/TravelBlogRepository';
 import { CourseLikeRepository } from '../../course/persistence/CourseLikeRepository';
 import { BlogLikeRepository } from '../../blog/persistence/BlogLikeRepository';
 import { RegionLikeRepository } from '../../country/persistence/RegionLikeRepository';
-import { MyPageRoadmapCardResponse, MyPageRoadmapsResponse } from '../presentation/dto/response/MyPageRoadmapsResponse';
-import { MyPageBlogCardResponse, MyPageBlogsResponse } from '../presentation/dto/response/MyPageBlogsResponse';
 import { MyPageLikedRegionsResponse, MyPageRegionCardResponse } from '../presentation/dto/response/MyPageLikedRegionsResponse';
+import { CourseDetailListResponse } from '../../course/presentation/dto/response/CourseDetailListResponse';
+import { CourseLikesResponse } from '../../course/presentation/dto/response/CourseLikesResponse';
+import { ItineraryJob, ItineraryJobType } from '../../itinerary/entity/ItineraryJob.entity';
+import { ItineraryStatus } from '../../itinerary/entity/ItineraryStatus.enum';
+import { BlogsResponse } from '../../blog/presentation/dto/response/BlogsResponse';
+import { BlogResponse } from '../../blog/presentation/dto/response/BlogResponse';
+import { BlogLikesResponse } from '../../blog/presentation/dto/response/BlogLikesResponse';
 
 @Injectable()
 export class UserMyPageContentService {
@@ -16,40 +23,39 @@ export class UserMyPageContentService {
     private readonly courseLikeRepository: CourseLikeRepository,
     private readonly blogLikeRepository: BlogLikeRepository,
     private readonly regionLikeRepository: RegionLikeRepository,
+    @InjectRepository(ItineraryJob)
+    private readonly itineraryJobRepository: Repository<ItineraryJob>,
   ) {}
 
   async getMyRoadmaps(
     userId: string,
     page: number = 1,
     limit: number = 10,
-  ): Promise<MyPageRoadmapsResponse> {
+  ): Promise<CourseDetailListResponse> {
     const { safePage, safeLimit } = this.normalizePagination(page, limit);
     const [courses, total] = await this.travelCourseRepository.findByUserId(
       userId,
       safePage,
       safeLimit,
     );
-
-    const items = await Promise.all(
-      courses.map(async (course) =>
-        MyPageRoadmapCardResponse.fromEntity(
-          course,
-          await this.courseLikeRepository.existsByUserIdAndCourseId(
-            userId,
-            course.id,
-          ),
-        ),
-      ),
+    const latestGenerationJobs = await this.findLatestGenerationJobsByCourseIds(
+      courses.map((course) => course.id),
     );
 
-    return MyPageRoadmapsResponse.from(items, total, safePage, safeLimit);
+    return CourseDetailListResponse.from(
+      courses,
+      total,
+      safePage,
+      safeLimit,
+      latestGenerationJobs,
+    );
   }
 
   async getMyBlogs(
     userId: string,
     page: number = 1,
     limit: number = 10,
-  ): Promise<MyPageBlogsResponse> {
+  ): Promise<BlogsResponse> {
     const { safePage, safeLimit } = this.normalizePagination(page, limit);
     const [blogs, total] = await this.travelBlogRepository.findByUserId(
       userId,
@@ -57,23 +63,29 @@ export class UserMyPageContentService {
       safeLimit,
     );
 
-    const items = await Promise.all(
+    const blogsWithStatus = await Promise.all(
       blogs.map(async (blog) =>
-        MyPageBlogCardResponse.fromEntity(
+        BlogResponse.fromEntityWithUserStatus(
           blog,
           await this.blogLikeRepository.existsByUserIdAndBlogId(userId, blog.id),
         ),
       ),
     );
 
-    return MyPageBlogsResponse.from(items, total, safePage, safeLimit);
+    return {
+      blogs: blogsWithStatus,
+      page: safePage,
+      limit: safeLimit,
+      total,
+      totalPages: Math.ceil(total / safeLimit),
+    };
   }
 
   async getLikedRoadmaps(
     userId: string,
     page: number = 1,
     limit: number = 10,
-  ): Promise<MyPageRoadmapsResponse> {
+  ): Promise<CourseLikesResponse> {
     const { safePage, safeLimit } = this.normalizePagination(page, limit);
     const [likes, total] = await this.courseLikeRepository.findByUserId(
       userId,
@@ -81,18 +93,14 @@ export class UserMyPageContentService {
       safeLimit,
     );
 
-    const items = likes.map((like) =>
-      MyPageRoadmapCardResponse.fromEntity(like.travelCourse, true),
-    );
-
-    return MyPageRoadmapsResponse.from(items, total, safePage, safeLimit);
+    return CourseLikesResponse.from(likes, total, safePage, safeLimit);
   }
 
   async getLikedBlogs(
     userId: string,
     page: number = 1,
     limit: number = 10,
-  ): Promise<MyPageBlogsResponse> {
+  ): Promise<BlogLikesResponse> {
     const { safePage, safeLimit } = this.normalizePagination(page, limit);
     const [likes, total] = await this.blogLikeRepository.findByUserId(
       userId,
@@ -100,11 +108,7 @@ export class UserMyPageContentService {
       safeLimit,
     );
 
-    const items = likes.map((like) =>
-      MyPageBlogCardResponse.fromEntity(like.travelBlog, true),
-    );
-
-    return MyPageBlogsResponse.from(items, total, safePage, safeLimit);
+    return BlogLikesResponse.from(likes, total, safePage, safeLimit);
   }
 
   async getLikedRegions(
@@ -137,5 +141,37 @@ export class UserMyPageContentService {
       safePage: Math.max(1, page),
       safeLimit: Math.max(1, Math.min(20, limit)),
     };
+  }
+
+  private async findLatestGenerationJobsByCourseIds(
+    courseIds: string[],
+  ): Promise<Map<string, ItineraryJob>> {
+    if (courseIds.length === 0) {
+      return new Map();
+    }
+
+    const jobs = await this.itineraryJobRepository.find({
+      where: courseIds.map((courseId) => ({
+        travelCourseId: courseId,
+        status: ItineraryStatus.SUCCESS,
+        jobType: ItineraryJobType.GENERATION,
+      })),
+      order: {
+        completedAt: 'DESC',
+        createdAt: 'DESC',
+      },
+    });
+
+    const latestJobs = new Map<string, ItineraryJob>();
+
+    for (const job of jobs) {
+      if (!job.travelCourseId || latestJobs.has(job.travelCourseId)) {
+        continue;
+      }
+
+      latestJobs.set(job.travelCourseId, job);
+    }
+
+    return latestJobs;
   }
 }

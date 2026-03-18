@@ -20,10 +20,8 @@ import { UserId } from '../../../global/decorators/UserId';
 import { TravelBlogService } from '../service/TravelBlogService';
 import { BlogLikeService } from '../service/BlogLikeService';
 import { GetBlogsRequest } from './dto/request/GetBlogsRequest';
-import { GetMyBlogsRequest } from './dto/request/GetMyBlogsRequest';
 import { BlogsResponse } from './dto/response/BlogsResponse';
 import { BlogResponse } from './dto/response/BlogResponse';
-import { BlogLikesResponse } from './dto/response/BlogLikesResponse';
 
 /**
  * TravelBlogController
@@ -84,89 +82,6 @@ export class TravelBlogController {
       request.limit,
       userId,
     );
-  }
-
-  /**
-   * 내 블로그 목록 조회
-   * @description
-   * - 인증된 사용자의 블로그 목록 조회 (공개/비공개 모두)
-   * @param userId - 인증된 사용자 ID
-   * @param request - 페이지네이션 요청
-   * @returns 블로그 목록
-   */
-  @Get('me')
-  @UserApiBearerAuth()
-  @ApiOperation({ summary: '내 블로그 목록 조회' })
-  @ApiQuery({
-    name: 'page',
-    description: '페이지 번호',
-    required: false,
-    example: 1,
-  })
-  @ApiQuery({
-    name: 'limit',
-    description: '페이지 크기',
-    required: false,
-    example: 6,
-  })
-  @ApiResponse({
-    status: 200,
-    description: '조회 성공',
-    type: BlogsResponse,
-  })
-  @ApiResponse({ status: 401, description: '인증되지 않음' })
-  async getMyBlogs(
-    @UserId() userId: string,
-    @Query() request: GetMyBlogsRequest,
-  ): Promise<BlogsResponse> {
-    return this.travelBlogService.getMyBlogs(
-      userId,
-      request.page,
-      request.limit,
-    );
-  }
-
-  /**
-   * 내 좋아요 목록 조회
-   * @description
-   * - 로그인한 사용자가 좋아요한 블로그 목록 조회
-   * @param userId - 사용자 ID (자동 주입)
-   * @param request - 페이지네이션 요청
-   * @returns BlogLikesResponse
-   */
-  @Get('me/likes')
-  @UserApiBearerAuth()
-  @ApiOperation({ summary: '내 좋아요 목록 조회' })
-  @ApiQuery({
-    name: 'page',
-    description: '페이지 번호',
-    required: false,
-    example: 1,
-  })
-  @ApiQuery({
-    name: 'limit',
-    description: '페이지 크기',
-    required: false,
-    example: 6,
-  })
-  @ApiResponse({
-    status: 200,
-    description: '조회 성공',
-    type: BlogLikesResponse,
-  })
-  @ApiResponse({ status: 401, description: '인증 실패' })
-  async getMyLikes(
-    @UserId() userId: string,
-    @Query() request: GetMyBlogsRequest,
-  ): Promise<BlogLikesResponse> {
-    const page = request.page ?? 1;
-    const limit = request.limit ?? 6;
-    const [likes, total] = await this.blogLikeService.getMyLikes(
-      userId,
-      page,
-      limit,
-    );
-    return BlogLikesResponse.from(likes, total, page, limit);
   }
 
   /**
