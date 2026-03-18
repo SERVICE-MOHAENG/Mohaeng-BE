@@ -1,6 +1,7 @@
-import { Body, Controller, Param, Patch } from '@nestjs/common';
+import { Body, Controller, Patch } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AdminApiBearerAuth } from '../../../global/decorators/AdminApiBearerAuth';
+import { UuidParam } from '../../../global/decorators/UuidParam';
 import { CountryService } from '../../country/service/CountryService';
 import { UpdateImageUrlRequest } from './dto/request/UpdateImageUrlRequest';
 import { CountryImageResponse } from './dto/response/CountryImageResponse';
@@ -25,7 +26,7 @@ export class AdminCountryController {
   })
   @ApiResponse({ status: 404, description: '국가를 찾을 수 없음' })
   async updateCountryImage(
-    @Param('id') id: string,
+    @UuidParam() id: string,
     @Body() request: UpdateImageUrlRequest,
   ): Promise<CountryImageResponse> {
     const country = await this.countryService.updateImageUrl(

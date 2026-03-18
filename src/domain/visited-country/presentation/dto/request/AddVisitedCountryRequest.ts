@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, Matches } from 'class-validator';
+import { IsNotEmpty, IsString, IsUUID, Matches } from 'class-validator';
 
 /**
  * AddVisitedCountryRequest DTO
@@ -13,6 +13,7 @@ export class AddVisitedCountryRequest {
   })
   @IsNotEmpty()
   @IsString()
+  @IsUUID()
   countryId: string;
 
   @ApiProperty({

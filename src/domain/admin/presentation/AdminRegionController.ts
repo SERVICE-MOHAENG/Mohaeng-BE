@@ -1,6 +1,7 @@
-import { Body, Controller, Param, Patch } from '@nestjs/common';
+import { Body, Controller, Patch } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AdminApiBearerAuth } from '../../../global/decorators/AdminApiBearerAuth';
+import { UuidParam } from '../../../global/decorators/UuidParam';
 import { RegionService } from '../../country/service/RegionService';
 import { UpdateImageUrlRequest } from './dto/request/UpdateImageUrlRequest';
 import { RegionImageResponse } from './dto/response/RegionImageResponse';
@@ -25,7 +26,7 @@ export class AdminRegionController {
   })
   @ApiResponse({ status: 404, description: '도시를 찾을 수 없음' })
   async updateRegionImage(
-    @Param('id') id: string,
+    @UuidParam() id: string,
     @Body() request: UpdateImageUrlRequest,
   ): Promise<RegionImageResponse> {
     const region = await this.regionService.updateImageUrl(

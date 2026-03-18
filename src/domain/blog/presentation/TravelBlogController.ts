@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Delete,
-  Param,
   Query,
   HttpCode,
   HttpStatus,
@@ -17,6 +16,7 @@ import {
 } from '@nestjs/swagger';
 import { UserApiBearerAuth } from '../../../global/decorators/UserApiBearerAuth';
 import { UserId } from '../../../global/decorators/UserId';
+import { UuidParam } from '../../../global/decorators/UuidParam';
 import { TravelBlogService } from '../service/TravelBlogService';
 import { BlogLikeService } from '../service/BlogLikeService';
 import { GetBlogsRequest } from './dto/request/GetBlogsRequest';
@@ -108,7 +108,7 @@ export class TravelBlogController {
   @ApiResponse({ status: 403, description: '접근 권한 없음' })
   @ApiResponse({ status: 404, description: '블로그를 찾을 수 없음' })
   async getBlogById(
-    @Param('id') id: string,
+    @UuidParam() id: string,
     @UserId() userId: string,
   ): Promise<BlogResponse> {
     // 조회수 증가 먼저 수행
@@ -139,7 +139,7 @@ export class TravelBlogController {
   @ApiResponse({ status: 404, description: '블로그를 찾을 수 없음' })
   @ApiResponse({ status: 409, description: '이미 좋아요한 블로그' })
   async addLike(
-    @Param('id') id: string,
+    @UuidParam() id: string,
     @UserId() userId: string,
   ): Promise<void> {
     await this.blogLikeService.addLike(userId, id);
@@ -165,7 +165,7 @@ export class TravelBlogController {
   @ApiResponse({ status: 401, description: '인증 실패' })
   @ApiResponse({ status: 404, description: '블로그를 찾을 수 없음' })
   async removeLike(
-    @Param('id') id: string,
+    @UuidParam() id: string,
     @UserId() userId: string,
   ): Promise<void> {
     await this.blogLikeService.removeLike(userId, id);
