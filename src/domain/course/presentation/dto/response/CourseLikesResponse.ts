@@ -31,7 +31,7 @@ export class CourseLikesResponse {
   ): CourseLikesResponse {
     const response = new CourseLikesResponse();
     response.items = likes.map((like) =>
-      CourseResponse.fromEntity(like.travelCourse),
+      CourseResponse.fromEntityWithUserStatus(like.travelCourse, true),
     );
     response.page = page;
     response.limit = limit;
