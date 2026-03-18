@@ -101,9 +101,17 @@ export class CourseResponse {
       course.courseRegions?.map((region) => region.regionName) || [];
     response.hashTags = course.hashTags?.map((ht) => ht.tagName) || [];
     response.places =
-      course.courseDays
-        ?.flatMap((day) => day.coursePlaces || [])
-        .map((cp) => CoursePlaceResponse.fromEntity(cp)) || [];
+      [...(course.courseDays || [])]
+        .sort((a, b) => a.dayNumber - b.dayNumber)
+        .flatMap((day) =>
+          [...(day.coursePlaces || [])]
+            .sort((a, b) => a.visitOrder - b.visitOrder)
+            .map((coursePlace) =>
+              CoursePlaceResponse.fromEntity(coursePlace, {
+                dayNumber: day.dayNumber,
+              }),
+            ),
+        ) || [];
     response.isPublic = course.isPublic;
     response.isCompleted = course.isCompleted ?? false;
     response.sourceCourseId = course.sourceCourseId ?? null;
