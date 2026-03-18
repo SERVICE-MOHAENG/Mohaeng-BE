@@ -4,7 +4,6 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  Param,
   Post,
   Query,
 } from '@nestjs/common';
@@ -17,6 +16,7 @@ import {
 } from '@nestjs/swagger';
 import { UserApiBearerAuth } from '../../../global/decorators/UserApiBearerAuth';
 import { UserId } from '../../../global/decorators/UserId';
+import { UuidParam } from '../../../global/decorators/UuidParam';
 import { TravelCourseService } from '../../course/service/TravelCourseService';
 import { CoursesResponse } from '../../course/presentation/dto/response/CoursesResponse';
 import { RegionLikeService } from '../service/RegionLikeService';
@@ -81,7 +81,7 @@ export class RegionController {
   @ApiParam({ name: 'id', description: '지역 ID' })
   @ApiResponse({ status: 200, description: '조회 성공', type: CoursesResponse })
   async getCoursesByRegion(
-    @Param('id') id: string,
+    @UuidParam() id: string,
     @UserId() userId: string,
     @Query() request: GetRegionCoursesRequest,
   ): Promise<CoursesResponse> {
@@ -104,7 +104,7 @@ export class RegionController {
   @ApiResponse({ status: 404, description: '지역을 찾을 수 없음' })
   @ApiResponse({ status: 409, description: '이미 좋아요한 지역' })
   async addLike(
-    @Param('id') id: string,
+    @UuidParam() id: string,
     @UserId() userId: string,
   ): Promise<void> {
     await this.regionLikeService.addLike(userId, id);
@@ -118,7 +118,7 @@ export class RegionController {
   @ApiResponse({ status: 204, description: '좋아요 삭제 성공' })
   @ApiResponse({ status: 404, description: '지역을 찾을 수 없음' })
   async removeLike(
-    @Param('id') id: string,
+    @UuidParam() id: string,
     @UserId() userId: string,
   ): Promise<void> {
     await this.regionLikeService.removeLike(userId, id);

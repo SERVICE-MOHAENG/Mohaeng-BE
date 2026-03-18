@@ -10,6 +10,7 @@ import { QueryFailedError, EntityNotFoundError, TypeORMError } from 'typeorm';
 import { ApiResponseDto } from '../dto/ApiResponseDto';
 import { LogInterceptorService } from '../logger/LogInterceptorService';
 import { GlobalDatabaseErrorException } from '../exception/GlobalDatabaseErrorException';
+import { GlobalInvalidRequestException } from '../exception/GlobalInvalidRequestException';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -27,7 +28,16 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let errorResponse: ApiResponseDto;
 
     // TypeORM 에러 감지 (DB 연결 실패, 쿼리 실패 등)
-    if (
+    if (this.isInvalidRequestDatabaseError(exception)) {
+      const invalidRequestException = new GlobalInvalidRequestException();
+      status = invalidRequestException.getStatus();
+      errorResponse = invalidRequestException.getResponse() as ApiResponseDto;
+      this.logger.warn(
+        `[INVALID_REQUEST_DB] ${request?.method ?? 'UNKNOWN'} ${request?.originalUrl ?? request?.url ?? 'UNKNOWN_URL'} - ${(exception as Error).message}`,
+      );
+    }
+    // TypeORM 에러 감지 (DB 연결 실패, 쿼리 실패 등)
+    else if (
       exception instanceof QueryFailedError ||
       exception instanceof EntityNotFoundError ||
       exception instanceof TypeORMError
@@ -247,6 +257,30 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       constructorName === 'AbortError' ||
       constructorName === 'ParserError' ||
       constructorName === 'ConnectionError'
+    );
+  }
+
+  /**
+   * 잘못된 UUID 등 사용자 입력이 DB까지 흘러간 경우 400으로 변환
+   */
+  private isInvalidRequestDatabaseError(exception: unknown): boolean {
+    if (!(exception instanceof QueryFailedError)) {
+      return false;
+    }
+
+    const driverError = (
+      exception as QueryFailedError & {
+        driverError?: { code?: string; message?: string };
+      }
+    ).driverError;
+
+    const code = driverError?.code;
+    const message = driverError?.message ?? exception.message;
+
+    return (
+      code === '22P02' ||
+      message.includes('invalid input syntax') ||
+      message.includes('invalid input value')
     );
   }
 

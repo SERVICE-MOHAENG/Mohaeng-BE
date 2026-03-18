@@ -5,7 +5,6 @@ import {
   HttpCode,
   HttpStatus,
   Post,
-  Param,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -15,6 +14,7 @@ import { Queue } from 'bullmq';
 import { ResponseInterceptor } from '../../../global/interceptors/ResponseInterceptor';
 import { UserApiBearerAuth } from '../../../global/decorators/UserApiBearerAuth';
 import { UserId } from '../../../global/decorators/UserId';
+import { UuidParam } from '../../../global/decorators/UuidParam';
 import { ServiceSecretGuard } from '../../itinerary/guard/ServiceSecretGuard';
 import { UserPreferenceService } from '../service/UserPreferenceService';
 import { PreferenceCallbackService } from '../service/PreferenceCallbackService';
@@ -164,7 +164,7 @@ export class UserPreferenceController {
     description: '{ status: "PENDING"|"PROCESSING"|"SUCCESS"|"FAILED" }',
   })
   async getJobStatus(
-    @Param('jobId') jobId: string,
+    @UuidParam('jobId') jobId: string,
   ): Promise<{ status: string }> {
     const status = await this.preferenceCallbackService.getJobStatus(jobId);
     return { status: status ?? 'NOT_FOUND' };
@@ -183,7 +183,7 @@ export class UserPreferenceController {
     isArray: true,
   })
   async getJobResult(
-    @Param('jobId') jobId: string,
+    @UuidParam('jobId') jobId: string,
     @UserId() userId: string,
   ): Promise<{ destinations: PreferenceRecommendationResponse[] }> {
     const recommendations =
@@ -221,7 +221,7 @@ export class UserPreferenceController {
   @ApiOperation({ summary: 'Python LLM 추천 결과 콜백 (내부 전용)' })
   @ApiParam({ name: 'jobId', description: '작업 ID' })
   async handleCallback(
-    @Param('jobId') jobId: string,
+    @UuidParam('jobId') jobId: string,
     @Body() body: PreferenceCallbackRequest,
   ): Promise<void> {
     if (body.status === 'SUCCESS') {
