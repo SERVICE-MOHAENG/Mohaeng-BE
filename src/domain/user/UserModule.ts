@@ -12,6 +12,7 @@ import { BlogLikeRepository } from '../blog/persistence/BlogLikeRepository';
 import { RegionLikeRepository } from '../country/persistence/RegionLikeRepository';
 import { TravelCourse } from '../course/entity/TravelCourse.entity';
 import { TravelBlog } from '../blog/entity/TravelBlog.entity';
+import { ItineraryJob } from '../itinerary/entity/ItineraryJob.entity';
 import { TravelCourseRepository } from '../course/persistence/TravelCourseRepository';
 import { TravelBlogRepository } from '../blog/persistence/TravelBlogRepository';
 import { UserMyPageSummaryService } from './service/UserMyPageSummaryService';
@@ -32,6 +33,7 @@ import { UserMyPageContentService } from './service/UserMyPageContentService';
       RegionLike,
       TravelCourse,
       TravelBlog,
+      ItineraryJob,
     ]),
   ],
   controllers: [UserController],
