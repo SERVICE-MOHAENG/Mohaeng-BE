@@ -17,10 +17,12 @@ import { UserResponse } from './dto/response/UserResponse';
 import { GetMyPageContentRequest } from './dto/request/GetMyPageContentRequest';
 import { MyPageSummaryResponse } from './dto/response/MyPageSummaryResponse';
 import { UserMyPageSummaryService } from '../service/UserMyPageSummaryService';
-import { MyPageRoadmapsResponse } from './dto/response/MyPageRoadmapsResponse';
 import { UserMyPageContentService } from '../service/UserMyPageContentService';
-import { MyPageBlogsResponse } from './dto/response/MyPageBlogsResponse';
 import { MyPageLikedRegionsResponse } from './dto/response/MyPageLikedRegionsResponse';
+import { CourseDetailListResponse } from '../../course/presentation/dto/response/CourseDetailListResponse';
+import { CourseLikesResponse } from '../../course/presentation/dto/response/CourseLikesResponse';
+import { BlogsResponse } from '../../blog/presentation/dto/response/BlogsResponse';
+import { BlogLikesResponse } from '../../blog/presentation/dto/response/BlogLikesResponse';
 
 /**
  * UserController
@@ -57,12 +59,12 @@ export class UserController {
   @ApiResponse({
     status: 200,
     description: '내 여행 일정 조회 성공',
-    type: MyPageRoadmapsResponse,
+    type: CourseDetailListResponse,
   })
   async getMyRoadmaps(
     @UserId() userId: string,
     @Query() request: GetMyPageContentRequest,
-  ): Promise<MyPageRoadmapsResponse> {
+  ): Promise<CourseDetailListResponse> {
     return this.userMyPageContentService.getMyRoadmaps(
       userId,
       request.page,
@@ -76,12 +78,12 @@ export class UserController {
   @ApiResponse({
     status: 200,
     description: '내 여행 기록 조회 성공',
-    type: MyPageBlogsResponse,
+    type: BlogsResponse,
   })
   async getMyBlogs(
     @UserId() userId: string,
     @Query() request: GetMyPageContentRequest,
-  ): Promise<MyPageBlogsResponse> {
+  ): Promise<BlogsResponse> {
     return this.userMyPageContentService.getMyBlogs(
       userId,
       request.page,
@@ -95,12 +97,12 @@ export class UserController {
   @ApiResponse({
     status: 200,
     description: '좋아요한 여행 일정 조회 성공',
-    type: MyPageRoadmapsResponse,
+    type: CourseLikesResponse,
   })
   async getLikedRoadmaps(
     @UserId() userId: string,
     @Query() request: GetMyPageContentRequest,
-  ): Promise<MyPageRoadmapsResponse> {
+  ): Promise<CourseLikesResponse> {
     return this.userMyPageContentService.getLikedRoadmaps(
       userId,
       request.page,
@@ -114,12 +116,12 @@ export class UserController {
   @ApiResponse({
     status: 200,
     description: '좋아요한 블로그 조회 성공',
-    type: MyPageBlogsResponse,
+    type: BlogLikesResponse,
   })
   async getLikedBlogs(
     @UserId() userId: string,
     @Query() request: GetMyPageContentRequest,
-  ): Promise<MyPageBlogsResponse> {
+  ): Promise<BlogLikesResponse> {
     return this.userMyPageContentService.getLikedBlogs(
       userId,
       request.page,
