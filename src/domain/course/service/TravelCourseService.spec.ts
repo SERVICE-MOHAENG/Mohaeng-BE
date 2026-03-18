@@ -36,6 +36,7 @@ describe('TravelCourseService', () => {
   const createService = (
     travelCourseRepositoryOverrides: Record<string, jest.Mock> = {},
     itineraryJobRepositoryOverrides: Record<string, jest.Mock> = {},
+    userRepositoryOverrides: Record<string, jest.Mock> = {},
   ) => {
     const manager = {
       findOne: jest.fn(),
@@ -46,9 +47,16 @@ describe('TravelCourseService', () => {
 
     const travelCourseRepository = {
       findById: jest.fn(),
+      findByIdWithAllRelations: jest.fn(),
+      findCoursesForMainPage: jest.fn(),
       save: jest.fn(),
       countDistinctCompletedCountriesByUserId: jest.fn(),
       ...travelCourseRepositoryOverrides,
+    };
+
+    const userRepository = {
+      findById: jest.fn(),
+      ...userRepositoryOverrides,
     };
 
     const itineraryJobRepository = {
@@ -58,14 +66,14 @@ describe('TravelCourseService', () => {
     };
 
     const dataSource = {
-      transaction: jest.fn().mockImplementation(async (callback) =>
-        callback(manager),
-      ),
+      transaction: jest
+        .fn()
+        .mockImplementation(async (callback) => callback(manager)),
     };
 
     const service = new TravelCourseService(
       travelCourseRepository as any,
-      {} as any,
+      userRepository as any,
       {} as any,
       itineraryJobRepository as any,
       dataSource as any,
@@ -74,6 +82,7 @@ describe('TravelCourseService', () => {
     return {
       service,
       travelCourseRepository,
+      userRepository,
       itineraryJobRepository,
       manager,
       dataSource,
@@ -113,15 +122,12 @@ describe('TravelCourseService', () => {
       TravelCourse,
       expect.objectContaining({ id: 'course-id', isCompleted: true }),
     );
-    expect(travelCourseRepository.countDistinctCompletedCountriesByUserId).toHaveBeenCalledWith(
-      'user-id',
-      manager,
-    );
-    expect(manager.update).toHaveBeenCalledWith(
-      expect.anything(),
-      'user-id',
-      { visitedCountries: 2 },
-    );
+    expect(
+      travelCourseRepository.countDistinctCompletedCountriesByUserId,
+    ).toHaveBeenCalledWith('user-id', manager);
+    expect(manager.update).toHaveBeenCalledWith(expect.anything(), 'user-id', {
+      visitedCountries: 2,
+    });
     expect(result.isCompleted).toBe(true);
   });
 
@@ -142,15 +148,12 @@ describe('TravelCourseService', () => {
       false,
     );
 
-    expect(travelCourseRepository.countDistinctCompletedCountriesByUserId).toHaveBeenCalledWith(
-      'user-id',
-      manager,
-    );
-    expect(manager.update).toHaveBeenCalledWith(
-      expect.anything(),
-      'user-id',
-      { visitedCountries: 1 },
-    );
+    expect(
+      travelCourseRepository.countDistinctCompletedCountriesByUserId,
+    ).toHaveBeenCalledWith('user-id', manager);
+    expect(manager.update).toHaveBeenCalledWith(expect.anything(), 'user-id', {
+      visitedCountries: 1,
+    });
     expect(result.isCompleted).toBe(false);
   });
 
@@ -183,15 +186,12 @@ describe('TravelCourseService', () => {
     await service.deleteCourse('course-id', 'user-id');
 
     expect(manager.delete).toHaveBeenCalledWith(TravelCourse, 'course-id');
-    expect(travelCourseRepository.countDistinctCompletedCountriesByUserId).toHaveBeenCalledWith(
-      'user-id',
-      manager,
-    );
-    expect(manager.update).toHaveBeenCalledWith(
-      expect.anything(),
-      'user-id',
-      { visitedCountries: 1 },
-    );
+    expect(
+      travelCourseRepository.countDistinctCompletedCountriesByUserId,
+    ).toHaveBeenCalledWith('user-id', manager);
+    expect(manager.update).toHaveBeenCalledWith(expect.anything(), 'user-id', {
+      visitedCountries: 1,
+    });
   });
 
   it('does not recalculate visited country count when deleting an incomplete course', async () => {
@@ -268,5 +268,88 @@ describe('TravelCourseService', () => {
     expect(result.courses[0].data.next_action_suggestion).toEqual([
       '다음 행동',
     ]);
+  });
+
+  it('returns mainpage roadmap summaries', async () => {
+    const course = createCourseEntity({
+      title: '시부야 밤거리',
+      description: '병현이와 함께하는 시부야 여행',
+      imageUrl: 'https://example.com/course.jpg',
+      days: 1,
+      likeCount: 1002,
+      hashTags: [{ tagName: '#당일치기' }, { tagName: '#친구' }] as any,
+      isPublic: true,
+    });
+
+    const { service, travelCourseRepository } = createService({
+      findCoursesForMainPage: jest.fn().mockResolvedValue([[course], 1]),
+    });
+
+    const result = await service.getCoursesForMainPage('latest', 'JP', 1, 10);
+
+    expect(travelCourseRepository.findCoursesForMainPage).toHaveBeenCalledWith(
+      'latest',
+      'JP',
+      1,
+      10,
+    );
+    expect(result).toEqual({
+      courses: [
+        {
+          id: 'course-id',
+          title: '시부야 밤거리',
+          trip_days: 1,
+          summary: '병현이와 함께하는 시부야 여행',
+          tags: ['당일치기', '친구'],
+          like_count: 1002,
+          is_liked: false,
+          image_url: 'https://example.com/course.jpg',
+        },
+      ],
+      page: 1,
+      limit: 10,
+      total: 1,
+      totalPages: 1,
+    });
+  });
+
+  it('returns only the copied roadmap id', async () => {
+    const sourceCourse = createCourseEntity({
+      isPublic: true,
+      courseCountries: [],
+      courseDays: [],
+      courseRegions: [],
+    });
+
+    const { service, travelCourseRepository, userRepository, manager } =
+      createService(
+        {
+          findByIdWithAllRelations: jest.fn().mockResolvedValue(sourceCourse),
+        },
+        {},
+        {
+          findById: jest
+            .fn()
+            .mockResolvedValue({ id: 'target-user-id', name: '복사한 유저' }),
+        },
+      );
+
+    manager.save.mockImplementation(async (entity: unknown, value: any) => {
+      if (entity === TravelCourse) {
+        return { ...value, id: 'copied-course-id' };
+      }
+      return value;
+    });
+
+    await expect(
+      service.copyRoadmap('source-course-id', 'target-user-id'),
+    ).resolves.toEqual({
+      id: 'copied-course-id',
+    });
+
+    expect(
+      travelCourseRepository.findByIdWithAllRelations,
+    ).toHaveBeenCalledWith('source-course-id');
+    expect(userRepository.findById).toHaveBeenCalledWith('target-user-id');
   });
 });
