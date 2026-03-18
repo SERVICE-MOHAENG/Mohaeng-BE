@@ -38,6 +38,6 @@ export class FeedbackController {
     @CurrentUser() user: AuthenticatedUser,
     @Body() request: CreateFeedbackRequest,
   ): Promise<SubmitFeedbackResponse> {
-    return this.feedbackService.submitFeedback(user, request);
+    return this.feedbackService.submitFeedback(user.id, user.email, request);
   }
 }

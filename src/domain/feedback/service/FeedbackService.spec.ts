@@ -10,10 +10,8 @@ describe('FeedbackService', () => {
     const service = new FeedbackService(discordService);
 
     const result = await service.submitFeedback(
-      {
-        id: 'user-id',
-        email: 'user@example.com',
-      },
+      'user-id',
+      'user@example.com',
       {
         title: '  일정 수정이 어려워요  ',
         content: '  수정 후 결과를 바로 확인할 수 있으면 좋겠습니다.  ',
@@ -38,10 +36,8 @@ describe('FeedbackService', () => {
 
     await expect(
       service.submitFeedback(
-        {
-          id: 'user-id',
-          email: 'user@example.com',
-        },
+        'user-id',
+        'user@example.com',
         {
           title: '제목',
           content: '내용',
