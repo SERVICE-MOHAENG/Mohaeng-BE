@@ -37,6 +37,7 @@ describe('TravelCourseService', () => {
     travelCourseRepositoryOverrides: Record<string, jest.Mock> = {},
     itineraryJobRepositoryOverrides: Record<string, jest.Mock> = {},
     userRepositoryOverrides: Record<string, jest.Mock> = {},
+    courseLikeRepositoryOverrides: Record<string, jest.Mock> = {},
   ) => {
     const manager = {
       findOne: jest.fn(),
@@ -49,6 +50,7 @@ describe('TravelCourseService', () => {
       findById: jest.fn(),
       findByIdWithAllRelations: jest.fn(),
       findCoursesForMainPage: jest.fn(),
+      findPublicCoursesByRegion: jest.fn(),
       save: jest.fn(),
       countDistinctCompletedCountriesByUserId: jest.fn(),
       ...travelCourseRepositoryOverrides,
@@ -57,6 +59,12 @@ describe('TravelCourseService', () => {
     const userRepository = {
       findById: jest.fn(),
       ...userRepositoryOverrides,
+    };
+
+    const courseLikeRepository = {
+      existsByUserIdAndCourseId: jest.fn(),
+      findLikedCourseIds: jest.fn().mockResolvedValue(new Set<string>()),
+      ...courseLikeRepositoryOverrides,
     };
 
     const itineraryJobRepository = {
@@ -74,7 +82,7 @@ describe('TravelCourseService', () => {
     const service = new TravelCourseService(
       travelCourseRepository as any,
       userRepository as any,
-      {} as any,
+      courseLikeRepository as any,
       itineraryJobRepository as any,
       dataSource as any,
     );
@@ -83,6 +91,7 @@ describe('TravelCourseService', () => {
       service,
       travelCourseRepository,
       userRepository,
+      courseLikeRepository,
       itineraryJobRepository,
       manager,
       dataSource,
@@ -311,6 +320,85 @@ describe('TravelCourseService', () => {
       total: 1,
       totalPages: 1,
     });
+  });
+
+  it('uses batch liked course lookup for authenticated mainpage requests', async () => {
+    const course = createCourseEntity({
+      title: '오사카 미식 투어',
+      description: '먹거리 중심 일정',
+      isPublic: true,
+    });
+
+    const { service, courseLikeRepository } = createService(
+      {
+        findCoursesForMainPage: jest.fn().mockResolvedValue([[course], 1]),
+      },
+      {},
+      {},
+      {
+        findLikedCourseIds: jest
+          .fn()
+          .mockResolvedValue(new Set<string>(['course-id'])),
+      },
+    );
+
+    const result = await service.getCoursesForMainPage(
+      'latest',
+      undefined,
+      1,
+      10,
+      'user-id',
+    );
+
+    expect(courseLikeRepository.findLikedCourseIds).toHaveBeenCalledWith(
+      'user-id',
+      ['course-id'],
+    );
+    expect(courseLikeRepository.existsByUserIdAndCourseId).not.toHaveBeenCalled();
+    expect(result.courses[0].is_liked).toBe(true);
+  });
+
+  it('uses batch liked course lookup for region course requests', async () => {
+    const course = createCourseEntity({
+      title: '후쿠오카 산책',
+      description: '도심 산책 일정',
+      isPublic: true,
+    });
+
+    const { service, travelCourseRepository, courseLikeRepository } =
+      createService(
+        {
+          findPublicCoursesByRegion: jest.fn().mockResolvedValue([[course], 1]),
+        } as any,
+        {},
+        {},
+        {
+          findLikedCourseIds: jest
+            .fn()
+            .mockResolvedValue(new Set<string>(['course-id'])),
+        },
+      );
+
+    const result = await service.getPublicCoursesByRegion(
+      'region-id',
+      'latest',
+      1,
+      10,
+      'user-id',
+    );
+
+    expect(travelCourseRepository.findPublicCoursesByRegion).toHaveBeenCalledWith(
+      'region-id',
+      'latest',
+      1,
+      10,
+    );
+    expect(courseLikeRepository.findLikedCourseIds).toHaveBeenCalledWith(
+      'user-id',
+      ['course-id'],
+    );
+    expect(courseLikeRepository.existsByUserIdAndCourseId).not.toHaveBeenCalled();
+    expect(result.courses[0].isLiked).toBe(true);
   });
 
   it('returns only the copied roadmap id', async () => {

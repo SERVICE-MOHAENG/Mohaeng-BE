@@ -414,15 +414,15 @@ export class TravelCourseService {
     let courseResponses: MainPageCourseResponse[];
 
     if (userId) {
-      courseResponses = await Promise.all(
-        courses.map(async (course) => {
-          const isLiked =
-            await this.courseLikeRepository.existsByUserIdAndCourseId(
-              userId,
-              course.id,
-            );
-          return MainPageCourseResponse.fromEntity(course, isLiked);
-        }),
+      const likedCourseIds = await this.courseLikeRepository.findLikedCourseIds(
+        userId,
+        courses.map((course) => course.id),
+      );
+      courseResponses = courses.map((course) =>
+        MainPageCourseResponse.fromEntity(
+          course,
+          likedCourseIds.has(course.id),
+        ),
       );
     } else {
       courseResponses = courses.map((course) =>
@@ -457,18 +457,15 @@ export class TravelCourseService {
     let courseResponses: CourseResponse[];
 
     if (userId) {
-      courseResponses = await Promise.all(
-        courses.map(async (course) => {
-          const isLiked =
-            await this.courseLikeRepository.existsByUserIdAndCourseId(
-              userId,
-              course.id,
-            );
-          const response = this.mapToCourseResponse(course);
-          response.isLiked = isLiked;
-          return response;
-        }),
+      const likedCourseIds = await this.courseLikeRepository.findLikedCourseIds(
+        userId,
+        courses.map((course) => course.id),
       );
+      courseResponses = courses.map((course) => {
+        const response = this.mapToCourseResponse(course);
+        response.isLiked = likedCourseIds.has(course.id);
+        return response;
+      });
     } else {
       courseResponses = courses.map((course) =>
         this.mapToCourseResponse(course),
