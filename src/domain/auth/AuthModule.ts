@@ -9,6 +9,9 @@ import { EmailOtpService } from './service/EmailOtpService';
 import { GoogleStrategy } from './strategy/google.strategy';
 import { NaverStrategy } from './strategy/naver.strategy';
 import { KakaoStrategy } from './strategy/kakao.strategy';
+import { GoogleAuthCallbackGuard } from './guard/google-auth-callback.guard';
+import { NaverAuthCallbackGuard } from './guard/naver-auth-callback.guard';
+import { KakaoAuthCallbackGuard } from './guard/kakao-auth-callback.guard';
 
 /**
  * AuthModule
@@ -30,6 +33,9 @@ import { KakaoStrategy } from './strategy/kakao.strategy';
     GoogleStrategy,
     NaverStrategy,
     KakaoStrategy,
+    GoogleAuthCallbackGuard,
+    NaverAuthCallbackGuard,
+    KakaoAuthCallbackGuard,
   ],
   exports: [AuthService],
 })

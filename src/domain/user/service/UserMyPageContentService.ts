@@ -62,14 +62,12 @@ export class UserMyPageContentService {
       safePage,
       safeLimit,
     );
-
-    const blogsWithStatus = await Promise.all(
-      blogs.map(async (blog) =>
-        BlogResponse.fromEntityWithUserStatus(
-          blog,
-          await this.blogLikeRepository.existsByUserIdAndBlogId(userId, blog.id),
-        ),
-      ),
+    const likedBlogIds = await this.blogLikeRepository.findLikedBlogIds(
+      userId,
+      blogs.map((blog) => blog.id),
+    );
+    const blogsWithStatus = blogs.map((blog) =>
+      BlogResponse.fromEntityWithUserStatus(blog, likedBlogIds.has(blog.id)),
     );
 
     return {

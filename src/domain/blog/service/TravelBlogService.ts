@@ -76,16 +76,7 @@ export class TravelBlogService {
     limit: number = 6,
   ): Promise<BlogsResponse> {
     const [blogs, total] = await this.findByUserId(userId, page, limit);
-
-    const blogResponses = await Promise.all(
-      blogs.map(async (blog) => {
-        const isLiked = await this.blogLikeRepository.existsByUserIdAndBlogId(
-          userId,
-          blog.id,
-        );
-        return BlogResponse.fromEntityWithUserStatus(blog, isLiked);
-      }),
-    );
+    const blogResponses = await this.mapBlogsWithLikedStatus(blogs, userId);
 
     return {
       blogs: blogResponses,
@@ -222,15 +213,7 @@ export class TravelBlogService {
     let blogResponses: BlogResponse[];
 
     if (userId) {
-      blogResponses = await Promise.all(
-        blogs.map(async (blog) => {
-          const isLiked = await this.blogLikeRepository.existsByUserIdAndBlogId(
-            userId,
-            blog.id,
-          );
-          return BlogResponse.fromEntityWithUserStatus(blog, isLiked);
-        }),
-      );
+      blogResponses = await this.mapBlogsWithLikedStatus(blogs, userId);
     } else {
       blogResponses = blogs.map((blog) =>
         BlogResponse.fromEntityWithUser(blog),
@@ -244,5 +227,19 @@ export class TravelBlogService {
       total,
       totalPages: Math.ceil(total / limit),
     };
+  }
+
+  private async mapBlogsWithLikedStatus(
+    blogs: TravelBlog[],
+    userId: string,
+  ): Promise<BlogResponse[]> {
+    const likedBlogIds = await this.blogLikeRepository.findLikedBlogIds(
+      userId,
+      blogs.map((blog) => blog.id),
+    );
+
+    return blogs.map((blog) =>
+      BlogResponse.fromEntityWithUserStatus(blog, likedBlogIds.has(blog.id)),
+    );
   }
 }

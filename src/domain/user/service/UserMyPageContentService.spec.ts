@@ -123,6 +123,56 @@ describe('UserMyPageContentService', () => {
     });
   });
 
+  it('returns my blogs with batch liked lookup', async () => {
+    const travelBlogRepository = {
+      findByUserId: jest.fn().mockResolvedValue([
+        [
+          {
+            id: 'blog-id',
+            title: '오키나와 여행 기록',
+            content: '바다 중심 여행기',
+            imageUrl: null,
+            isPublic: true,
+            viewCount: 12,
+            likeCount: 4,
+            createdAt: new Date('2026-03-12T00:00:00.000Z'),
+            updatedAt: new Date('2026-03-12T00:00:00.000Z'),
+          },
+        ],
+        1,
+      ]),
+    };
+    const blogLikeRepository = {
+      findByUserId: jest.fn(),
+      existsByUserIdAndBlogId: jest.fn(),
+      findLikedBlogIds: jest
+        .fn()
+        .mockResolvedValue(new Set<string>(['blog-id'])),
+    };
+
+    const service = new UserMyPageContentService(
+      {} as any,
+      travelBlogRepository as any,
+      {} as any,
+      blogLikeRepository as any,
+      {} as any,
+      {} as any,
+    );
+
+    const result = await service.getMyBlogs('user-id', 1, 10);
+
+    expect(travelBlogRepository.findByUserId).toHaveBeenCalledWith(
+      'user-id',
+      1,
+      10,
+    );
+    expect(blogLikeRepository.findLikedBlogIds).toHaveBeenCalledWith('user-id', [
+      'blog-id',
+    ]);
+    expect(blogLikeRepository.existsByUserIdAndBlogId).not.toHaveBeenCalled();
+    expect(result.blogs[0].isLiked).toBe(true);
+  });
+
   it('returns liked roadmaps with isLiked set to true', async () => {
     const courseLikeRepository = {
       findByUserId: jest.fn().mockResolvedValue([

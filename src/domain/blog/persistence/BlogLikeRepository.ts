@@ -80,4 +80,25 @@ export class BlogLikeRepository {
     });
     return count > 0;
   }
+
+  async findLikedBlogIds(
+    userId: string,
+    blogIds: string[],
+  ): Promise<Set<string>> {
+    const uniqueBlogIds = [...new Set(blogIds)];
+    if (uniqueBlogIds.length === 0) {
+      return new Set<string>();
+    }
+
+    const rows = await this.repository
+      .createQueryBuilder('blogLike')
+      .innerJoin('blogLike.travelBlog', 'travelBlog')
+      .innerJoin('blogLike.user', 'user')
+      .select('travelBlog.id', 'blogId')
+      .where('user.id = :userId', { userId })
+      .andWhere('travelBlog.id IN (:...blogIds)', { blogIds: uniqueBlogIds })
+      .getRawMany<{ blogId: string }>();
+
+    return new Set(rows.map((row) => row.blogId));
+  }
 }

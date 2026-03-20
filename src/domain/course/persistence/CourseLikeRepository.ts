@@ -125,4 +125,27 @@ export class CourseLikeRepository {
     });
     return count > 0;
   }
+
+  async findLikedCourseIds(
+    userId: string,
+    courseIds: string[],
+  ): Promise<Set<string>> {
+    const uniqueCourseIds = [...new Set(courseIds)];
+    if (uniqueCourseIds.length === 0) {
+      return new Set<string>();
+    }
+
+    const rows = await this.repository
+      .createQueryBuilder('courseLike')
+      .innerJoin('courseLike.travelCourse', 'travelCourse')
+      .innerJoin('courseLike.user', 'user')
+      .select('travelCourse.id', 'courseId')
+      .where('user.id = :userId', { userId })
+      .andWhere('travelCourse.id IN (:...courseIds)', {
+        courseIds: uniqueCourseIds,
+      })
+      .getRawMany<{ courseId: string }>();
+
+    return new Set(rows.map((row) => row.courseId));
+  }
 }
