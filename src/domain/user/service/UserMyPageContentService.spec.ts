@@ -1,7 +1,7 @@
 import { UserMyPageContentService } from './UserMyPageContentService';
 
 describe('UserMyPageContentService', () => {
-  it('returns my roadmaps with normalized pagination and like state', async () => {
+  it('returns my roadmaps with normalized pagination and liked state', async () => {
     const travelCourseRepository = {
       findByUserId: jest.fn().mockResolvedValue([
         [
@@ -12,6 +12,7 @@ describe('UserMyPageContentService', () => {
             imageUrl: null,
             days: 1,
             nights: 0,
+            likeCount: 7,
             peopleCount: 2,
             travelStartDay: new Date('2026-03-20'),
             travelFinishDay: new Date('2026-03-20'),
@@ -22,41 +23,29 @@ describe('UserMyPageContentService', () => {
         1,
       ]),
     };
+    const courseLikeRepository = {
+      findLikedCourseIds: jest
+        .fn()
+        .mockResolvedValue(new Set<string>(['course-id'])),
+    };
     const service = new UserMyPageContentService(
       travelCourseRepository as any,
       {} as any,
+      courseLikeRepository as any,
       {} as any,
       {} as any,
-      {} as any,
-      {
-        find: jest.fn().mockResolvedValue([
-          {
-            travelCourseId: 'course-id',
-            llmCommentary: '추천 이유',
-            nextActionSuggestions: ['다음 행동'],
-            completedAt: new Date('2026-03-19T12:00:00.000Z'),
-            createdAt: new Date('2026-03-19T11:00:00.000Z'),
-          },
-        ]),
-      } as any,
     );
 
     await expect(service.getMyRoadmaps('user-id', 0, 99)).resolves.toEqual({
       courses: [
         {
-          data: {
-            start_date: '2026-03-20',
-            end_date: '2026-03-20',
-            trip_days: 1,
-            nights: 0,
-            people_count: 2,
-            tags: ['당일치기', '친구'],
-            title: '시부야 밤거리',
-            summary: '도쿄 야경 중심 일정',
-            itinerary: [],
-            llm_commentary: '추천 이유',
-            next_action_suggestion: ['다음 행동'],
-          },
+          id: 'course-id',
+          title: '시부야 밤거리',
+          start_date: '2026-03-20',
+          end_date: '2026-03-20',
+          tags: ['당일치기', '친구'],
+          like_count: 7,
+          is_liked: true,
         },
       ],
       page: 1,
@@ -69,6 +58,10 @@ describe('UserMyPageContentService', () => {
       'user-id',
       1,
       20,
+    );
+    expect(courseLikeRepository.findLikedCourseIds).toHaveBeenCalledWith(
+      'user-id',
+      ['course-id'],
     );
   });
 
@@ -95,7 +88,6 @@ describe('UserMyPageContentService', () => {
       {} as any,
       {} as any,
       blogLikeRepository as any,
-      {} as any,
       {} as any,
     );
 
@@ -156,7 +148,6 @@ describe('UserMyPageContentService', () => {
       {} as any,
       blogLikeRepository as any,
       {} as any,
-      {} as any,
     );
 
     const result = await service.getMyBlogs('user-id', 1, 10);
@@ -188,10 +179,12 @@ describe('UserMyPageContentService', () => {
               days: 3,
               likeCount: 10,
               modificationCount: 1,
+              travelStartDay: new Date('2026-03-12'),
+              travelFinishDay: new Date('2026-03-14'),
               user: { id: 'user-id', name: '동건 하' },
               courseCountries: [],
               courseRegions: [],
-              hashTags: [],
+              hashTags: [{ tagName: '#예술' }, { tagName: '#도시' }],
               courseDays: [],
               isPublic: true,
               isCompleted: false,
@@ -211,16 +204,19 @@ describe('UserMyPageContentService', () => {
       courseLikeRepository as any,
       {} as any,
       {} as any,
-      {} as any,
     );
 
     await expect(service.getLikedRoadmaps('user-id', 1, 10)).resolves.toEqual({
-      items: [
-        expect.objectContaining({
+      courses: [
+        {
           id: 'course-id',
           title: '뉴욕 예술 탐험',
-          isLiked: true,
-        }),
+          start_date: '2026-03-12',
+          end_date: '2026-03-14',
+          tags: ['예술', '도시'],
+          like_count: 10,
+          is_liked: true,
+        },
       ],
       page: 1,
       limit: 10,
@@ -254,7 +250,6 @@ describe('UserMyPageContentService', () => {
       {} as any,
       {} as any,
       regionLikeRepository as any,
-      {} as any,
     );
 
     await expect(service.getLikedRegions('user-id')).resolves.toEqual({
