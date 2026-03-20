@@ -30,6 +30,14 @@ import { SignupResponse } from './dto/response/SignupResponse';
 import { GoogleAuthGuard } from '../guard/google-auth.guard';
 import { NaverAuthGuard } from '../guard/naver-auth.guard';
 import { KakaoAuthGuard } from '../guard/kakao-auth.guard';
+import { GoogleAuthCallbackGuard } from '../guard/google-auth-callback.guard';
+import { NaverAuthCallbackGuard } from '../guard/naver-auth-callback.guard';
+import { KakaoAuthCallbackGuard } from '../guard/kakao-auth-callback.guard';
+import {
+  OAuthProviderName,
+  redirectOAuthFailure,
+  redirectOAuthSuccess,
+} from '../oauth-redirect.util';
 import { User } from '../../user/entity/User.entity';
 
 @ApiTags('auth')
@@ -152,7 +160,7 @@ export class AuthController {
   }
 
   @Get('google/callback')
-  @UseGuards(GoogleAuthGuard)
+  @UseGuards(GoogleAuthCallbackGuard)
   @ApiOperation({ summary: 'Google 로그인 콜백' })
   @ApiResponse({
     status: 302,
@@ -160,25 +168,15 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: '인증 실패' })
   async googleAuthRedirect(
-    @Req() req: Request & { user: User },
+    @Req() req: Request & { user?: User },
     @Res() res: Response,
   ): Promise<void> {
-    // Google OAuth 성공 후 일회용 인증 코드 발급
-    const code = await this.authService.generateOAuthCode(req.user);
-
-    // 프론트엔드 리다이렉트 URL 가져오기
-    const frontendRedirectUrl = this.configService.get<string>(
+    await this.handleOAuthCallback(
+      req.user,
+      res,
+      'google',
       'GOOGLE_FRONTEND_REDIRECT_URL',
     );
-
-    if (!frontendRedirectUrl) {
-      throw new Error(
-        'GOOGLE_FRONTEND_REDIRECT_URL 환경 변수가 설정되지 않았습니다. .env 파일에 해당 값을 설정해주세요.',
-      );
-    }
-
-    // 프론트엔드로 인증 코드 전달 (URL에 노출되지만 일회용이고 5분 후 만료)
-    res.redirect(`${frontendRedirectUrl}?code=${code}`);
   }
 
   @Post('oauth/exchange')
@@ -217,7 +215,7 @@ export class AuthController {
   }
 
   @Get('naver/callback')
-  @UseGuards(NaverAuthGuard)
+  @UseGuards(NaverAuthCallbackGuard)
   @ApiOperation({ summary: 'Naver 로그인 콜백' })
   @ApiResponse({
     status: 302,
@@ -225,25 +223,15 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: '인증 실패' })
   async naverAuthRedirect(
-    @Req() req: Request & { user: User },
+    @Req() req: Request & { user?: User },
     @Res() res: Response,
   ): Promise<void> {
-    // Naver OAuth 성공 후 일회용 인증 코드 발급
-    const code = await this.authService.generateOAuthCode(req.user);
-
-    // 프론트엔드 리다이렉트 URL 가져오기
-    const frontendRedirectUrl = this.configService.get<string>(
+    await this.handleOAuthCallback(
+      req.user,
+      res,
+      'naver',
       'NAVER_FRONTEND_REDIRECT_URL',
     );
-
-    if (!frontendRedirectUrl) {
-      throw new Error(
-        'NAVER_FRONTEND_REDIRECT_URL 환경 변수가 설정되지 않았습니다. .env 파일에 해당 값을 설정해주세요.',
-      );
-    }
-
-    // 프론트엔드로 인증 코드 전달 (URL에 노출되지만 일회용이고 5분 후 만료)
-    res.redirect(`${frontendRedirectUrl}?code=${code}`);
   }
 
   @Get('kakao/login')
@@ -259,7 +247,7 @@ export class AuthController {
   }
 
   @Get('kakao/callback')
-  @UseGuards(KakaoAuthGuard)
+  @UseGuards(KakaoAuthCallbackGuard)
   @ApiOperation({ summary: 'Kakao 로그인 콜백' })
   @ApiResponse({
     status: 302,
@@ -267,24 +255,52 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: '인증 실패' })
   async kakaoAuthRedirect(
-    @Req() req: Request & { user: User },
+    @Req() req: Request & { user?: User },
     @Res() res: Response,
   ): Promise<void> {
-    // Kakao OAuth 성공 후 일회용 인증 코드 발급
-    const code = await this.authService.generateOAuthCode(req.user);
-
-    // 프론트엔드 리다이렉트 URL 가져오기
-    const frontendRedirectUrl = this.configService.get<string>(
+    await this.handleOAuthCallback(
+      req.user,
+      res,
+      'kakao',
       'KAKAO_FRONTEND_REDIRECT_URL',
     );
+  }
+
+  private async handleOAuthCallback(
+    user: User | undefined,
+    response: Response,
+    provider: OAuthProviderName,
+    frontendRedirectUrlKey: string,
+  ): Promise<void> {
+    if (response.headersSent) {
+      return;
+    }
+
+    const frontendRedirectUrl =
+      this.getFrontendRedirectUrl(frontendRedirectUrlKey);
+
+    if (!user) {
+      redirectOAuthFailure(response, frontendRedirectUrl, provider);
+      return;
+    }
+
+    try {
+      const code = await this.authService.generateOAuthCode(user);
+      redirectOAuthSuccess(response, frontendRedirectUrl, code);
+    } catch (error) {
+      redirectOAuthFailure(response, frontendRedirectUrl, provider, error);
+    }
+  }
+
+  private getFrontendRedirectUrl(configKey: string): string {
+    const frontendRedirectUrl = this.configService.get<string>(configKey);
 
     if (!frontendRedirectUrl) {
       throw new Error(
-        'KAKAO_FRONTEND_REDIRECT_URL 환경 변수가 설정되지 않았습니다. .env 파일에 해당 값을 설정해주세요.',
+        `${configKey} 환경 변수가 설정되지 않았습니다. .env 파일에 해당 값을 설정해주세요.`,
       );
     }
 
-    // 프론트엔드로 인증 코드 전달 (URL에 노출되지만 일회용이고 5분 후 만료)
-    res.redirect(`${frontendRedirectUrl}?code=${code}`);
+    return frontendRedirectUrl;
   }
 }
