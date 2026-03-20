@@ -19,8 +19,7 @@ import { MyPageSummaryResponse } from './dto/response/MyPageSummaryResponse';
 import { UserMyPageSummaryService } from '../service/UserMyPageSummaryService';
 import { UserMyPageContentService } from '../service/UserMyPageContentService';
 import { MyPageLikedRegionsResponse } from './dto/response/MyPageLikedRegionsResponse';
-import { CourseDetailListResponse } from '../../course/presentation/dto/response/CourseDetailListResponse';
-import { CourseLikesResponse } from '../../course/presentation/dto/response/CourseLikesResponse';
+import { MyPageRoadmapsResponse } from './dto/response/MyPageRoadmapsResponse';
 import { BlogsResponse } from '../../blog/presentation/dto/response/BlogsResponse';
 import { BlogLikesResponse } from '../../blog/presentation/dto/response/BlogLikesResponse';
 
@@ -59,12 +58,12 @@ export class UserController {
   @ApiResponse({
     status: 200,
     description: '내 여행 일정 조회 성공',
-    type: CourseDetailListResponse,
+    type: MyPageRoadmapsResponse,
   })
   async getMyRoadmaps(
     @UserId() userId: string,
     @Query() request: GetMyPageContentRequest,
-  ): Promise<CourseDetailListResponse> {
+  ): Promise<MyPageRoadmapsResponse> {
     return this.userMyPageContentService.getMyRoadmaps(
       userId,
       request.page,
@@ -97,12 +96,12 @@ export class UserController {
   @ApiResponse({
     status: 200,
     description: '좋아요한 여행 일정 조회 성공',
-    type: CourseLikesResponse,
+    type: MyPageRoadmapsResponse,
   })
   async getLikedRoadmaps(
     @UserId() userId: string,
     @Query() request: GetMyPageContentRequest,
-  ): Promise<CourseLikesResponse> {
+  ): Promise<MyPageRoadmapsResponse> {
     return this.userMyPageContentService.getLikedRoadmaps(
       userId,
       request.page,

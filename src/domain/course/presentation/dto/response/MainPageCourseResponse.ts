@@ -8,11 +8,11 @@ export class MainPageCourseResponse {
   @ApiProperty({ description: '코스 제목' })
   title: string;
 
-  @ApiProperty({ description: '총 여행 일수' })
-  trip_days: number;
+  @ApiProperty({ description: '여행 시작 날짜 (YYYY-MM-DD)' })
+  start_date: string;
 
-  @ApiProperty({ description: '코스 요약', nullable: true })
-  summary: string | null;
+  @ApiProperty({ description: '여행 종료 날짜 (YYYY-MM-DD)' })
+  end_date: string;
 
   @ApiProperty({ description: '태그 목록', type: [String] })
   tags: string[];
@@ -23,9 +23,6 @@ export class MainPageCourseResponse {
   @ApiProperty({ description: '현재 사용자의 좋아요 여부' })
   is_liked: boolean;
 
-  @ApiProperty({ description: '대표 이미지 URL', nullable: true })
-  image_url: string | null;
-
   static fromEntity(
     course: TravelCourse,
     isLiked: boolean = false,
@@ -33,14 +30,28 @@ export class MainPageCourseResponse {
     const response = new MainPageCourseResponse();
     response.id = course.id;
     response.title = course.title;
-    response.trip_days = course.days;
-    response.summary = course.description ?? null;
+    response.start_date = MainPageCourseResponse.formatDate(
+      course.travelStartDay,
+    );
+    response.end_date = MainPageCourseResponse.formatDate(
+      course.travelFinishDay,
+    );
     response.tags = (course.hashTags || []).map((tag) =>
       tag.tagName.startsWith('#') ? tag.tagName.slice(1) : tag.tagName,
     );
     response.like_count = course.likeCount;
     response.is_liked = isLiked;
-    response.image_url = course.imageUrl ?? null;
     return response;
+  }
+
+  private static formatDate(date: Date | string): string {
+    if (typeof date === 'string') {
+      return date.slice(0, 10);
+    }
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 }
