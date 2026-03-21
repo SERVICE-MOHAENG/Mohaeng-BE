@@ -19,9 +19,9 @@ import { MyPageSummaryResponse } from './dto/response/MyPageSummaryResponse';
 import { UserMyPageSummaryService } from '../service/UserMyPageSummaryService';
 import { UserMyPageContentService } from '../service/UserMyPageContentService';
 import { MyPageLikedRegionsResponse } from './dto/response/MyPageLikedRegionsResponse';
-import { MyPageRoadmapsResponse } from './dto/response/MyPageRoadmapsResponse';
 import { BlogsResponse } from '../../blog/presentation/dto/response/BlogsResponse';
 import { BlogLikesResponse } from '../../blog/presentation/dto/response/BlogLikesResponse';
+import { RoadmapListResponse } from '../../course/presentation/dto/response/RoadmapListResponse';
 
 /**
  * UserController
@@ -58,12 +58,12 @@ export class UserController {
   @ApiResponse({
     status: 200,
     description: '내 여행 일정 조회 성공',
-    type: MyPageRoadmapsResponse,
+    type: RoadmapListResponse,
   })
   async getMyRoadmaps(
     @UserId() userId: string,
     @Query() request: GetMyPageContentRequest,
-  ): Promise<MyPageRoadmapsResponse> {
+  ): Promise<RoadmapListResponse> {
     return this.userMyPageContentService.getMyRoadmaps(
       userId,
       request.page,
@@ -96,12 +96,12 @@ export class UserController {
   @ApiResponse({
     status: 200,
     description: '좋아요한 여행 일정 조회 성공',
-    type: MyPageRoadmapsResponse,
+    type: RoadmapListResponse,
   })
   async getLikedRoadmaps(
     @UserId() userId: string,
     @Query() request: GetMyPageContentRequest,
-  ): Promise<MyPageRoadmapsResponse> {
+  ): Promise<RoadmapListResponse> {
     return this.userMyPageContentService.getLikedRoadmaps(
       userId,
       request.page,
