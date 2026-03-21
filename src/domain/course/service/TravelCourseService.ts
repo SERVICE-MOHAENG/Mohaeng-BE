@@ -22,8 +22,7 @@ import { CourseDetailResponse } from '../presentation/dto/response/CourseDetailR
 import { CopyRoadmapResponse } from '../presentation/dto/response/CopyRoadmapResponse';
 import { CoursesResponse } from '../presentation/dto/response/CoursesResponse';
 import { CourseDetailListResponse } from '../presentation/dto/response/CourseDetailListResponse';
-import { MainPageCourseResponse } from '../presentation/dto/response/MainPageCourseResponse';
-import { MainPageCoursesResponse } from '../presentation/dto/response/MainPageCoursesResponse';
+import { RoadmapListResponse } from '../presentation/dto/response/RoadmapListResponse';
 import {
   ItineraryJob,
   ItineraryJobType,
@@ -402,7 +401,7 @@ export class TravelCourseService {
     page: number = 1,
     limit: number = 10,
     userId?: string,
-  ): Promise<MainPageCoursesResponse> {
+  ): Promise<RoadmapListResponse> {
     const [courses, total] =
       await this.travelCourseRepository.findCoursesForMainPage(
         sortBy,
@@ -411,32 +410,14 @@ export class TravelCourseService {
         limit,
       );
 
-    let courseResponses: MainPageCourseResponse[];
+    const likedCourseIds = userId
+      ? await this.courseLikeRepository.findLikedCourseIds(
+          userId,
+          courses.map((course) => course.id),
+        )
+      : new Set<string>();
 
-    if (userId) {
-      const likedCourseIds = await this.courseLikeRepository.findLikedCourseIds(
-        userId,
-        courses.map((course) => course.id),
-      );
-      courseResponses = courses.map((course) =>
-        MainPageCourseResponse.fromEntity(
-          course,
-          likedCourseIds.has(course.id),
-        ),
-      );
-    } else {
-      courseResponses = courses.map((course) =>
-        MainPageCourseResponse.fromEntity(course),
-      );
-    }
-
-    return {
-      courses: courseResponses,
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-    };
+    return RoadmapListResponse.from(courses, total, page, limit, likedCourseIds);
   }
 
   async getPublicCoursesByRegion(

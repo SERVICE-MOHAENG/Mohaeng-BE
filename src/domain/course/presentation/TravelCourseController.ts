@@ -29,7 +29,7 @@ import { UpdateCourseCompletionRequest } from './dto/request/UpdateCourseComplet
 import { CourseResponse } from './dto/response/CourseResponse';
 import { CourseDetailResponse } from './dto/response/CourseDetailResponse';
 import { CopyRoadmapResponse } from './dto/response/CopyRoadmapResponse';
-import { MainPageCoursesResponse } from './dto/response/MainPageCoursesResponse';
+import { RoadmapListResponse } from './dto/response/RoadmapListResponse';
 
 /**
  * TravelCourseController
@@ -62,13 +62,13 @@ export class TravelCourseController {
   @ApiResponse({
     status: 200,
     description: '조회 성공',
-    type: MainPageCoursesResponse,
+    type: RoadmapListResponse,
   })
   @ApiResponse({ status: 400, description: '잘못된 요청' })
   async getMainpageCourses(
     @Query() request: GetCoursesRequest,
     @UserId() userId?: string,
-  ): Promise<MainPageCoursesResponse> {
+  ): Promise<RoadmapListResponse> {
     return this.travelCourseService.getCoursesForMainPage(
       request.sortBy,
       request.countryCode,

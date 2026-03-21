@@ -5,10 +5,10 @@ import { CourseLikeRepository } from '../../course/persistence/CourseLikeReposit
 import { BlogLikeRepository } from '../../blog/persistence/BlogLikeRepository';
 import { RegionLikeRepository } from '../../country/persistence/RegionLikeRepository';
 import { MyPageLikedRegionsResponse, MyPageRegionCardResponse } from '../presentation/dto/response/MyPageLikedRegionsResponse';
-import { MyPageRoadmapsResponse, MyPageRoadmapCardResponse } from '../presentation/dto/response/MyPageRoadmapsResponse';
 import { BlogsResponse } from '../../blog/presentation/dto/response/BlogsResponse';
 import { BlogResponse } from '../../blog/presentation/dto/response/BlogResponse';
 import { BlogLikesResponse } from '../../blog/presentation/dto/response/BlogLikesResponse';
+import { RoadmapListResponse } from '../../course/presentation/dto/response/RoadmapListResponse';
 
 @Injectable()
 export class UserMyPageContentService {
@@ -24,7 +24,7 @@ export class UserMyPageContentService {
     userId: string,
     page: number = 1,
     limit: number = 10,
-  ): Promise<MyPageRoadmapsResponse> {
+  ): Promise<RoadmapListResponse> {
     const { safePage, safeLimit } = this.normalizePagination(page, limit);
     const [courses, total] = await this.travelCourseRepository.findByUserId(
       userId,
@@ -36,16 +36,12 @@ export class UserMyPageContentService {
       courses.map((course) => course.id),
     );
 
-    return MyPageRoadmapsResponse.from(
-      courses.map((course) =>
-        MyPageRoadmapCardResponse.fromEntity(
-          course,
-          likedCourseIds.has(course.id),
-        ),
-      ),
+    return RoadmapListResponse.from(
+      courses,
       total,
       safePage,
       safeLimit,
+      likedCourseIds,
     );
   }
 
@@ -81,21 +77,21 @@ export class UserMyPageContentService {
     userId: string,
     page: number = 1,
     limit: number = 10,
-  ): Promise<MyPageRoadmapsResponse> {
+  ): Promise<RoadmapListResponse> {
     const { safePage, safeLimit } = this.normalizePagination(page, limit);
     const [likes, total] = await this.courseLikeRepository.findByUserId(
       userId,
       safePage,
       safeLimit,
     );
+    const courses = likes.map((like) => like.travelCourse);
 
-    return MyPageRoadmapsResponse.from(
-      likes.map((like) =>
-        MyPageRoadmapCardResponse.fromEntity(like.travelCourse, true),
-      ),
+    return RoadmapListResponse.from(
+      courses,
       total,
       safePage,
       safeLimit,
+      new Set(courses.map((course) => course.id)),
     );
   }
 

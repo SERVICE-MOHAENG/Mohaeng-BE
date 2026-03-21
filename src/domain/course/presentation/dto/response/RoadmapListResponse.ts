@@ -1,8 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { TravelCourse } from '../../../../course/entity/TravelCourse.entity';
-import { MyPagePaginatedResponse } from './MyPagePaginatedResponse';
+import { TravelCourse } from '../../../entity/TravelCourse.entity';
 
-export class MyPageRoadmapCardResponse {
+export class RoadmapCardResponse {
   @ApiProperty({ description: '로드맵 ID' })
   id: string;
 
@@ -27,16 +26,12 @@ export class MyPageRoadmapCardResponse {
   static fromEntity(
     course: TravelCourse,
     isLiked: boolean = false,
-  ): MyPageRoadmapCardResponse {
-    const response = new MyPageRoadmapCardResponse();
+  ): RoadmapCardResponse {
+    const response = new RoadmapCardResponse();
     response.id = course.id;
     response.title = course.title;
-    response.start_date = MyPageRoadmapCardResponse.formatDate(
-      course.travelStartDay,
-    );
-    response.end_date = MyPageRoadmapCardResponse.formatDate(
-      course.travelFinishDay,
-    );
+    response.start_date = RoadmapCardResponse.formatDate(course.travelStartDay);
+    response.end_date = RoadmapCardResponse.formatDate(course.travelFinishDay);
     response.tags =
       course.hashTags?.map((hashTag) =>
         hashTag.tagName.startsWith('#')
@@ -60,21 +55,36 @@ export class MyPageRoadmapCardResponse {
   }
 }
 
-export class MyPageRoadmapsResponse extends MyPagePaginatedResponse {
+export class RoadmapListResponse {
   @ApiProperty({
     description: '로드맵 목록',
-    type: [MyPageRoadmapCardResponse],
+    type: [RoadmapCardResponse],
   })
-  courses: MyPageRoadmapCardResponse[];
+  courses: RoadmapCardResponse[];
+
+  @ApiProperty({ description: '현재 페이지' })
+  page: number;
+
+  @ApiProperty({ description: '페이지 크기' })
+  limit: number;
+
+  @ApiProperty({ description: '전체 개수' })
+  total: number;
+
+  @ApiProperty({ description: '전체 페이지 수' })
+  totalPages: number;
 
   static from(
-    courses: MyPageRoadmapCardResponse[],
+    courses: TravelCourse[],
     total: number,
     page: number,
     limit: number,
-  ): MyPageRoadmapsResponse {
-    const response = new MyPageRoadmapsResponse();
-    response.courses = courses;
+    likedCourseIds: Set<string> = new Set<string>(),
+  ): RoadmapListResponse {
+    const response = new RoadmapListResponse();
+    response.courses = courses.map((course) =>
+      RoadmapCardResponse.fromEntity(course, likedCourseIds.has(course.id)),
+    );
     response.page = page;
     response.limit = limit;
     response.total = total;
