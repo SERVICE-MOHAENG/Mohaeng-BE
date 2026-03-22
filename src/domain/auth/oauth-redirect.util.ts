@@ -18,6 +18,16 @@ interface OAuthErrorPayload {
   message: string;
 }
 
+export interface OAuthFailureLogPayload {
+  provider: OAuthProviderName;
+  queryError?: string;
+  queryErrorDescription?: string;
+  errorCode?: string;
+  errorMessage?: string;
+  infoCode?: string;
+  infoMessage?: string;
+}
+
 export function buildOAuthRedirectUrl(
   baseUrl: string,
   params: OAuthRedirectParams,
@@ -104,6 +114,30 @@ export function extractOAuthFailurePayload(
   };
 }
 
+export function buildOAuthFailureLogPayload(
+  provider: OAuthProviderName,
+  error?: unknown,
+  info?: unknown,
+  request?: Pick<Request, 'query'>,
+): OAuthFailureLogPayload {
+  const errorPayload =
+    extractHttpExceptionPayload(error) ?? extractRecordPayloadForLogging(error);
+  const infoPayload =
+    extractHttpExceptionPayload(info) ?? extractRecordPayloadForLogging(info);
+
+  return compactOAuthFailureLogPayload({
+    provider,
+    queryError: getQueryStringValue(request?.query?.error),
+    queryErrorDescription:
+      getQueryStringValue(request?.query?.error_description) ??
+      getQueryStringValue(request?.query?.message),
+    errorCode: errorPayload?.errorCode,
+    errorMessage: errorPayload?.message ?? extractPlainMessage(error),
+    infoCode: infoPayload?.errorCode,
+    infoMessage: infoPayload?.message ?? extractPlainMessage(info),
+  });
+}
+
 function extractHttpExceptionPayload(error: unknown): OAuthErrorPayload | null {
   if (!(error instanceof HttpException)) {
     return null;
@@ -163,6 +197,33 @@ function extractRecordPayload(value: unknown): OAuthErrorPayload | null {
   };
 }
 
+function extractRecordPayloadForLogging(
+  value: unknown,
+): Partial<OAuthErrorPayload> | null {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const errorCode =
+    getStringValue(record.errorCode) ??
+    getStringValue(record.code) ??
+    extractNestedStringValue(record.error, 'errorCode') ??
+    extractNestedStringValue(record.error, 'code');
+  const message =
+    getStringValue(record.message) ??
+    extractNestedStringValue(record.error, 'message');
+
+  if (!errorCode && !message) {
+    return null;
+  }
+
+  return {
+    errorCode,
+    message,
+  };
+}
+
 function extractNestedStringValue(
   value: unknown,
   key: string,
@@ -180,6 +241,28 @@ function getQueryStringValue(value: unknown): string | undefined {
   }
 
   return getStringValue(value);
+}
+
+function compactOAuthFailureLogPayload(
+  payload: OAuthFailureLogPayload,
+): OAuthFailureLogPayload {
+  return Object.fromEntries(
+    Object.entries(payload).filter(
+      ([, value]) => value !== undefined && value !== null && value !== '',
+    ),
+  ) as OAuthFailureLogPayload;
+}
+
+function extractPlainMessage(value: unknown): string | undefined {
+  if (value instanceof Error) {
+    return getStringValue(value.message);
+  }
+
+  if (typeof value === 'string') {
+    return getStringValue(value);
+  }
+
+  return undefined;
 }
 
 function getStringValue(value: unknown): string | undefined {

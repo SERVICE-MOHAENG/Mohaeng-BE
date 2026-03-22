@@ -4,6 +4,7 @@ import { Strategy } from 'passport-kakao';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from '../service/AuthService';
 import { AuthKakaoProfileInvalidException } from '../exception/AuthKakaoProfileInvalidException';
+import { User } from '../../user/entity/User.entity';
 
 @Injectable()
 export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
@@ -41,8 +42,7 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
     accessToken: string,
     refreshToken: string,
     profile: any,
-    done: any,
-  ): Promise<void> {
+  ): Promise<User> {
     void accessToken;
     void refreshToken;
 
@@ -58,13 +58,11 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
       throw new AuthKakaoProfileInvalidException();
     }
 
-    const user = await this.authService.validateKakaoUser({
+    return this.authService.validateKakaoUser({
       providerId,
       email,
       name: nickname,
       picture: profileImage,
     });
-
-    done(null, user);
   }
 }

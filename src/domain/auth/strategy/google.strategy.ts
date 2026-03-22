@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Profile, Strategy, VerifyCallback } from 'passport-google-oauth20';
+import { Profile, Strategy } from 'passport-google-oauth20';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from '../service/AuthService';
 import { AuthGoogleProfileInvalidException } from '../exception/AuthGoogleProfileInvalidException';
+import { User } from '../../user/entity/User.entity';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
@@ -42,29 +43,31 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     accessToken: string,
     refreshToken: string,
     profile: Profile,
-    done: VerifyCallback,
-  ): Promise<void> {
+  ): Promise<User> {
     void accessToken;
     void refreshToken;
     // 안전한 데이터 추출 (Optional chaining + 기본값)
     const email = profile.emails?.[0]?.value ?? null;
-    const givenName = profile.name?.givenName ?? '';
-    const familyName = profile.name?.familyName ?? '';
+    const givenName = profile.name?.givenName?.trim() ?? '';
+    const familyName = profile.name?.familyName?.trim() ?? '';
+    const displayName = profile.displayName?.trim() ?? '';
     const picture = profile.photos?.[0]?.value;
     const providerId = profile.id;
+    const emailLocalPart = email?.split('@')[0]?.trim() ?? '';
+    const name = givenName
+      ? [givenName, familyName].filter(Boolean).join(' ')
+      : displayName || emailLocalPart;
 
-    // 필수 필드 검증: 이메일, 이름, providerId가 없으면 인증 실패
-    if (!email || !givenName || !providerId) {
+    // 필수 필드 검증: 이메일, providerId가 없으면 인증 실패
+    if (!email || !providerId || !name) {
       throw new AuthGoogleProfileInvalidException();
     }
 
-    const user = await this.authService.validateGoogleUser({
+    return this.authService.validateGoogleUser({
       providerId,
       email,
-      name: givenName + (familyName ? ' ' + familyName : ''),
+      name,
       picture,
     });
-
-    done(null, user);
   }
 }

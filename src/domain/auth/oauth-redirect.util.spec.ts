@@ -2,9 +2,11 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiResponseDto } from '../../global/dto/ApiResponseDto';
 import {
+  buildOAuthFailureLogPayload,
   buildOAuthRedirectUrl,
   extractOAuthFailurePayload,
   redirectOAuthFailure,
+  redirectOAuthSuccess,
 } from './oauth-redirect.util';
 
 describe('oauth-redirect.util', () => {
@@ -54,5 +56,47 @@ describe('oauth-redirect.util', () => {
     expect(response.redirect).toHaveBeenCalledWith(
       'http://localhost:3000/oauth/callback/google?errorCode=access_denied&message=%EC%82%AC%EC%9A%A9%EC%9E%90%EA%B0%80+%EB%A1%9C%EA%B7%B8%EC%9D%B8%EC%9D%84+%EC%B7%A8%EC%86%8C%ED%96%88%EC%8A%B5%EB%8B%88%EB%8B%A4&provider=google',
     );
+  });
+
+  it('redirects success responses with a code param', () => {
+    const response = {
+      redirect: jest.fn(),
+    } as unknown as Response;
+
+    redirectOAuthSuccess(
+      response,
+      'http://localhost:3000/oauth/callback/google',
+      'oauth-code',
+    );
+
+    expect(response.redirect).toHaveBeenCalledWith(
+      'http://localhost:3000/oauth/callback/google?code=oauth-code',
+    );
+  });
+
+  it('builds a safe oauth failure log payload', () => {
+    expect(
+      buildOAuthFailureLogPayload(
+        'google',
+        new Error('provider failure'),
+        {
+          errorCode: 'TRIP_CORE_HE_AUTH_A004',
+          message: '이미 다른 방식으로 가입된 이메일입니다',
+        },
+        {
+          query: {
+            error: 'access_denied',
+            error_description: '사용자가 로그인을 취소했습니다',
+          },
+        },
+      ),
+    ).toEqual({
+      provider: 'google',
+      queryError: 'access_denied',
+      queryErrorDescription: '사용자가 로그인을 취소했습니다',
+      errorMessage: 'provider failure',
+      infoCode: 'TRIP_CORE_HE_AUTH_A004',
+      infoMessage: '이미 다른 방식으로 가입된 이메일입니다',
+    });
   });
 });

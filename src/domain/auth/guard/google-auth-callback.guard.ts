@@ -2,12 +2,19 @@ import { ExecutionContext, Injectable } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
-import { redirectOAuthFailure } from '../oauth-redirect.util';
+import {
+  buildOAuthFailureLogPayload,
+  redirectOAuthFailure,
+} from '../oauth-redirect.util';
+import { LogInterceptorService } from '../../../global/logger/LogInterceptorService';
 
 @Injectable()
 export class GoogleAuthCallbackGuard extends AuthGuard('google') {
+  private readonly logger = new LogInterceptorService();
+
   constructor(private readonly configService: ConfigService) {
     super();
+    this.logger.setContext(GoogleAuthCallbackGuard.name);
   }
 
   handleRequest<TUser = unknown>(
@@ -22,6 +29,16 @@ export class GoogleAuthCallbackGuard extends AuthGuard('google') {
     if (err || !user) {
       const request = context.switchToHttp().getRequest<Request>();
       const response = context.switchToHttp().getResponse<Response>();
+      const failurePayload = buildOAuthFailureLogPayload(
+        'google',
+        err,
+        info,
+        request,
+      );
+
+      this.logger.warn(
+        `[OAUTH_CALLBACK_FAILURE] ${JSON.stringify(failurePayload)}`,
+      );
 
       redirectOAuthFailure(
         response,
