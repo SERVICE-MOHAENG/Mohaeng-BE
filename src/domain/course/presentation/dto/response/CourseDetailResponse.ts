@@ -60,6 +60,9 @@ class CourseDetailDataResponse {
   @ApiProperty({ description: '총 인원 수' })
   people_count: number;
 
+  @ApiProperty({ description: '여행 완료 여부' })
+  is_completed: boolean;
+
   @ApiProperty({ description: '여행 특징 태그', type: [String] })
   tags: string[];
 
@@ -94,6 +97,7 @@ export class CourseDetailResponse {
       trip_days: course.days,
       nights: course.nights,
       people_count: course.peopleCount,
+      is_completed: course.isCompleted ?? false,
       tags: (course.hashTags || []).map((tag) =>
         tag.tagName.startsWith('#') ? tag.tagName.slice(1) : tag.tagName,
       ),

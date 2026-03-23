@@ -11,6 +11,7 @@ describe('CourseDetailResponse', () => {
       nights: 2,
       days: 3,
       peopleCount: 2,
+      isCompleted: true,
       travelStartDay: new Date('2026-02-28'),
       travelFinishDay: new Date('2026-03-02'),
       hashTags: [{ tagName: '#뉴욕' }, { tagName: '#예술' }],
@@ -49,6 +50,7 @@ describe('CourseDetailResponse', () => {
     expect(response.data.end_date).toBe('2026-03-02');
     expect(response.data.trip_days).toBe(3);
     expect(response.data.people_count).toBe(2);
+    expect(response.data.is_completed).toBe(true);
     expect(response.data.tags).toEqual(['뉴욕', '예술']);
     expect(response.data.itinerary[0].day_number).toBe(1);
     expect(response.data.itinerary[0].places[0].visit_time).toBe('09:00');
