@@ -6,8 +6,6 @@ import { VisitedCountryAccessDeniedException } from '../exception/VisitedCountry
 import { User } from '../../user/entity/User.entity';
 import { Country } from '../../country/entity/Country.entity';
 import { AddVisitedCountryRequest } from '../presentation/dto/request/AddVisitedCountryRequest';
-import { UserRepository } from '../../user/persistence/UserRepository';
-import { UserNotFoundException } from '../../user/exception/UserNotFoundException';
 
 /**
  * UserVisitedCountry Service
@@ -18,7 +16,6 @@ import { UserNotFoundException } from '../../user/exception/UserNotFoundExceptio
 export class UserVisitedCountryService {
   constructor(
     private readonly userVisitedCountryRepository: UserVisitedCountryRepository,
-    private readonly userRepository: UserRepository,
   ) {}
 
   /**
@@ -59,18 +56,6 @@ export class UserVisitedCountryService {
    */
   async countByUserId(userId: string): Promise<number> {
     return this.userVisitedCountryRepository.countByUserId(userId);
-  }
-
-  /**
-   * 저장된 방문 국가 수 조회
-   */
-  async getVisitedCountryCount(userId: string): Promise<number> {
-    const user = await this.userRepository.findById(userId);
-    if (!user) {
-      throw new UserNotFoundException();
-    }
-
-    return user.visitedCountries;
   }
 
   /**
