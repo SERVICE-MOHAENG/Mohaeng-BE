@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { CourseLikeRepository } from '../persistence/CourseLikeRepository';
 import { TravelCourseRepository } from '../persistence/TravelCourseRepository';
 import { CourseLike } from '../entity/CourseLike.entity';
@@ -24,6 +24,23 @@ export class CourseLikeService {
     private readonly dataSource: DataSource,
   ) {}
 
+  private async findLockedCourse(
+    courseRepo: Repository<TravelCourse>,
+    courseId: string,
+  ): Promise<{ course: TravelCourse | null; ownerId: string | null }> {
+    const { entities, raw } = await courseRepo
+      .createQueryBuilder('course')
+      .addSelect('course.user_id', 'ownerId')
+      .where('course.id = :courseId', { courseId })
+      .setLock('pessimistic_write')
+      .getRawAndEntities();
+
+    return {
+      course: entities[0] ?? null,
+      ownerId: raw[0]?.ownerId ?? null,
+    };
+  }
+
   /**
    * 좋아요 추가
    * @description
@@ -37,15 +54,14 @@ export class CourseLikeService {
       const likeRepo = manager.getRepository(CourseLike);
 
       // 코스 존재 확인 (비관적 락 적용)
-      const course = await courseRepo.findOne({
-        where: { id: courseId },
-        relations: ['user'],
-        lock: { mode: 'pessimistic_write' },
-      });
+      const { course, ownerId } = await this.findLockedCourse(
+        courseRepo,
+        courseId,
+      );
       if (!course) {
         throw new CourseNotFoundException();
       }
-      if (!course.isPublic && course.user.id !== userId) {
+      if (!course.isPublic && ownerId !== userId) {
         throw new CourseAccessDeniedException();
       }
 
@@ -87,15 +103,14 @@ export class CourseLikeService {
       const likeRepo = manager.getRepository(CourseLike);
 
       // 코스 존재 확인 (비관적 락 적용)
-      const course = await courseRepo.findOne({
-        where: { id: courseId },
-        relations: ['user'],
-        lock: { mode: 'pessimistic_write' },
-      });
+      const { course, ownerId } = await this.findLockedCourse(
+        courseRepo,
+        courseId,
+      );
       if (!course) {
         throw new CourseNotFoundException();
       }
-      if (!course.isPublic && course.user.id !== userId) {
+      if (!course.isPublic && ownerId !== userId) {
         throw new CourseAccessDeniedException();
       }
 

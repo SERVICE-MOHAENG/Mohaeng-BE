@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { BlogLikeRepository } from '../persistence/BlogLikeRepository';
 import { TravelBlogRepository } from '../persistence/TravelBlogRepository';
 import { BlogLike } from '../entity/BlogLike.entity';
@@ -24,6 +24,23 @@ export class BlogLikeService {
     private readonly dataSource: DataSource,
   ) {}
 
+  private async findLockedBlog(
+    blogRepo: Repository<TravelBlog>,
+    blogId: string,
+  ): Promise<{ blog: TravelBlog | null; ownerId: string | null }> {
+    const { entities, raw } = await blogRepo
+      .createQueryBuilder('blog')
+      .addSelect('blog.user_id', 'ownerId')
+      .where('blog.id = :blogId', { blogId })
+      .setLock('pessimistic_write')
+      .getRawAndEntities();
+
+    return {
+      blog: entities[0] ?? null,
+      ownerId: raw[0]?.ownerId ?? null,
+    };
+  }
+
   /**
    * 좋아요 추가
    * @description
@@ -37,15 +54,11 @@ export class BlogLikeService {
       const likeRepo = manager.getRepository(BlogLike);
 
       // 블로그 존재 확인 (비관적 락 적용)
-      const blog = await blogRepo.findOne({
-        where: { id: blogId },
-        relations: ['user'],
-        lock: { mode: 'pessimistic_write' },
-      });
+      const { blog, ownerId } = await this.findLockedBlog(blogRepo, blogId);
       if (!blog) {
         throw new BlogNotFoundException();
       }
-      if (!blog.isPublic && blog.user.id !== userId) {
+      if (!blog.isPublic && ownerId !== userId) {
         throw new BlogAccessDeniedException();
       }
 
@@ -87,15 +100,11 @@ export class BlogLikeService {
       const likeRepo = manager.getRepository(BlogLike);
 
       // 블로그 존재 확인 (비관적 락 적용)
-      const blog = await blogRepo.findOne({
-        where: { id: blogId },
-        relations: ['user'],
-        lock: { mode: 'pessimistic_write' },
-      });
+      const { blog, ownerId } = await this.findLockedBlog(blogRepo, blogId);
       if (!blog) {
         throw new BlogNotFoundException();
       }
-      if (!blog.isPublic && blog.user.id !== userId) {
+      if (!blog.isPublic && ownerId !== userId) {
         throw new BlogAccessDeniedException();
       }
 
