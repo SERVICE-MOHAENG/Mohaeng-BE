@@ -5,7 +5,6 @@ import { UserVisitedCountryRepository } from './persistence/UserVisitedCountryRe
 import { UserVisitedCountryService } from './service/UserVisitedCountryService';
 import { UserVisitedCountryController } from './presentation/UserVisitedCountryController';
 import { CountryModule } from '../country/CountryModule';
-import { UserModule } from '../user/UserModule';
 
 /**
  * VisitedCountry Module
@@ -13,11 +12,7 @@ import { UserModule } from '../user/UserModule';
  * - 사용자 방문 국가 도메인 모듈
  */
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([UserVisitedCountry]),
-    CountryModule,
-    UserModule,
-  ],
+  imports: [TypeOrmModule.forFeature([UserVisitedCountry]), CountryModule],
   providers: [UserVisitedCountryRepository, UserVisitedCountryService],
   controllers: [UserVisitedCountryController],
   exports: [UserVisitedCountryService],

@@ -7,6 +7,9 @@ import { VisitedCountryResponse } from './VisitedCountryResponse';
  * - 방문 국가 목록 응답
  */
 export class VisitedCountriesResponse {
+  @ApiProperty({ description: '방문한 국가 수' })
+  count: number;
+
   @ApiProperty({
     description: '방문 국가 목록',
     type: [VisitedCountryResponse],

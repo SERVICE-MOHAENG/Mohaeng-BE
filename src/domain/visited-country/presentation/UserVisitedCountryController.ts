@@ -1,8 +1,4 @@
-import {
-  Controller,
-  Get,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UserApiBearerAuth } from '../../../global/decorators/UserApiBearerAuth';
 import { UserId } from '../../../global/decorators/UserId';
@@ -10,7 +6,6 @@ import { UserVisitedCountryService } from '../service/UserVisitedCountryService'
 import { GetMyVisitedCountriesRequest } from './dto/request/GetMyVisitedCountriesRequest';
 import { VisitedCountryResponse } from './dto/response/VisitedCountryResponse';
 import { VisitedCountriesResponse } from './dto/response/VisitedCountriesResponse';
-import { VisitedCountryCountResponse } from './dto/response/VisitedCountryCountResponse';
 
 /**
  * UserVisitedCountryController
@@ -25,27 +20,6 @@ export class UserVisitedCountryController {
   ) {}
 
   /**
-   * 내 방문 국가 수 조회
-   */
-  @Get('me/count')
-  @UserApiBearerAuth()
-  @ApiOperation({ summary: '내 방문 국가 수 조회' })
-  @ApiResponse({
-    status: 200,
-    description: '조회 성공',
-    type: VisitedCountryCountResponse,
-  })
-  @ApiResponse({ status: 401, description: '인증되지 않음' })
-  async getMyVisitedCountryCount(
-    @UserId() userId: string,
-  ): Promise<VisitedCountryCountResponse> {
-    const count = await this.visitedCountryService.getVisitedCountryCount(
-      userId,
-    );
-    return VisitedCountryCountResponse.from(count);
-  }
-
-  /**
    * 내 방문 국가 목록 조회
    * @description
    * - 인증된 사용자의 방문 국가 목록 조회 (DB 레벨 페이지네이션)
@@ -55,7 +29,7 @@ export class UserVisitedCountryController {
    */
   @Get('me')
   @UserApiBearerAuth()
-  @ApiOperation({ summary: '내 방문 국가 목록 조회' })
+  @ApiOperation({ summary: '내 방문 국가 수 및 목록 조회' })
   @ApiResponse({
     status: 200,
     description: '조회 성공',
@@ -81,6 +55,7 @@ export class UserVisitedCountryController {
     );
 
     return {
+      count: total,
       items,
       page,
       limit,
