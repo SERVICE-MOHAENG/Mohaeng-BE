@@ -2,6 +2,7 @@ import { TravelCourse } from '../entity/TravelCourse.entity';
 import { TravelCourseService } from './TravelCourseService';
 import { CourseAccessDeniedException } from '../exception/CourseAccessDeniedException';
 import { CourseNotFoundException } from '../exception/CourseNotFoundException';
+import { UserVisitedCountry } from '../../visited-country/entity/UserVisitedCountry.entity';
 
 describe('TravelCourseService', () => {
   const createCourseEntity = (
@@ -39,11 +40,21 @@ describe('TravelCourseService', () => {
     userRepositoryOverrides: Record<string, jest.Mock> = {},
     courseLikeRepositoryOverrides: Record<string, jest.Mock> = {},
   ) => {
+    const deleteQueryBuilder = {
+      delete: jest.fn().mockReturnThis(),
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      execute: jest.fn(),
+    };
+
     const manager = {
       findOne: jest.fn(),
+      find: jest.fn().mockResolvedValue([]),
       save: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
+      create: jest.fn((_: unknown, plain: unknown) => plain),
+      createQueryBuilder: jest.fn(() => deleteQueryBuilder),
     };
 
     const travelCourseRepository = {
@@ -52,7 +63,6 @@ describe('TravelCourseService', () => {
       findCoursesForMainPage: jest.fn(),
       findPublicCoursesByRegion: jest.fn(),
       save: jest.fn(),
-      countDistinctCompletedCountriesByUserId: jest.fn(),
       ...travelCourseRepositoryOverrides,
     };
 
@@ -94,6 +104,7 @@ describe('TravelCourseService', () => {
       courseLikeRepository,
       itineraryJobRepository,
       manager,
+      deleteQueryBuilder,
       dataSource,
     };
   };
@@ -111,15 +122,25 @@ describe('TravelCourseService', () => {
   });
 
   it('updates completion status to true for the course owner', async () => {
+    const country = {
+      id: 'country-jp',
+      name: '일본',
+      code: 'JP',
+    } as any;
     const course = createCourseEntity();
-    const { service, travelCourseRepository, manager } = createService({
+    const completedCourse = createCourseEntity({
+      isCompleted: true,
+      courseCountries: [{ country }] as any,
+      travelFinishDay: new Date('2026-03-12'),
+    });
+    const { service, manager, deleteQueryBuilder } = createService({
       findById: jest.fn().mockResolvedValue({
         ...course,
         isCompleted: true,
       }),
-      countDistinctCompletedCountriesByUserId: jest.fn().mockResolvedValue(2),
     });
     manager.findOne.mockResolvedValue(course);
+    manager.find.mockResolvedValue([completedCourse]);
 
     const result = await service.updateCompletionStatus(
       'course-id',
@@ -131,25 +152,47 @@ describe('TravelCourseService', () => {
       TravelCourse,
       expect.objectContaining({ id: 'course-id', isCompleted: true }),
     );
-    expect(
-      travelCourseRepository.countDistinctCompletedCountriesByUserId,
-    ).toHaveBeenCalledWith('user-id', manager);
     expect(manager.update).toHaveBeenCalledWith(expect.anything(), 'user-id', {
-      visitedCountries: 2,
+      visitedCountries: 1,
     });
+    expect(deleteQueryBuilder.execute).toHaveBeenCalled();
+    expect(manager.save).toHaveBeenCalledWith(
+      UserVisitedCountry,
+      expect.arrayContaining([
+        expect.objectContaining({
+          country,
+          user: { id: 'user-id' },
+          visitDate: new Date('2026-03-12'),
+        }),
+      ]),
+    );
     expect(result.isCompleted).toBe(true);
   });
 
   it('updates completion status to false and syncs unique country count', async () => {
     const course = createCourseEntity({ isCompleted: true });
-    const { service, travelCourseRepository, manager } = createService({
+    const { service, manager } = createService({
       findById: jest.fn().mockResolvedValue({
         ...course,
         isCompleted: false,
       }),
-      countDistinctCompletedCountriesByUserId: jest.fn().mockResolvedValue(1),
     });
     manager.findOne.mockResolvedValue(course);
+    manager.find.mockResolvedValue([
+      createCourseEntity({
+        isCompleted: true,
+        courseCountries: [
+          {
+            country: {
+              id: 'country-fr',
+              name: '프랑스',
+              code: 'FR',
+            },
+          },
+        ] as any,
+        travelFinishDay: new Date('2026-04-03'),
+      }),
+    ]);
 
     const result = await service.updateCompletionStatus(
       'course-id',
@@ -157,9 +200,6 @@ describe('TravelCourseService', () => {
       false,
     );
 
-    expect(
-      travelCourseRepository.countDistinctCompletedCountriesByUserId,
-    ).toHaveBeenCalledWith('user-id', manager);
     expect(manager.update).toHaveBeenCalledWith(expect.anything(), 'user-id', {
       visitedCountries: 1,
     });
@@ -187,34 +227,93 @@ describe('TravelCourseService', () => {
 
   it('recalculates visited country count when deleting a completed course', async () => {
     const course = createCourseEntity({ isCompleted: true });
-    const { service, travelCourseRepository, manager } = createService({
-      countDistinctCompletedCountriesByUserId: jest.fn().mockResolvedValue(1),
-    });
+    const { service, manager } = createService();
     manager.findOne.mockResolvedValue(course);
+    manager.find.mockResolvedValue([
+      createCourseEntity({
+        isCompleted: true,
+        courseCountries: [
+          {
+            country: {
+              id: 'country-us',
+              name: '미국',
+              code: 'US',
+            },
+          },
+        ] as any,
+        travelFinishDay: new Date('2026-05-01'),
+      }),
+    ]);
 
     await service.deleteCourse('course-id', 'user-id');
 
     expect(manager.delete).toHaveBeenCalledWith(TravelCourse, 'course-id');
-    expect(
-      travelCourseRepository.countDistinctCompletedCountriesByUserId,
-    ).toHaveBeenCalledWith('user-id', manager);
     expect(manager.update).toHaveBeenCalledWith(expect.anything(), 'user-id', {
       visitedCountries: 1,
     });
   });
 
-  it('does not recalculate visited country count when deleting an incomplete course', async () => {
+  it('keeps visited country count at zero when deleting an incomplete course', async () => {
     const course = createCourseEntity({ isCompleted: false });
-    const { service, travelCourseRepository, manager } = createService();
+    const { service, manager } = createService();
     manager.findOne.mockResolvedValue(course);
+    manager.find.mockResolvedValue([]);
 
     await service.deleteCourse('course-id', 'user-id');
 
     expect(manager.delete).toHaveBeenCalledWith(TravelCourse, 'course-id');
-    expect(
-      travelCourseRepository.countDistinctCompletedCountriesByUserId,
-    ).not.toHaveBeenCalled();
-    expect(manager.update).not.toHaveBeenCalled();
+    expect(manager.update).toHaveBeenCalledWith(expect.anything(), 'user-id', {
+      visitedCountries: 0,
+    });
+  });
+
+  it('deduplicates countries across completed courses when syncing visited countries', async () => {
+    const country = {
+      id: 'country-jp',
+      name: '일본',
+      code: 'JP',
+    } as any;
+    const course = createCourseEntity();
+    const { service, manager } = createService({
+      findById: jest.fn().mockResolvedValue({
+        ...course,
+        isCompleted: true,
+      }),
+    });
+    manager.findOne.mockResolvedValue(course);
+    manager.find.mockResolvedValue([
+      createCourseEntity({
+        id: 'course-1',
+        isCompleted: true,
+        courseCountries: [{ country }] as any,
+        travelFinishDay: new Date('2026-03-12'),
+      }),
+      createCourseEntity({
+        id: 'course-2',
+        isCompleted: true,
+        courseCountries: [{ country }] as any,
+        travelFinishDay: new Date('2026-04-20'),
+      }),
+    ]);
+
+    await service.updateCompletionStatus('course-id', 'user-id', true);
+
+    expect(manager.save).toHaveBeenCalledWith(
+      UserVisitedCountry,
+      expect.arrayContaining([
+        expect.objectContaining({
+          country,
+          visitDate: new Date('2026-04-20'),
+        }),
+      ]),
+    );
+    const visitedCountrySaveCall = manager.save.mock.calls.find(
+      ([entity]) => entity === UserVisitedCountry,
+    );
+    expect(visitedCountrySaveCall?.[1]).toHaveLength(1);
+    expect(manager.update).toHaveBeenCalledWith(expect.anything(), 'user-id', {
+      visitedCountries: 1,
+    });
   });
 
   it('returns AI-style roadmap items for my courses', async () => {

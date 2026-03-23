@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { TravelCourseRepository } from '../persistence/TravelCourseRepository';
 import { CourseLikeRepository } from '../persistence/CourseLikeRepository';
 import { TravelCourse } from '../entity/TravelCourse.entity';
@@ -15,6 +15,7 @@ import { User } from '../../user/entity/User.entity';
 import { Country } from '../../country/entity/Country.entity';
 import { UserRepository } from '../../user/persistence/UserRepository';
 import { UserNotFoundException } from '../../user/exception/UserNotFoundException';
+import { UserVisitedCountry } from '../../visited-country/entity/UserVisitedCountry.entity';
 import { CreateCourseRequest } from '../presentation/dto/request/CreateCourseRequest';
 import { UpdateCourseRequest } from '../presentation/dto/request/UpdateCourseRequest';
 import { CourseResponse } from '../presentation/dto/response/CourseResponse';
@@ -216,13 +217,7 @@ export class TravelCourseService {
 
       course.isCompleted = isCompleted;
       await manager.save(TravelCourse, course);
-
-      const visitedCountries =
-        await this.travelCourseRepository.countDistinctCompletedCountriesByUserId(
-          userId,
-          manager,
-        );
-      await manager.update(User, userId, { visitedCountries });
+      await this.syncVisitedCountriesFromCompletedCourses(userId, manager);
     });
 
     return CourseResponse.fromEntity(await this.findById(courseId));
@@ -283,18 +278,8 @@ export class TravelCourseService {
         throw new CourseAccessDeniedException();
       }
 
-      const shouldSyncVisitedCountries = course.isCompleted;
-
       await manager.delete(TravelCourse, course.id);
-
-      if (shouldSyncVisitedCountries) {
-        const visitedCountries =
-          await this.travelCourseRepository.countDistinctCompletedCountriesByUserId(
-            userId,
-            manager,
-          );
-        await manager.update(User, userId, { visitedCountries });
-      }
+      await this.syncVisitedCountriesFromCompletedCourses(userId, manager);
     });
   }
 
@@ -417,7 +402,13 @@ export class TravelCourseService {
         )
       : new Set<string>();
 
-    return RoadmapListResponse.from(courses, total, page, limit, likedCourseIds);
+    return RoadmapListResponse.from(
+      courses,
+      total,
+      page,
+      limit,
+      likedCourseIds,
+    );
   }
 
   async getPublicCoursesByRegion(
@@ -467,6 +458,65 @@ export class TravelCourseService {
    */
   private mapToCourseResponse(course: TravelCourse): CourseResponse {
     return CourseResponse.fromEntity(course);
+  }
+
+  private async syncVisitedCountriesFromCompletedCourses(
+    userId: string,
+    manager: EntityManager,
+  ): Promise<void> {
+    const completedCourses = await manager.find(TravelCourse, {
+      where: {
+        user: { id: userId },
+        isCompleted: true,
+      },
+      relations: ['courseCountries', 'courseCountries.country'],
+      relationLoadStrategy: 'query',
+    });
+
+    const visitedCountryMap = new Map<
+      string,
+      {
+        country: Country;
+        visitDate: Date;
+      }
+    >();
+
+    for (const course of completedCourses) {
+      const visitDate = course.travelFinishDay ?? course.travelStartDay;
+
+      for (const courseCountry of course.courseCountries ?? []) {
+        const { country } = courseCountry;
+        if (!country) {
+          continue;
+        }
+
+        const existing = visitedCountryMap.get(country.id);
+        if (!existing || existing.visitDate < visitDate) {
+          visitedCountryMap.set(country.id, { country, visitDate });
+        }
+      }
+    }
+
+    await manager
+      .createQueryBuilder()
+      .delete()
+      .from(UserVisitedCountry)
+      .where('user_id = :userId', { userId })
+      .execute();
+
+    if (visitedCountryMap.size > 0) {
+      const userReference = manager.create(User, { id: userId });
+      const visitedCountries = Array.from(visitedCountryMap.values()).map(
+        ({ country, visitDate }) =>
+          UserVisitedCountry.create(userReference, country, visitDate),
+      );
+
+      await manager.save(UserVisitedCountry, visitedCountries);
+    }
+
+    await manager.update(User, userId, {
+      visitedCountries: visitedCountryMap.size,
+    });
   }
 
   private async findLatestGenerationJobByCourseId(
