@@ -8,6 +8,7 @@ import { MyPageLikedRegionsResponse, MyPageRegionCardResponse } from '../present
 import { BlogsResponse } from '../../blog/presentation/dto/response/BlogsResponse';
 import { BlogResponse } from '../../blog/presentation/dto/response/BlogResponse';
 import { BlogLikesResponse } from '../../blog/presentation/dto/response/BlogLikesResponse';
+import { MyRoadmapListResponse } from '../presentation/dto/response/MyRoadmapListResponse';
 import { RoadmapListResponse } from '../../course/presentation/dto/response/RoadmapListResponse';
 
 @Injectable()
@@ -24,7 +25,7 @@ export class UserMyPageContentService {
     userId: string,
     page: number = 1,
     limit: number = 10,
-  ): Promise<RoadmapListResponse> {
+  ): Promise<MyRoadmapListResponse> {
     const { safePage, safeLimit } = this.normalizePagination(page, limit);
     const [courses, total] = await this.travelCourseRepository.findByUserId(
       userId,
@@ -36,7 +37,7 @@ export class UserMyPageContentService {
       courses.map((course) => course.id),
     );
 
-    return RoadmapListResponse.from(
+    return MyRoadmapListResponse.from(
       courses,
       total,
       safePage,
