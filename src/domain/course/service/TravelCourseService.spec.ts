@@ -411,6 +411,7 @@ describe('TravelCourseService', () => {
           tags: ['당일치기', '친구'],
           like_count: 1002,
           is_liked: false,
+          is_completed: false,
         },
       ],
       page: 1,

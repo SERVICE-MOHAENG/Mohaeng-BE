@@ -23,6 +23,9 @@ export class RoadmapCardResponse {
   @ApiProperty({ description: '현재 사용자의 좋아요 여부' })
   is_liked: boolean;
 
+  @ApiProperty({ description: '여행 완료 여부' })
+  is_completed: boolean;
+
   static fromEntity(
     course: TravelCourse,
     isLiked: boolean = false,
@@ -40,6 +43,7 @@ export class RoadmapCardResponse {
       ) ?? [];
     response.like_count = course.likeCount;
     response.is_liked = isLiked;
+    response.is_completed = course.isCompleted ?? false;
     return response;
   }
 
