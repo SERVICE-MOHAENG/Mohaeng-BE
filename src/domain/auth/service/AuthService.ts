@@ -424,9 +424,7 @@ export class AuthService {
     if (user) {
       // 기존 사용자가 있지만 provider가 다른 경우
       if (user.provider !== provider) {
-        throw new AuthEmailAlreadyRegisteredWithDifferentProviderException(
-          user.provider,
-        );
+        throw new AuthEmailAlreadyRegisteredWithDifferentProviderException();
       }
 
       // 비활성 사용자 체크
