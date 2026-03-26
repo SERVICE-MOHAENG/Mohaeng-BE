@@ -134,7 +134,7 @@ export class TravelCourseService {
       request.days,
       request.description,
       undefined,
-      request.isPublic ?? false,
+      request.isPublic ?? true,
       undefined,
     );
 

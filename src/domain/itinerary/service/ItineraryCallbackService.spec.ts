@@ -116,4 +116,70 @@ describe('ItineraryCallbackService', () => {
     );
     expect(courseCountrySaveCall?.[1]).toHaveLength(1);
   });
+
+  it('creates generated courses as public', async () => {
+    const manager = {
+      save: jest.fn(async (entity: unknown, value?: unknown) => {
+        if (entity === TravelCourse) {
+          return { ...(value as object), id: 'course-id' };
+        }
+        return value ?? entity;
+      }),
+      findOne: jest.fn(),
+    };
+
+    const dataSource = {
+      transaction: jest.fn(async (callback: (manager: any) => Promise<void>) =>
+        callback(manager),
+      ),
+    } as unknown as DataSource;
+
+    const itineraryJobRepository = {
+      findById: jest.fn().mockResolvedValue({
+        id: 'job-id',
+        userId: 'user-id',
+        surveyId: 'survey-id',
+        status: ItineraryStatus.PENDING,
+        markSuccess: jest.fn(),
+      } as unknown as ItineraryJob),
+      save: jest.fn(),
+    };
+
+    const surveyRepository = {
+      findOne: jest.fn().mockResolvedValue({
+        id: 'survey-id',
+        travelCourseId: null,
+        destinations: [],
+      } as unknown as CourseSurvey),
+    };
+
+    const service = new ItineraryCallbackService(
+      itineraryJobRepository as any,
+      dataSource,
+      {} as any,
+      surveyRepository as any,
+      {} as any,
+    );
+
+    await service.handleSuccess('job-id', {
+      start_date: '2026-03-11',
+      end_date: '2026-03-11',
+      trip_days: 1,
+      nights: 0,
+      people_count: 1,
+      tags: [],
+      title: '도쿄 당일치기',
+      summary: '간단한 일정',
+      itinerary: [],
+      llm_commentary: '좋은 일정입니다.',
+      next_action_suggestion: ['가방을 챙기세요.'],
+    });
+
+    expect(manager.save).toHaveBeenCalledWith(
+      TravelCourse,
+      expect.objectContaining({
+        isPublic: true,
+      }),
+    );
+  });
 });
