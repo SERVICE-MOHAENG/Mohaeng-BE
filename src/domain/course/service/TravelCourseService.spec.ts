@@ -2,6 +2,7 @@ import { TravelCourse } from '../entity/TravelCourse.entity';
 import { TravelCourseService } from './TravelCourseService';
 import { CourseAccessDeniedException } from '../exception/CourseAccessDeniedException';
 import { CourseNotFoundException } from '../exception/CourseNotFoundException';
+import { CourseCountry } from '../entity/CourseCountry.entity';
 import { UserVisitedCountry } from '../../visited-country/entity/UserVisitedCountry.entity';
 
 describe('TravelCourseService', () => {
@@ -311,6 +312,61 @@ describe('TravelCourseService', () => {
       ([entity]) => entity === UserVisitedCountry,
     );
     expect(visitedCountrySaveCall?.[1]).toHaveLength(1);
+    expect(manager.update).toHaveBeenCalledWith(expect.anything(), 'user-id', {
+      visitedCountries: 1,
+    });
+  });
+
+  it('falls back to course regions when completed courses are missing country mappings', async () => {
+    const country = {
+      id: 'country-jp',
+      name: '일본',
+      code: 'JP',
+    } as any;
+    const course = createCourseEntity();
+    const { service, manager } = createService({
+      findById: jest.fn().mockResolvedValue({
+        ...course,
+        isCompleted: true,
+      }),
+    });
+    manager.findOne.mockResolvedValue(course);
+    manager.find.mockResolvedValue([
+      createCourseEntity({
+        id: 'course-1',
+        isCompleted: true,
+        courseCountries: [],
+        courseRegions: [
+          {
+            region: {
+              country,
+            },
+          },
+        ] as any,
+        travelFinishDay: new Date('2026-06-15'),
+      }),
+    ]);
+
+    await service.updateCompletionStatus('course-id', 'user-id', true);
+
+    expect(manager.save).toHaveBeenCalledWith(
+      CourseCountry,
+      expect.arrayContaining([
+        expect.objectContaining({
+          travelCourse: expect.objectContaining({ id: 'course-1' }),
+          country,
+        }),
+      ]),
+    );
+    expect(manager.save).toHaveBeenCalledWith(
+      UserVisitedCountry,
+      expect.arrayContaining([
+        expect.objectContaining({
+          country,
+          visitDate: new Date('2026-06-15'),
+        }),
+      ]),
+    );
     expect(manager.update).toHaveBeenCalledWith(expect.anything(), 'user-id', {
       visitedCountries: 1,
     });

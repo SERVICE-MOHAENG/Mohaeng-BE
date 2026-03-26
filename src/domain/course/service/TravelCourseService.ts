@@ -469,7 +469,13 @@ export class TravelCourseService {
         user: { id: userId },
         isCompleted: true,
       },
-      relations: ['courseCountries', 'courseCountries.country'],
+      relations: [
+        'courseCountries',
+        'courseCountries.country',
+        'courseRegions',
+        'courseRegions.region',
+        'courseRegions.region.country',
+      ],
       relationLoadStrategy: 'query',
     });
 
@@ -480,9 +486,11 @@ export class TravelCourseService {
         visitDate: Date;
       }
     >();
+    const missingCourseCountries: CourseCountry[] = [];
 
     for (const course of completedCourses) {
       const visitDate = course.travelFinishDay ?? course.travelStartDay;
+      const mappedCountryIds = new Set<string>();
 
       for (const courseCountry of course.courseCountries ?? []) {
         const { country } = courseCountry;
@@ -490,11 +498,33 @@ export class TravelCourseService {
           continue;
         }
 
+        mappedCountryIds.add(country.id);
         const existing = visitedCountryMap.get(country.id);
         if (!existing || existing.visitDate < visitDate) {
           visitedCountryMap.set(country.id, { country, visitDate });
         }
       }
+
+      for (const courseRegion of course.courseRegions ?? []) {
+        const country = courseRegion.region?.country;
+        if (!country) {
+          continue;
+        }
+
+        if (!mappedCountryIds.has(country.id)) {
+          mappedCountryIds.add(country.id);
+          missingCourseCountries.push(CourseCountry.create(course, country));
+        }
+
+        const existing = visitedCountryMap.get(country.id);
+        if (!existing || existing.visitDate < visitDate) {
+          visitedCountryMap.set(country.id, { country, visitDate });
+        }
+      }
+    }
+
+    if (missingCourseCountries.length > 0) {
+      await manager.save(CourseCountry, missingCourseCountries);
     }
 
     await manager

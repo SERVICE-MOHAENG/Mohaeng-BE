@@ -10,6 +10,7 @@ import { TravelCourse } from '../../course/entity/TravelCourse.entity';
 import { CourseDay } from '../../course/entity/CourseDay.entity';
 import { CoursePlace } from '../../course/entity/CoursePlace.entity';
 import { CourseHashTag } from '../../course/entity/CourseHashTag.entity';
+import { CourseCountry } from '../../course/entity/CourseCountry.entity';
 import { CourseRegion } from '../../course/entity/CourseRegion.entity';
 import { Place } from '../../place/entity/Place.entity';
 import { CourseSurvey } from '../../course/entity/CourseSurvey.entity';
@@ -117,7 +118,11 @@ export class ItineraryCallbackService {
 
     const survey = await this.surveyRepository.findOne({
       where: { id: job.surveyId },
-      relations: ['destinations', 'destinations.region'],
+      relations: [
+        'destinations',
+        'destinations.region',
+        'destinations.region.country',
+      ],
     });
 
     await this.dataSource.transaction(async (manager) => {
@@ -145,6 +150,8 @@ export class ItineraryCallbackService {
       const savedCourse = await manager.save(TravelCourse, course);
 
       // 3. CourseRegion 매핑 (설문의 destination 기반)
+      const countryMap = new Map<string, CourseCountry>();
+
       if (survey?.destinations) {
         for (const dest of survey.destinations) {
           const courseRegion = new CourseRegion();
@@ -154,7 +161,19 @@ export class ItineraryCallbackService {
           courseRegion.startDate = new Date(dest.startDay);
           courseRegion.endDate = new Date(dest.endDate);
           await manager.save(CourseRegion, courseRegion);
+
+          const country = dest.region?.country;
+          if (country && !countryMap.has(country.id)) {
+            countryMap.set(
+              country.id,
+              CourseCountry.create(savedCourse, country),
+            );
+          }
         }
+      }
+
+      if (countryMap.size > 0) {
+        await manager.save(CourseCountry, Array.from(countryMap.values()));
       }
 
       // 4. HashTags 생성
