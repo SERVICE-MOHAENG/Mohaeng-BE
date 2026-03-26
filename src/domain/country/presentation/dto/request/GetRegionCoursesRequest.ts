@@ -1,7 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
-import { CourseSortType } from '../../../../course/presentation/dto/request/GetCoursesRequest';
+import {
+  CourseSortType,
+  normalizeCourseSortType,
+} from '../../../../course/presentation/dto/request/GetCoursesRequest';
 
 export class GetRegionCoursesRequest {
   @ApiProperty({
@@ -11,6 +14,7 @@ export class GetRegionCoursesRequest {
     default: CourseSortType.LATEST,
   })
   @IsOptional()
+  @Transform(normalizeCourseSortType)
   @IsEnum(CourseSortType)
   sortBy?: CourseSortType = CourseSortType.LATEST;
 
