@@ -140,7 +140,7 @@ export class ItineraryCallbackService {
       course.travelStartDay = new Date(data.start_date);
       course.travelFinishDay = new Date(data.end_date);
       course.user = userRef;
-      course.isPublic = false;
+      course.isPublic = true;
       course.isCompleted = false;
       course.viewCount = 0;
       course.likeCount = 0;

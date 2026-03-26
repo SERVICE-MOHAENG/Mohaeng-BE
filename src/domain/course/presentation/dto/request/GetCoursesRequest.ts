@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString, IsInt, Min, Max, IsEnum } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 /**
  * CourseSortType Enum
@@ -11,6 +11,19 @@ export enum CourseSortType {
   LATEST = 'latest',
   POPULAR = 'popular',
 }
+
+export const normalizeCourseSortType = ({
+  value,
+}: {
+  value: unknown;
+}): unknown => {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  return normalized.length === 0 ? CourseSortType.LATEST : normalized;
+};
 
 /**
  * GetCoursesRequest DTO
@@ -26,6 +39,7 @@ export class GetCoursesRequest {
     required: false,
   })
   @IsOptional()
+  @Transform(normalizeCourseSortType)
   @IsEnum(CourseSortType)
   sortBy?: CourseSortType = CourseSortType.LATEST;
 
