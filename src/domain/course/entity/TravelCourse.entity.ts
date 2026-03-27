@@ -27,10 +27,18 @@ export class TravelCourse {
   @PrimaryGeneratedColumn('uuid', { name: 'id' })
   id: string;
 
-  @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
+  @CreateDateColumn({
+    type: 'timestamp',
+    name: 'created_at',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamp', name: 'updated_at' })
+  @UpdateDateColumn({
+    type: 'timestamp',
+    name: 'updated_at',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   updatedAt: Date;
 
   @Column({
@@ -200,6 +208,8 @@ export class TravelCourse {
     course.likeCount = 0;
     course.modificationCount = 0;
     const now = new Date();
+    course.createdAt = now;
+    course.updatedAt = now;
     course.travelStartDay = now;
     course.travelFinishDay = now;
     course.courseCountries = (countries || []).map((country) =>

@@ -307,6 +307,7 @@ export class TravelCourseService {
 
     const newCourse = await this.dataSource.transaction(async (manager) => {
       const course = new TravelCourse();
+      const now = new Date();
       course.title = source.title;
       course.user = user;
       course.nights = source.nights;
@@ -322,6 +323,8 @@ export class TravelCourseService {
       course.travelFinishDay = source.travelFinishDay;
       course.sourceCourseId = source.id;
       course.isCompleted = false;
+      course.createdAt = now;
+      course.updatedAt = now;
       const savedCourse = await manager.save(TravelCourse, course);
 
       for (const cc of source.courseCountries || []) {

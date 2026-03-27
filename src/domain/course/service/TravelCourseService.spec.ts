@@ -120,6 +120,8 @@ describe('TravelCourseService', () => {
     );
 
     expect(course.isCompleted).toBe(false);
+    expect(course.createdAt).toBeInstanceOf(Date);
+    expect(course.updatedAt).toBeInstanceOf(Date);
   });
 
   it('updates completion status to true for the course owner', async () => {
@@ -590,6 +592,15 @@ describe('TravelCourseService', () => {
     ).resolves.toEqual({
       id: 'copied-course-id',
     });
+
+    expect(manager.save).toHaveBeenCalledWith(
+      TravelCourse,
+      expect.objectContaining({
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+        sourceCourseId: 'course-id',
+      }),
+    );
 
     expect(
       travelCourseRepository.findByIdWithAllRelations,
