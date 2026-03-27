@@ -462,6 +462,7 @@ describe('TravelCourseService', () => {
         {
           id: 'course-id',
           title: '시부야 밤거리',
+          description: '병현이와 함께하는 시부야 여행',
           start_date: '2026-03-11',
           end_date: '2026-03-12',
           tags: ['당일치기', '친구'],
