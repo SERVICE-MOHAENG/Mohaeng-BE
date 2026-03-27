@@ -8,6 +8,9 @@ export class RoadmapCardResponse {
   @ApiProperty({ description: '로드맵 제목' })
   title: string;
 
+  @ApiProperty({ description: '로드맵 설명', nullable: true })
+  description: string | null;
+
   @ApiProperty({ description: '여행 시작 날짜 (YYYY-MM-DD)' })
   start_date: string;
 
@@ -33,6 +36,7 @@ export class RoadmapCardResponse {
     const response = new RoadmapCardResponse();
     response.id = course.id;
     response.title = course.title;
+    response.description = course.description ?? null;
     response.start_date = RoadmapCardResponse.formatDate(course.travelStartDay);
     response.end_date = RoadmapCardResponse.formatDate(course.travelFinishDay);
     response.tags =
