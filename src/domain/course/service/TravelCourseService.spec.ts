@@ -598,6 +598,7 @@ describe('TravelCourseService', () => {
       expect.objectContaining({
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
+        isPublic: false,
         sourceCourseId: 'course-id',
       }),
     );

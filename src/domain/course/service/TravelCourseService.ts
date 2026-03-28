@@ -314,7 +314,7 @@ export class TravelCourseService {
       course.days = source.days;
       course.description = source.description;
       course.imageUrl = source.imageUrl;
-      course.isPublic = true;
+      course.isPublic = false;
       course.viewCount = 0;
       course.likeCount = 0;
       course.modificationCount = 0;
