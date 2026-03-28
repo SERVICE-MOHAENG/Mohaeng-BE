@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Repository, QueryFailedError } from 'typeorm';
+import {
+  EntityManager,
+  Repository,
+  QueryFailedError,
+  IsNull,
+} from 'typeorm';
 import { TravelCourse } from '../entity/TravelCourse.entity';
 
 /**
@@ -99,7 +104,7 @@ export class TravelCourseRepository {
     limit: number = 20,
   ): Promise<[TravelCourse[], number]> {
     return this.repository.findAndCount({
-      where: { isPublic: true },
+      where: { isPublic: true, sourceCourseId: IsNull() },
       relations: [
         'user',
         'courseCountries',
@@ -162,7 +167,8 @@ export class TravelCourseRepository {
   ): Promise<[TravelCourse[], number]> {
     const baseQuery = this.repository
       .createQueryBuilder('course')
-      .where('course.isPublic = :isPublic', { isPublic: true });
+      .where('course.isPublic = :isPublic', { isPublic: true })
+      .andWhere('course.sourceCourseId IS NULL');
 
     if (countryCode) {
       baseQuery
@@ -225,6 +231,7 @@ export class TravelCourseRepository {
       .createQueryBuilder('course')
       .innerJoin('course.courseRegions', 'courseRegion')
       .where('course.isPublic = :isPublic', { isPublic: true })
+      .andWhere('course.sourceCourseId IS NULL')
       .andWhere('courseRegion.regionId = :regionId', { regionId });
 
     const totalRow = await baseQuery
