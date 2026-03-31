@@ -36,6 +36,8 @@ import { RoadmapSurveyTheme } from './domain/course/entity/RoadmapSurveyTheme.en
 import { RoadmapSurveyDestination } from './domain/course/entity/RoadmapSurveyDestination.entity';
 import { TravelBlog } from './domain/blog/entity/TravelBlog.entity';
 import { BlogLike } from './domain/blog/entity/BlogLike.entity';
+import { BlogImage } from './domain/blog/entity/BlogImage.entity';
+import { BlogHashTag } from './domain/blog/entity/BlogHashTag.entity';
 import { Country } from './domain/country/entity/Country.entity';
 import { Region } from './domain/country/entity/Region.entity';
 import { RegionLike } from './domain/country/entity/RegionLike.entity';
@@ -105,6 +107,8 @@ import { CourseAiChat } from './domain/course/entity/CourseAiChat.entity';
           ItineraryJob,
           TravelBlog,
           BlogLike,
+          BlogImage,
+          BlogHashTag,
           Country,
           Region,
           RegionLike,
