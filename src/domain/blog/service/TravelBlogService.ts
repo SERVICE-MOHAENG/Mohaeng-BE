@@ -10,6 +10,10 @@ import { BlogResponse } from '../presentation/dto/response/BlogResponse';
 import { BlogSortType } from '../presentation/dto/request/GetBlogsRequest';
 import { CreateBlogRequest } from '../presentation/dto/request/CreateBlogRequest';
 import { UpdateBlogRequest } from '../presentation/dto/request/UpdateBlogRequest';
+import { TravelCourseService } from '../../course/service/TravelCourseService';
+import { CourseAccessDeniedException } from '../../course/exception/CourseAccessDeniedException';
+import { BlogAlreadyExistsForRoadmapException } from '../exception/BlogAlreadyExistsForRoadmapException';
+import { BlogRoadmapNotCompletedException } from '../exception/BlogRoadmapNotCompletedException';
 
 /**
  * TravelBlog Service
@@ -21,6 +25,7 @@ export class TravelBlogService {
   constructor(
     private readonly travelBlogRepository: TravelBlogRepository,
     private readonly blogLikeRepository: BlogLikeRepository,
+    private readonly travelCourseService: TravelCourseService,
   ) {}
 
   /**
@@ -104,10 +109,22 @@ export class TravelBlogService {
     title: string,
     content: string,
     user: User,
-    imageUrl?: string,
+    travelCourseId: string,
+    imageUrls: string[] = [],
+    tags: string[] = [],
     isPublic: boolean = true,
   ): Promise<TravelBlog> {
-    const blog = TravelBlog.create(title, content, user, imageUrl, isPublic);
+    const travelCourse =
+      await this.travelCourseService.findById(travelCourseId);
+    const blog = TravelBlog.create(
+      title,
+      content,
+      user,
+      travelCourse,
+      imageUrls,
+      tags,
+      isPublic,
+    );
     return this.travelBlogRepository.save(blog);
   }
 
@@ -118,17 +135,45 @@ export class TravelBlogService {
     userId: string,
     request: CreateBlogRequest,
   ): Promise<TravelBlog> {
-    const user = new User();
-    user.id = userId;
+    const travelCourse = await this.travelCourseService.findById(
+      request.travelCourseId,
+    );
+
+    if (travelCourse.user.id !== userId) {
+      throw new CourseAccessDeniedException();
+    }
+
+    if (!travelCourse.isCompleted) {
+      throw new BlogRoadmapNotCompletedException();
+    }
+
+    const alreadyExists =
+      await this.travelBlogRepository.existsByTravelCourseId(
+        request.travelCourseId,
+      );
+    if (alreadyExists) {
+      throw new BlogAlreadyExistsForRoadmapException();
+    }
+
+    const imageUrls = (request.imageUrls || [])
+      .map((imageUrl) => imageUrl.trim())
+      .filter(Boolean);
+    const tags = [...new Set((request.tags || []).map((tag) => tag.trim()))]
+      .filter(Boolean)
+      .map((tag) => (tag.startsWith('#') ? tag.slice(1) : tag));
 
     const blog = TravelBlog.create(
       request.title,
       request.content,
-      user,
-      request.imageUrl,
+      travelCourse.user,
+      travelCourse,
+      imageUrls,
+      tags,
       request.isPublic ?? false,
     );
-    return this.travelBlogRepository.save(blog);
+
+    const savedBlog = await this.travelBlogRepository.save(blog);
+    return this.findById(savedBlog.id);
   }
 
   /**

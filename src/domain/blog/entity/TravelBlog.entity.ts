@@ -1,7 +1,10 @@
 import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { BaseEntity } from '../../../global/BaseEntity';
 import { User } from '../../user/entity/User.entity';
+import { TravelCourse } from '../../course/entity/TravelCourse.entity';
 import { BlogLike } from './BlogLike.entity';
+import { BlogImage } from './BlogImage.entity';
+import { BlogHashTag } from './BlogHashTag.entity';
 
 /**
  * TravelBlog Entity
@@ -65,8 +68,22 @@ export class TravelBlog extends BaseEntity {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
+  @ManyToOne(() => TravelCourse, { nullable: false, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'travel_course_id' })
+  travelCourse: TravelCourse;
+
   @OneToMany(() => BlogLike, (like) => like.travelBlog)
   likes: BlogLike[];
+
+  @OneToMany(() => BlogImage, (image) => image.travelBlog, {
+    cascade: true,
+  })
+  images: BlogImage[];
+
+  @OneToMany(() => BlogHashTag, (hashTag) => hashTag.travelBlog, {
+    cascade: true,
+  })
+  hashTags: BlogHashTag[];
 
   /**
    * 여행 블로그 생성 팩토리 메서드
@@ -75,17 +92,24 @@ export class TravelBlog extends BaseEntity {
     title: string,
     content: string,
     user: User,
-    imageUrl?: string,
+    travelCourse: TravelCourse,
+    imageUrls: string[] = [],
+    tags: string[] = [],
     isPublic: boolean = true,
   ): TravelBlog {
     const blog = new TravelBlog();
     blog.title = title;
     blog.content = content;
     blog.user = user;
-    blog.imageUrl = imageUrl || null;
+    blog.travelCourse = travelCourse;
+    blog.imageUrl = imageUrls[0] || null;
     blog.isPublic = isPublic;
     blog.viewCount = 0;
     blog.likeCount = 0;
+    blog.images = imageUrls.map((imageUrl, index) =>
+      BlogImage.create(imageUrl, blog, index),
+    );
+    blog.hashTags = tags.map((tag) => BlogHashTag.create(tag, blog));
     return blog;
   }
 
