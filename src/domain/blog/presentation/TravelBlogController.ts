@@ -72,7 +72,6 @@ export class TravelBlogController {
    * @returns BlogsResponse
    */
   @Get('mainpage')
-  @UserApiBearerAuth()
   @ApiOperation({ summary: '여행 블로그 목록 조회 (메인페이지)' })
   @ApiQuery({
     name: 'sortBy',
@@ -98,10 +97,9 @@ export class TravelBlogController {
     type: BlogsResponse,
   })
   @ApiResponse({ status: 400, description: '잘못된 요청' })
-  @ApiResponse({ status: 401, description: '인증되지 않음' })
   async getMainpageBlogs(
-    @UserId() userId: string,
     @Query() request: GetBlogsRequest,
+    @UserId() userId?: string,
   ): Promise<BlogsResponse> {
     return this.travelBlogService.getBlogs(
       request.sortBy,

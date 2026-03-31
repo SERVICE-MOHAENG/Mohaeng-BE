@@ -166,6 +166,35 @@ describe('TravelBlogService', () => {
     expect(result).toBe(savedBlog);
   });
 
+  it('creates public blog by default when visibility is omitted', async () => {
+    const course = createCourse();
+    const savedBlog = createBlog({ isPublic: true });
+    const { service, travelBlogRepository, travelCourseService } =
+      createService(
+        {
+          save: jest.fn().mockResolvedValue(savedBlog),
+          findById: jest.fn().mockResolvedValue(savedBlog),
+        },
+        {},
+        {
+          findById: jest.fn().mockResolvedValue(course),
+        },
+      );
+
+    await service.createBlog('user-id', {
+      travelCourseId: 'course-id',
+      title: '블로그',
+      content: '본문',
+    });
+
+    expect(travelCourseService.findById).toHaveBeenCalledWith('course-id');
+    expect(travelBlogRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isPublic: true,
+      }),
+    );
+  });
+
   it('rejects blog creation when roadmap is owned by another user', async () => {
     const { service } = createService(
       {},
@@ -254,5 +283,18 @@ describe('TravelBlogService', () => {
     );
     expect(blogLikeRepository.existsByUserIdAndBlogId).not.toHaveBeenCalled();
     expect(result.blogs[0].isLiked).toBe(true);
+  });
+
+  it('returns public blog lists without liked lookup for anonymous mainpage requests', async () => {
+    const blog = createBlog();
+    const { service, blogLikeRepository } = createService({
+      findBlogsByLatest: jest.fn().mockResolvedValue([[blog], 1]),
+    });
+
+    const result = await service.getBlogs(BlogSortType.LATEST, 1, 6);
+
+    expect(blogLikeRepository.findLikedBlogIds).not.toHaveBeenCalled();
+    expect(result.blogs[0].isLiked).toBeUndefined();
+    expect(result.blogs[0].id).toBe('blog-id');
   });
 });

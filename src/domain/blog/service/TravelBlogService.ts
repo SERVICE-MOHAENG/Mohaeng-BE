@@ -169,7 +169,7 @@ export class TravelBlogService {
       travelCourse,
       imageUrls,
       tags,
-      request.isPublic ?? false,
+      request.isPublic ?? true,
     );
 
     const savedBlog = await this.travelBlogRepository.save(blog);

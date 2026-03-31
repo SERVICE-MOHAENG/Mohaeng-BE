@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { BlogLike } from '../entity/BlogLike.entity';
 
 /**
@@ -42,8 +42,28 @@ export class BlogLikeRepository {
     const safePage = Math.max(1, page);
     const safeLimit = Math.max(1, Math.min(100, limit));
 
-    return this.repository.findAndCount({
-      where: { user: { id: userId }, travelBlog: { isPublic: true } },
+    const [pagedLikes, total] = await this.repository
+      .createQueryBuilder('blogLike')
+      .innerJoin('blogLike.user', 'user')
+      .innerJoin('blogLike.travelBlog', 'travelBlog')
+      .innerJoin('travelBlog.user', 'owner')
+      .where('user.id = :userId', { userId })
+      .andWhere('(travelBlog.isPublic = :isPublic OR owner.id = :userId)', {
+        userId,
+        isPublic: true,
+      })
+      .orderBy('blogLike.createdAt', 'DESC')
+      .skip((safePage - 1) * safeLimit)
+      .take(safeLimit)
+      .getManyAndCount();
+
+    const likeIds = pagedLikes.map((like) => like.id);
+    if (likeIds.length === 0) {
+      return [[], total];
+    }
+
+    const likes = await this.repository.find({
+      where: { id: In(likeIds) },
       relations: [
         'travelBlog',
         'travelBlog.user',
@@ -52,10 +72,16 @@ export class BlogLikeRepository {
         'travelBlog.hashTags',
       ],
       relationLoadStrategy: 'query',
-      skip: (safePage - 1) * safeLimit,
-      take: safeLimit,
-      order: { createdAt: 'DESC' },
     });
+
+    const likesById = new Map(likes.map((like) => [like.id, like]));
+
+    return [
+      likeIds
+        .map((likeId) => likesById.get(likeId))
+        .filter((like): like is BlogLike => Boolean(like)),
+      total,
+    ];
   }
 
   /**
