@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   Post,
@@ -22,6 +23,7 @@ import { BlogLikeService } from '../service/BlogLikeService';
 import { GetBlogsRequest } from './dto/request/GetBlogsRequest';
 import { BlogsResponse } from './dto/response/BlogsResponse';
 import { BlogResponse } from './dto/response/BlogResponse';
+import { CreateBlogRequest } from './dto/request/CreateBlogRequest';
 
 /**
  * TravelBlogController
@@ -35,6 +37,31 @@ export class TravelBlogController {
     private readonly travelBlogService: TravelBlogService,
     private readonly blogLikeService: BlogLikeService,
   ) {}
+
+  @Post()
+  @UserApiBearerAuth()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: '여행 블로그 생성' })
+  @ApiResponse({
+    status: 201,
+    description: '생성 성공',
+    type: BlogResponse,
+  })
+  @ApiResponse({ status: 400, description: '잘못된 요청' })
+  @ApiResponse({ status: 401, description: '인증되지 않음' })
+  @ApiResponse({ status: 403, description: '선택한 로드맵에 대한 권한이 없음' })
+  @ApiResponse({ status: 404, description: '로드맵을 찾을 수 없음' })
+  @ApiResponse({
+    status: 409,
+    description: '선택한 로드맵에 이미 블로그가 존재함',
+  })
+  async createBlog(
+    @UserId() userId: string,
+    @Body() request: CreateBlogRequest,
+  ): Promise<BlogResponse> {
+    const blog = await this.travelBlogService.createBlog(userId, request);
+    return BlogResponse.fromEntityWithUser(blog);
+  }
 
   /**
    * 여행 블로그 목록 조회 (메인페이지용)

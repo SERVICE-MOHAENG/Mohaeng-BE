@@ -18,7 +18,8 @@ export class TravelBlogRepository {
   async findById(id: string): Promise<TravelBlog | null> {
     return this.repository.findOne({
       where: { id },
-      relations: ['user', 'likes'],
+      relations: ['user', 'likes', 'travelCourse', 'images', 'hashTags'],
+      relationLoadStrategy: 'query',
     });
   }
 
@@ -29,7 +30,8 @@ export class TravelBlogRepository {
   ): Promise<[TravelBlog[], number]> {
     return this.repository.findAndCount({
       where: { user: { id: userId } },
-      relations: ['likes'],
+      relations: ['user', 'likes', 'travelCourse', 'images', 'hashTags'],
+      relationLoadStrategy: 'query',
       skip: (page - 1) * limit,
       take: limit,
       order: { createdAt: 'DESC' },
@@ -48,7 +50,8 @@ export class TravelBlogRepository {
   ): Promise<[TravelBlog[], number]> {
     return this.repository.findAndCount({
       where: { isPublic: true },
-      relations: ['user', 'likes'],
+      relations: ['user', 'likes', 'travelCourse', 'images', 'hashTags'],
+      relationLoadStrategy: 'query',
       skip: (page - 1) * limit,
       take: limit,
       order: { createdAt: 'DESC' },
@@ -57,6 +60,15 @@ export class TravelBlogRepository {
 
   async save(blog: TravelBlog): Promise<TravelBlog> {
     return this.repository.save(blog);
+  }
+
+  async existsByTravelCourseId(travelCourseId: string): Promise<boolean> {
+    const count = await this.repository.count({
+      where: {
+        travelCourse: { id: travelCourseId },
+      },
+    });
+    return count > 0;
   }
 
   async delete(id: string): Promise<void> {
@@ -75,7 +87,8 @@ export class TravelBlogRepository {
   ): Promise<[TravelBlog[], number]> {
     return this.repository.findAndCount({
       where: { isPublic: true },
-      relations: ['user'],
+      relations: ['user', 'travelCourse', 'images', 'hashTags'],
+      relationLoadStrategy: 'query',
       skip: (page - 1) * limit,
       take: limit,
       order: { createdAt: 'DESC' },
@@ -94,7 +107,8 @@ export class TravelBlogRepository {
   ): Promise<[TravelBlog[], number]> {
     return this.repository.findAndCount({
       where: { isPublic: true },
-      relations: ['user'],
+      relations: ['user', 'travelCourse', 'images', 'hashTags'],
+      relationLoadStrategy: 'query',
       skip: (page - 1) * limit,
       take: limit,
       order: {

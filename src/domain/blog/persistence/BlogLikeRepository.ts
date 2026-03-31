@@ -44,7 +44,14 @@ export class BlogLikeRepository {
 
     return this.repository.findAndCount({
       where: { user: { id: userId }, travelBlog: { isPublic: true } },
-      relations: ['travelBlog', 'travelBlog.user'],
+      relations: [
+        'travelBlog',
+        'travelBlog.user',
+        'travelBlog.travelCourse',
+        'travelBlog.images',
+        'travelBlog.hashTags',
+      ],
+      relationLoadStrategy: 'query',
       skip: (safePage - 1) * safeLimit,
       take: safeLimit,
       order: { createdAt: 'DESC' },
