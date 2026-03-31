@@ -79,11 +79,11 @@ export class CreateBlogRequest {
 
   @ApiProperty({
     description: '공개 여부',
-    example: false,
-    default: false,
+    example: true,
+    default: true,
     required: false,
   })
   @IsOptional()
   @IsBoolean()
-  isPublic?: boolean = false;
+  isPublic?: boolean = true;
 }

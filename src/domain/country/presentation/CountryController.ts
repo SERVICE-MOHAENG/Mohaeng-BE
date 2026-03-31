@@ -1,7 +1,9 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { CountryService } from '../service/CountryService';
 import { RegionService } from '../service/RegionService';
 import { GetRegionsByCountryRequest } from './dto/request/GetRegionsByCountryRequest';
+import { CountriesResponse } from './dto/response/CountriesResponse';
 import { RegionsResponse } from './dto/response/RegionsResponse';
 
 /**
@@ -12,7 +14,27 @@ import { RegionsResponse } from './dto/response/RegionsResponse';
 @ApiTags('countries')
 @Controller('v1/countries')
 export class CountryController {
-  constructor(private readonly regionService: RegionService) {}
+  constructor(
+    private readonly countryService: CountryService,
+    private readonly regionService: RegionService,
+  ) {}
+
+  /**
+   * 전체 국가 목록 조회
+   * @description
+   * - 데이터베이스에 저장된 모든 국가 정보를 이름순으로 반환
+   */
+  @Get()
+  @ApiOperation({ summary: '전체 국가 목록 조회' })
+  @ApiResponse({
+    status: 200,
+    description: '국가 목록 조회 성공',
+    type: CountriesResponse,
+  })
+  async getCountries(): Promise<CountriesResponse> {
+    const countries = await this.countryService.findAll();
+    return CountriesResponse.from(countries);
+  }
 
   /**
    * 나라 이름으로 도시 목록 조회

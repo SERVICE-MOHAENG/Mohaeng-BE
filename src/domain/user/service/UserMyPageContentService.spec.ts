@@ -42,6 +42,7 @@ describe('UserMyPageContentService', () => {
         {
           id: 'course-id',
           title: '시부야 밤거리',
+          description: '도쿄 야경 중심 일정',
           start_date: '2026-03-20',
           end_date: '2026-03-20',
           tags: ['당일치기', '친구'],
@@ -98,9 +99,12 @@ describe('UserMyPageContentService', () => {
       items: [
         {
           id: 'blog-id',
+          travelCourseId: null,
           title: '오사카 여행 기록',
           content: undefined,
           imageUrl: null,
+          imageUrls: [],
+          tags: [],
           isPublic: undefined,
           viewCount: undefined,
           likeCount: 12,
@@ -214,6 +218,7 @@ describe('UserMyPageContentService', () => {
         {
           id: 'course-id',
           title: '뉴욕 예술 탐험',
+          description: '설명',
           start_date: '2026-03-12',
           end_date: '2026-03-14',
           tags: ['예술', '도시'],
