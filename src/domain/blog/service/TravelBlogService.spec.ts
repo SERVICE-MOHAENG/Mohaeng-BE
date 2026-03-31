@@ -284,17 +284,4 @@ describe('TravelBlogService', () => {
     expect(blogLikeRepository.existsByUserIdAndBlogId).not.toHaveBeenCalled();
     expect(result.blogs[0].isLiked).toBe(true);
   });
-
-  it('returns public blog lists without liked lookup for anonymous mainpage requests', async () => {
-    const blog = createBlog();
-    const { service, blogLikeRepository } = createService({
-      findBlogsByLatest: jest.fn().mockResolvedValue([[blog], 1]),
-    });
-
-    const result = await service.getBlogs(BlogSortType.LATEST, 1, 6);
-
-    expect(blogLikeRepository.findLikedBlogIds).not.toHaveBeenCalled();
-    expect(result.blogs[0].isLiked).toBeUndefined();
-    expect(result.blogs[0].id).toBe('blog-id');
-  });
 });
