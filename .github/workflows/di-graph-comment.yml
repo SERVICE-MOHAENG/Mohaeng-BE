@@ -1,0 +1,133 @@
+name: DI Graph PR Comment
+
+on:
+  pull_request:
+    branches:
+      - develop
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  di-graph:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: PR 브랜치 체크아웃
+        uses: actions/checkout@v4
+
+      - name: develop 브랜치 체크아웃 (비교용)
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          path: develop-branch
+
+      - name: Node.js 설정
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: nestjs-di-viewer 설치
+        run: npm install -g nestjs-di-viewer
+
+      - name: PR 브랜치 의존성 설치
+        run: npm ci --ignore-scripts
+
+      - name: develop 브랜치 의존성 설치
+        working-directory: develop-branch
+        run: npm ci --ignore-scripts
+
+      - name: Mermaid 다이어그램 생성 - PR 브랜치
+        id: pr-diagram
+        run: |
+          DIAGRAM=$(nestjs-di-viewer src/app.module.ts --diagram 2>/dev/null || echo "")
+          echo "diagram<<EOF" >> $GITHUB_OUTPUT
+          echo "$DIAGRAM" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Mermaid 다이어그램 생성 - develop 브랜치
+        id: develop-diagram
+        working-directory: develop-branch
+        run: |
+          DIAGRAM=$(nestjs-di-viewer src/app.module.ts --diagram 2>/dev/null || echo "")
+          echo "diagram<<EOF" >> $GITHUB_OUTPUT
+          echo "$DIAGRAM" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: 커밋 정보 수집
+        id: info
+        run: |
+          PR_SHA="${{ github.event.pull_request.head.sha }}"
+          DEVELOP_SHA="${{ github.event.pull_request.base.sha }}"
+          echo "pr_sha=${PR_SHA:0:8}" >> $GITHUB_OUTPUT
+          echo "develop_sha=${DEVELOP_SHA:0:8}" >> $GITHUB_OUTPUT
+          echo "pr_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
+
+      - name: PR 코멘트 작성
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const prNumber = context.payload.pull_request.number;
+            const prSha = '${{ steps.info.outputs.pr_sha }}';
+            const developSha = '${{ steps.info.outputs.develop_sha }}';
+            const prBranch = '${{ steps.info.outputs.pr_branch }}';
+            const prDiagram = `${{ steps.pr-diagram.outputs.diagram }}`;
+            const developDiagram = `${{ steps.develop-diagram.outputs.diagram }}`;
+
+            const body = [
+              '## 🔍 NestJS DI 의존성 그래프',
+              '',
+              '| | 브랜치 | 커밋 |',
+              '|---|---|---|',
+              `| **develop** | \`develop\` | \`${developSha}\` |`,
+              `| **PR 브랜치** | \`${prBranch}\` | \`${prSha}\` |`,
+              '',
+              '### develop',
+              '```mermaid',
+              developDiagram,
+              '```',
+              '',
+              '### PR 브랜치',
+              '```mermaid',
+              prDiagram,
+              '```',
+              '',
+              '**범례**',
+              '| 색상 | 의미 |',
+              '|---|---|',
+              '| 파란 테두리 | 일반 모듈 |',
+              '| 빨간 테두리 | 순환 의존성 |',
+              '| 주황 점선 | 고아 모듈 (어느 모듈에도 import되지 않음) |',
+              '',
+              '---',
+              `*[nestjs-di-viewer](https://www.npmjs.com/package/nestjs-di-viewer)로 자동 생성됨 @ ${new Date().toISOString()}*`,
+            ].join('\n');
+
+            const comments = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number: prNumber,
+            });
+
+            const botComment = comments.data.find(
+              c => c.user.type === 'Bot' && c.body.includes('NestJS DI 의존성 그래프')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: botComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: prNumber,
+                body,
+              });
+            }
