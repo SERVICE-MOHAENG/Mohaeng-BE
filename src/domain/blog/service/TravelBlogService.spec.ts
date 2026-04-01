@@ -195,6 +195,36 @@ describe('TravelBlogService', () => {
     );
   });
 
+  it('creates public blog even when client sends false visibility', async () => {
+    const course = createCourse();
+    const savedBlog = createBlog({ isPublic: true });
+    const { service, travelBlogRepository, travelCourseService } =
+      createService(
+        {
+          save: jest.fn().mockResolvedValue(savedBlog),
+          findById: jest.fn().mockResolvedValue(savedBlog),
+        },
+        {},
+        {
+          findById: jest.fn().mockResolvedValue(course),
+        },
+      );
+
+    await service.createBlog('user-id', {
+      travelCourseId: 'course-id',
+      title: '블로그',
+      content: '본문',
+      isPublic: false,
+    });
+
+    expect(travelCourseService.findById).toHaveBeenCalledWith('course-id');
+    expect(travelBlogRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isPublic: true,
+      }),
+    );
+  });
+
   it('rejects blog creation when roadmap is owned by another user', async () => {
     const { service } = createService(
       {},
