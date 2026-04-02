@@ -70,7 +70,7 @@ export class TravelBlogController {
    * - latest: 최신순, popular: 인기순
    * @param request - 조회 요청 (정렬 기준, 페이지네이션)
    * @returns BlogsResponse
-  */
+   */
   @Get('mainpage')
   @UserApiBearerAuth()
   @ApiOperation({ summary: '여행 블로그 목록 조회 (메인페이지)' })
@@ -138,11 +138,10 @@ export class TravelBlogController {
     @UuidParam() id: string,
     @UserId() userId: string,
   ): Promise<BlogResponse> {
-    // 조회수 증가 먼저 수행
-    await this.travelBlogService.incrementViewCount(id);
-
-    // 증가된 조회수 포함하여 조회
-    return this.travelBlogService.findByIdWithUserStatus(id, userId);
+    return this.travelBlogService.findByIdWithUserStatusAndIncrementViewCount(
+      id,
+      userId,
+    );
   }
 
   /**

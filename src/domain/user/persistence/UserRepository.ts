@@ -23,7 +23,12 @@ export class UserRepository {
    * @returns Promise<User | null>
    */
   async findByEmail(email: string): Promise<User | null> {
-    return this.repository.findOne({ where: { email } });
+    return this.repository
+      .createQueryBuilder('user')
+      .where('LOWER(user.email) = :normalizedEmail', {
+        normalizedEmail: this.normalizeEmail(email),
+      })
+      .getOne();
   }
 
   /**
@@ -68,7 +73,12 @@ export class UserRepository {
    * @returns Promise<boolean>
    */
   async existsByEmail(email: string): Promise<boolean> {
-    const count = await this.repository.count({ where: { email } });
+    const count = await this.repository
+      .createQueryBuilder('user')
+      .where('LOWER(user.email) = :normalizedEmail', {
+        normalizedEmail: this.normalizeEmail(email),
+      })
+      .getCount();
     return count > 0;
   }
 
@@ -105,5 +115,9 @@ export class UserRepository {
    */
   async clear(): Promise<void> {
     await this.repository.clear();
+  }
+
+  private normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
   }
 }

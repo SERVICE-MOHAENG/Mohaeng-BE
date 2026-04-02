@@ -78,7 +78,7 @@ export class User extends BaseEntity {
   static create(name: string, email: string, passwordHash: string): User {
     const user = new User();
     user.name = name;
-    user.email = email;
+    user.email = User.normalizeEmail(email);
     user.passwordHash = passwordHash;
     user.provider = Provider.LOCAL;
     user.providerId = null;
@@ -100,7 +100,7 @@ export class User extends BaseEntity {
   ): User {
     const user = new User();
     user.name = name;
-    user.email = email;
+    user.email = User.normalizeEmail(email);
     user.passwordHash = null;
     user.provider = provider;
     user.providerId = providerId;
@@ -124,5 +124,9 @@ export class User extends BaseEntity {
     if (this.visitedCountries > 0) {
       this.visitedCountries -= 1;
     }
+  }
+
+  private static normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
   }
 }

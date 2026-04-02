@@ -18,7 +18,6 @@ import { AuthEmailOtpCooldownException } from '../exception/AuthEmailOtpCooldown
 import { AuthEmailOtpTooManyRequestsException } from '../exception/AuthEmailOtpTooManyRequestsException';
 import { AuthInvalidEmailOtpException } from '../exception/AuthInvalidEmailOtpException';
 import { AuthEmailOtpMaxAttemptsExceededException } from '../exception/AuthEmailOtpMaxAttemptsExceededException';
-import { AuthEmailNotVerifiedException } from '../exception/AuthEmailNotVerifiedException';
 import { LoginRequest } from '../presentation/dto/request/LoginRequest';
 import { SignupRequest } from '../../user/presentation/dto/request/SignupRequest';
 import { UserResponse } from '../../user/presentation/dto/response/UserResponse';
@@ -55,10 +54,12 @@ export class AuthService {
   ) {}
 
   async login(request: LoginRequest): Promise<AuthTokens> {
+    const normalizedEmail = this.normalizeEmail(request.email);
+
     // 이메일로 사용자 조회
     let user: User;
     try {
-      user = await this.userService.findByEmail(request.email);
+      user = await this.userService.findByEmail(normalizedEmail);
     } catch (error) {
       if (error instanceof UserNotFoundException) {
         throw new AuthInvalidCredentialsException();
@@ -403,6 +404,8 @@ export class AuthService {
       picture?: string;
     },
   ): Promise<User> {
+    const normalizedEmail = this.normalizeEmail(oauthUser.email);
+
     // 1순위: providerId로 기존 사용자 조회 (가장 정확한 방법)
     let user = await this.userRepository.findByProviderAndProviderId(
       provider,
@@ -419,7 +422,7 @@ export class AuthService {
     }
 
     // 2순위: 이메일로 기존 사용자 조회 (폴백)
-    user = await this.userRepository.findByEmail(oauthUser.email);
+    user = await this.userRepository.findByEmail(normalizedEmail);
 
     if (user) {
       // 기존 사용자가 있지만 provider가 다른 경우
@@ -438,7 +441,7 @@ export class AuthService {
     // 신규 사용자 생성
     user = User.createWithOAuth(
       oauthUser.name,
-      oauthUser.email,
+      normalizedEmail,
       provider,
       oauthUser.providerId,
     );
