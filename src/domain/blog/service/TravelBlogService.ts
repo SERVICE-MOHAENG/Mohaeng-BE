@@ -61,6 +61,26 @@ export class TravelBlogService {
     return BlogResponse.fromEntityWithUserStatus(blog, isLiked);
   }
 
+  async findByIdWithUserStatusAndIncrementViewCount(
+    id: string,
+    userId: string,
+  ): Promise<BlogResponse> {
+    const blog = await this.findById(id);
+
+    if (!blog.isPublic && blog.user.id !== userId) {
+      throw new BlogAccessDeniedException();
+    }
+
+    blog.incrementViewCount();
+    const updatedBlog = await this.travelBlogRepository.save(blog);
+    const isLiked = await this.blogLikeRepository.existsByUserIdAndBlogId(
+      userId,
+      id,
+    );
+
+    return BlogResponse.fromEntityWithUserStatus(updatedBlog, isLiked);
+  }
+
   /**
    * 사용자 ID로 여행 블로그 목록 조회
    */
