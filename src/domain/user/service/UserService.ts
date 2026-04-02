@@ -22,7 +22,7 @@ export class UserService {
 
   async signup(request: SignupRequest): Promise<User> {
     // 이메일 인증 확인
-    const normalizedEmail = request.email.trim().toLowerCase();
+    const normalizedEmail = this.normalizeEmail(request.email);
     const verifiedKey = `auth:email-verified:${normalizedEmail}`;
     const isVerified = await this.redisService.get(verifiedKey);
 
@@ -39,13 +39,14 @@ export class UserService {
     const hashedPassword = await this.hashPassword(request.password);
 
     // 이메일 중복 방지
-    const existingUser = await this.userRepository.findByEmail(request.email);
+    const existingUser = await this.userRepository.findByEmail(normalizedEmail);
     if (existingUser) {
       if (existingUser.isActivate) {
         throw new EmailAlreadyExistsException();
       }
       // 비활성 계정: 이름/비밀번호 업데이트 후 재활성화
       existingUser.name = request.name;
+      existingUser.email = normalizedEmail;
       existingUser.passwordHash = hashedPassword;
       existingUser.isActivate = true;
       const savedUser = await this.userRepository.save(existingUser);
@@ -54,7 +55,7 @@ export class UserService {
     }
 
     // 신규 사용자 생성
-    const user = User.create(request.name, request.email, hashedPassword);
+    const user = User.create(request.name, normalizedEmail, hashedPassword);
     const savedUser = await this.userRepository.save(user);
 
     // 인증 완료 플래그 삭제 (일회용)
@@ -84,7 +85,9 @@ export class UserService {
   }
 
   async findByEmail(email: string): Promise<User> {
-    const user = await this.userRepository.findByEmail(email);
+    const user = await this.userRepository.findByEmail(
+      this.normalizeEmail(email),
+    );
     if (!user) {
       throw new UserNotFoundException();
     }
@@ -132,5 +135,9 @@ export class UserService {
     // 저장 및 응답 반환
     const updatedUser = await this.userRepository.save(user);
     return UserResponse.fromEntity(updatedUser);
+  }
+
+  private normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
   }
 }

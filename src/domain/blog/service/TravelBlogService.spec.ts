@@ -2,6 +2,7 @@ import { TravelBlogService } from './TravelBlogService';
 import { BlogSortType } from '../presentation/dto/request/GetBlogsRequest';
 import { CourseAccessDeniedException } from '../../course/exception/CourseAccessDeniedException';
 import { BlogAlreadyExistsForRoadmapException } from '../exception/BlogAlreadyExistsForRoadmapException';
+import { BlogAccessDeniedException } from '../exception/BlogAccessDeniedException';
 import { BlogRoadmapNotCompletedException } from '../exception/BlogRoadmapNotCompletedException';
 
 describe('TravelBlogService', () => {
@@ -18,6 +19,7 @@ describe('TravelBlogService', () => {
     isPublic: true,
     viewCount: 0,
     likeCount: 3,
+    incrementViewCount: jest.fn(),
     createdAt: new Date('2026-03-19T00:00:00.000Z'),
     updatedAt: new Date('2026-03-19T00:00:00.000Z'),
     user: {
@@ -104,6 +106,62 @@ describe('TravelBlogService', () => {
     );
     expect(blogLikeRepository.existsByUserIdAndBlogId).not.toHaveBeenCalled();
     expect(result.blogs[0].isLiked).toBe(true);
+  });
+
+  it('increments view count only after blog access is authorized', async () => {
+    const blog = createBlog();
+    const { service, travelBlogRepository, blogLikeRepository } = createService(
+      {
+        findById: jest.fn().mockResolvedValue(blog),
+        save: jest.fn().mockResolvedValue({
+          ...blog,
+          viewCount: 1,
+        }),
+      },
+      {
+        existsByUserIdAndBlogId: jest.fn().mockResolvedValue(true),
+      },
+    );
+
+    const result = await service.findByIdWithUserStatusAndIncrementViewCount(
+      'blog-id',
+      'user-id',
+    );
+
+    expect(blog.incrementViewCount).toHaveBeenCalledTimes(1);
+    expect(travelBlogRepository.save).toHaveBeenCalledWith(blog);
+    expect(blogLikeRepository.existsByUserIdAndBlogId).toHaveBeenCalledWith(
+      'user-id',
+      'blog-id',
+    );
+    expect(result.viewCount).toBe(1);
+    expect(result.isLiked).toBe(true);
+  });
+
+  it('does not increment view count for unauthorized private blog access', async () => {
+    const blog = createBlog({
+      isPublic: false,
+      user: {
+        id: 'owner-id',
+        name: '작성자',
+      },
+    });
+    const { service, travelBlogRepository, blogLikeRepository } = createService(
+      {
+        findById: jest.fn().mockResolvedValue(blog),
+      },
+      {
+        existsByUserIdAndBlogId: jest.fn(),
+      },
+    );
+
+    await expect(
+      service.findByIdWithUserStatusAndIncrementViewCount('blog-id', 'user-id'),
+    ).rejects.toBeInstanceOf(BlogAccessDeniedException);
+
+    expect(blog.incrementViewCount).not.toHaveBeenCalled();
+    expect(travelBlogRepository.save).not.toHaveBeenCalled();
+    expect(blogLikeRepository.existsByUserIdAndBlogId).not.toHaveBeenCalled();
   });
 
   it('creates a blog for a completed owned roadmap', async () => {
