@@ -1,6 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { DataSource } from 'typeorm';
 import { UserPreferenceRepository } from '../persistence/UserPreferenceRepository';
+import { PreferenceJobRepository } from '../persistence/PreferenceJobRepository';
+import { PreferenceJob } from '../entity/PreferenceJob.entity';
 import { UserPreference } from '../entity/UserPreference.entity';
 import { UserPreferenceWeather } from '../entity/UserPreferenceWeather.entity';
 import { UserPreferenceTravelRange } from '../entity/UserPreferenceTravelRange.entity';
@@ -14,6 +18,7 @@ import { TravelStyle } from '../entity/TravelStyle.enum';
 import { FoodPersonality } from '../entity/FoodPersonality.enum';
 import { MainInterest } from '../entity/MainInterest.enum';
 import { BudgetLevel } from '../entity/BudgetLevel.enum';
+import { PreferenceJobData } from '../processor/PreferenceProcessor';
 
 /**
  * 선호도 생성/수정 DTO
@@ -37,9 +42,14 @@ export interface CreateUserPreferenceDto {
  */
 @Injectable()
 export class UserPreferenceService {
+  private readonly logger = new Logger(UserPreferenceService.name);
+
   constructor(
     private readonly userPreferenceRepository: UserPreferenceRepository,
+    private readonly preferenceJobRepository: PreferenceJobRepository,
     private readonly dataSource: DataSource,
+    @InjectQueue('preference-recommendation')
+    private readonly preferenceQueue: Queue,
   ) {}
 
   /**
@@ -91,6 +101,43 @@ export class UserPreferenceService {
       // cascade로 매핑 테이블도 자동 저장
       return manager.save(UserPreference, saved);
     });
+  }
+
+  async createOrUpdateAndEnqueue(
+    dto: CreateUserPreferenceDto,
+  ): Promise<{ jobId: string; status: string }> {
+    const preference = await this.createOrUpdate(dto);
+    const job = PreferenceJob.create(dto.userId, preference.id);
+    const savedJob = await this.preferenceJobRepository.save(job);
+    const jobData: PreferenceJobData = {
+      jobId: savedJob.id,
+      preferenceId: preference.id,
+    };
+
+    try {
+      await this.preferenceQueue.add('recommend', jobData, {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 5000,
+        },
+      });
+    } catch (error) {
+      savedJob.markFailed('QUEUE_ERROR', '추천 작업 큐 등록에 실패했습니다');
+
+      try {
+        await this.preferenceJobRepository.save(savedJob);
+      } catch (saveError) {
+        this.logger.error(
+          `PreferenceJob FAILED 상태 저장 실패: jobId=${savedJob.id}`,
+          saveError,
+        );
+      }
+
+      throw error;
+    }
+
+    return { jobId: savedJob.id, status: savedJob.status };
   }
 
   /**
