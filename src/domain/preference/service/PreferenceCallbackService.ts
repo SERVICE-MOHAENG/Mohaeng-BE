@@ -5,6 +5,7 @@ import { PreferenceJobRepository } from '../persistence/PreferenceJobRepository'
 import { PreferenceRecommendation } from '../entity/PreferenceRecommendation.entity';
 import { PreferenceJobStatus } from '../entity/PreferenceJob.entity';
 import { RegionRepository } from '../../country/persistence/RegionRepository';
+import { PreferenceJobNotFoundException } from '../exception/PreferenceJobNotFoundException';
 
 export interface PreferenceSuccessPayload {
   recommended_destinations: { region_name: string }[];
@@ -100,17 +101,34 @@ export class PreferenceCallbackService {
   /**
    * Job 상태 조회
    */
-  async getJobStatus(jobId: string): Promise<PreferenceJobStatus | null> {
-    const job = await this.preferenceJobRepository.findById(jobId);
+  async getJobStatus(
+    userId: string,
+    jobId: string,
+  ): Promise<PreferenceJobStatus | null> {
+    const job = await this.preferenceJobRepository.findByIdAndUserId(
+      jobId,
+      userId,
+    );
     return job?.status ?? null;
   }
 
   /**
    * 추천 결과 조회 (Region 정보 포함)
    */
-  async getRecommendations(jobId: string): Promise<PreferenceRecommendation[]> {
+  async getRecommendations(
+    userId: string,
+    jobId: string,
+  ): Promise<PreferenceRecommendation[]> {
+    const job = await this.preferenceJobRepository.findByIdAndUserId(
+      jobId,
+      userId,
+    );
+    if (!job) {
+      throw new PreferenceJobNotFoundException();
+    }
+
     return this.recommendationRepository.find({
-      where: { jobId },
+      where: { jobId: job.id },
       relations: ['region'],
       order: { createdAt: 'ASC' },
     });
@@ -126,6 +144,10 @@ export class PreferenceCallbackService {
     if (!job || job.status !== PreferenceJobStatus.SUCCESS) {
       return [];
     }
-    return this.getRecommendations(job.id);
+    return this.recommendationRepository.find({
+      where: { jobId: job.id },
+      relations: ['region'],
+      order: { createdAt: 'ASC' },
+    });
   }
 }

@@ -24,6 +24,13 @@ export class PreferenceJobRepository {
     return this.repository.findOne({ where: { id } });
   }
 
+  async findByIdAndUserId(
+    id: string,
+    userId: string,
+  ): Promise<PreferenceJob | null> {
+    return this.repository.findOne({ where: { id, userId } });
+  }
+
   async findByUserId(userId: string): Promise<PreferenceJob | null> {
     return this.repository.findOne({
       where: { userId },
