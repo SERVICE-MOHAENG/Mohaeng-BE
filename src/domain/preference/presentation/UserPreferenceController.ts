@@ -9,8 +9,6 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags, ApiParam } from '@nestjs/swagger';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 import { ResponseInterceptor } from '../../../global/interceptors/ResponseInterceptor';
 import { UserApiBearerAuth } from '../../../global/decorators/UserApiBearerAuth';
 import { UserId } from '../../../global/decorators/UserId';
@@ -18,14 +16,11 @@ import { UuidParam } from '../../../global/decorators/UuidParam';
 import { ServiceSecretGuard } from '../../itinerary/guard/ServiceSecretGuard';
 import { UserPreferenceService } from '../service/UserPreferenceService';
 import { PreferenceCallbackService } from '../service/PreferenceCallbackService';
-import { PreferenceJobRepository } from '../persistence/PreferenceJobRepository';
-import { PreferenceJob } from '../entity/PreferenceJob.entity';
 import { RegionLikeService } from '../../country/service/RegionLikeService';
 import { CreateUserPreferenceRequest } from './dto/request/CreateUserPreferenceRequest';
 import { PreferenceCallbackRequest } from './dto/request/PreferenceCallbackRequest';
 import { UserPreferenceResponse } from './dto/response/UserPreferenceResponse';
 import { PreferenceRecommendationResponse } from './dto/response/PreferenceRecommendationResponse';
-import { PreferenceJobData } from '../processor/PreferenceProcessor';
 
 /**
  * UserPreferenceController
@@ -43,10 +38,7 @@ export class UserPreferenceController {
   constructor(
     private readonly userPreferenceService: UserPreferenceService,
     private readonly preferenceCallbackService: PreferenceCallbackService,
-    private readonly preferenceJobRepository: PreferenceJobRepository,
     private readonly regionLikeService: RegionLikeService,
-    @InjectQueue('preference-recommendation')
-    private readonly preferenceQueue: Queue,
   ) {}
 
   /**
@@ -66,8 +58,7 @@ export class UserPreferenceController {
     @UserId() userId: string,
     @Body() request: CreateUserPreferenceRequest,
   ): Promise<{ jobId: string; status: string }> {
-    // 1. 선호도 저장
-    const preference = await this.userPreferenceService.createOrUpdate({
+    return this.userPreferenceService.createOrUpdateAndEnqueue({
       userId,
       weather: request.weather,
       travelRange: request.travel_range,
@@ -76,25 +67,6 @@ export class UserPreferenceController {
       mainInterests: request.main_interests,
       budget: request.budget_level,
     });
-
-    // 2. PreferenceJob 생성 (PENDING)
-    const job = PreferenceJob.create(userId, preference.id);
-    const savedJob = await this.preferenceJobRepository.save(job);
-
-    // 3. BullMQ enqueue
-    const jobData: PreferenceJobData = {
-      jobId: savedJob.id,
-      preferenceId: preference.id,
-    };
-    await this.preferenceQueue.add('recommend', jobData, {
-      attempts: 3,
-      backoff: {
-        type: 'exponential',
-        delay: 5000, // 5s → 10s → 20s
-      },
-    });
-
-    return { jobId: savedJob.id, status: 'PENDING' };
   }
 
   /**
@@ -164,9 +136,13 @@ export class UserPreferenceController {
     description: '{ status: "PENDING"|"PROCESSING"|"SUCCESS"|"FAILED" }',
   })
   async getJobStatus(
+    @UserId() userId: string,
     @UuidParam('jobId') jobId: string,
   ): Promise<{ status: string }> {
-    const status = await this.preferenceCallbackService.getJobStatus(jobId);
+    const status = await this.preferenceCallbackService.getJobStatus(
+      userId,
+      jobId,
+    );
     return { status: status ?? 'NOT_FOUND' };
   }
 
@@ -187,7 +163,7 @@ export class UserPreferenceController {
     @UserId() userId: string,
   ): Promise<{ destinations: PreferenceRecommendationResponse[] }> {
     const recommendations =
-      await this.preferenceCallbackService.getRecommendations(jobId);
+      await this.preferenceCallbackService.getRecommendations(userId, jobId);
     const regionIds = recommendations
       .map((recommendation) => recommendation.regionId)
       .filter((regionId): regionId is string => !!regionId);

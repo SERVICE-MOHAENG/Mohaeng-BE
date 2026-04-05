@@ -182,8 +182,6 @@ export class TravelBlogService {
       .filter(Boolean)
       .map((tag) => (tag.startsWith('#') ? tag.slice(1) : tag));
 
-    // Hotfix: current client flow is expected to publish blogs to the main page.
-    // Ignore client-provided false values until private blog support is wired end-to-end.
     const blog = TravelBlog.create(
       request.title,
       request.content,
@@ -191,7 +189,7 @@ export class TravelBlogService {
       travelCourse,
       imageUrls,
       tags,
-      true,
+      request.isPublic ?? true,
     );
 
     const savedBlog = await this.travelBlogRepository.save(blog);
