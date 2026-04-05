@@ -253,9 +253,9 @@ describe('TravelBlogService', () => {
     );
   });
 
-  it('creates public blog even when client sends false visibility', async () => {
+  it('stores private blog when client sends false visibility', async () => {
     const course = createCourse();
-    const savedBlog = createBlog({ isPublic: true });
+    const savedBlog = createBlog({ isPublic: false });
     const { service, travelBlogRepository, travelCourseService } =
       createService(
         {
@@ -278,7 +278,7 @@ describe('TravelBlogService', () => {
     expect(travelCourseService.findById).toHaveBeenCalledWith('course-id');
     expect(travelBlogRepository.save).toHaveBeenCalledWith(
       expect.objectContaining({
-        isPublic: true,
+        isPublic: false,
       }),
     );
   });
