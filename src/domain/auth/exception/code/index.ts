@@ -14,6 +14,8 @@ export enum AuthErrorCode {
   EMAIL_NOT_VERIFIED = 'TRIP_CORE_HE_AUTH_A013',
   PASSWORD_RESET_NOT_AVAILABLE = 'TRIP_CORE_HE_AUTH_A014',
   PASSWORD_RESET_NOT_VERIFIED = 'TRIP_CORE_HE_AUTH_A015',
+  ACCOUNT_REACTIVATION_REQUIRED = 'TRIP_CORE_HE_AUTH_A016',
+  INVALID_REACTIVATION_TOKEN = 'TRIP_CORE_HE_AUTH_A017',
 }
 
 export const AuthErrorMessage = {
@@ -41,4 +43,8 @@ export const AuthErrorMessage = {
     '로컬 가입 계정만 비밀번호 재설정이 가능합니다',
   [AuthErrorCode.PASSWORD_RESET_NOT_VERIFIED]:
     '비밀번호 재설정을 위한 이메일 인증이 완료되지 않았습니다',
+  [AuthErrorCode.ACCOUNT_REACTIVATION_REQUIRED]:
+    '탈퇴한 계정입니다. 다시 활성화할 수 있습니다',
+  [AuthErrorCode.INVALID_REACTIVATION_TOKEN]:
+    '유효하지 않거나 만료된 재활성화 토큰입니다',
 } as const;

@@ -41,17 +41,7 @@ export class UserService {
     // 이메일 중복 방지
     const existingUser = await this.userRepository.findByEmail(normalizedEmail);
     if (existingUser) {
-      if (existingUser.isActivate) {
-        throw new EmailAlreadyExistsException();
-      }
-      // 비활성 계정: 이름/비밀번호 업데이트 후 재활성화
-      existingUser.name = request.name;
-      existingUser.email = normalizedEmail;
-      existingUser.passwordHash = hashedPassword;
-      existingUser.isActivate = true;
-      const savedUser = await this.userRepository.save(existingUser);
-      await this.redisService.delete(verifiedKey);
-      return savedUser;
+      throw new EmailAlreadyExistsException();
     }
 
     // 신규 사용자 생성
@@ -152,6 +142,20 @@ export class UserService {
 
     user.passwordHash = await this.hashPassword(password);
     return this.userRepository.save(user);
+  }
+
+  async reactivate(userId: string): Promise<User> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new UserNotFoundException();
+    }
+
+    if (!user.isActivate) {
+      await this.userRepository.reactivate(userId);
+      user.isActivate = true;
+    }
+
+    return user;
   }
 
   private normalizeEmail(email: string): string {
