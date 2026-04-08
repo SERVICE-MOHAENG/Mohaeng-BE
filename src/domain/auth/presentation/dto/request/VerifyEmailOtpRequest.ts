@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, Matches } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  Matches,
+} from 'class-validator';
+import { AuthEmailOtpPurpose } from './AuthEmailOtpPurpose.enum';
 
 export class VerifyEmailOtpRequest {
   @ApiProperty({ description: 'user email', example: 'user@example.com' })
@@ -11,4 +18,15 @@ export class VerifyEmailOtpRequest {
   @Matches(/^\d{6}$/)
   @IsNotEmpty()
   otp: string;
+
+  @ApiProperty({
+    description: 'OTP 사용 목적',
+    enum: AuthEmailOtpPurpose,
+    example: AuthEmailOtpPurpose.SIGNUP,
+    required: false,
+    default: AuthEmailOtpPurpose.SIGNUP,
+  })
+  @IsOptional()
+  @IsEnum(AuthEmailOtpPurpose)
+  purpose?: AuthEmailOtpPurpose;
 }
