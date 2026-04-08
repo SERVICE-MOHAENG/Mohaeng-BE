@@ -3,6 +3,8 @@ import { AuthEmailOtpPurpose } from '../presentation/dto/request/AuthEmailOtpPur
 import { Provider } from '../../user/entity/Provider.enum';
 import { AuthPasswordResetNotAvailableException } from '../exception/AuthPasswordResetNotAvailableException';
 import { AuthPasswordResetNotVerifiedException } from '../exception/AuthPasswordResetNotVerifiedException';
+import { AuthAccountReactivationRequiredException } from '../exception/AuthAccountReactivationRequiredException';
+import { AuthInvalidReactivationTokenException } from '../exception/AuthInvalidReactivationTokenException';
 
 describe('AuthService', () => {
   const createService = () => {
@@ -15,6 +17,7 @@ describe('AuthService', () => {
       findByEmail: jest.fn(),
       verifyPassword: jest.fn(),
       updatePassword: jest.fn(),
+      reactivate: jest.fn(),
     };
     const userRepository = {
       findByEmail: jest.fn(),
@@ -26,7 +29,17 @@ describe('AuthService', () => {
       sign: jest.fn(),
     };
     const configService = {
-      get: jest.fn(),
+      get: jest.fn((key: string) => {
+        if (key === 'JWT_REFRESH_SECRET') {
+          return 'test-refresh-secret';
+        }
+
+        if (key === 'JWT_REFRESH_TOKEN_EXPIRES_IN') {
+          return '7d';
+        }
+
+        return undefined;
+      }),
     };
     const globalJwtService = {
       signUserToken: jest.fn(),
@@ -37,6 +50,7 @@ describe('AuthService', () => {
     const redisService = {
       exists: jest.fn(),
       get: jest.fn(),
+      getAndDelete: jest.fn(),
       delete: jest.fn(),
       setWithExpiry: jest.fn(),
       increment: jest.fn(),
@@ -58,8 +72,11 @@ describe('AuthService', () => {
 
     return {
       service,
+      oauthCodeRepository,
       userService,
       userRepository,
+      jwtService,
+      globalJwtService,
       emailOtpService,
       redisService,
     };
@@ -189,5 +206,88 @@ describe('AuthService', () => {
     expect(redisService.deletePattern).toHaveBeenCalledWith(
       'refresh:user:user-id:*',
     );
+  });
+
+  it('requires reactivation after local credentials are verified for inactive users', async () => {
+    const { service, userService, redisService } = createService();
+    userService.findByEmail.mockResolvedValue({
+      id: 'user-id',
+      email: 'user@example.com',
+      provider: Provider.LOCAL,
+      passwordHash: 'hashed',
+      isActivate: false,
+    });
+    userService.verifyPassword.mockResolvedValue(true);
+    redisService.setWithExpiry.mockResolvedValue(undefined);
+
+    await expect(
+      service.login({
+        email: 'user@example.com',
+        password: 'P@ssw0rd!',
+      }),
+    ).rejects.toBeInstanceOf(AuthAccountReactivationRequiredException);
+
+    expect(redisService.setWithExpiry).toHaveBeenCalledWith(
+      expect.stringMatching(/^auth:reactivation:/),
+      JSON.stringify({ userId: 'user-id' }),
+      600,
+    );
+  });
+
+  it('requires reactivation when exchanging an oauth code for an inactive user', async () => {
+    const { service, oauthCodeRepository, userRepository, redisService } =
+      createService();
+    oauthCodeRepository.findAndDelete.mockResolvedValue({
+      userId: 'user-id',
+      email: 'user@example.com',
+    });
+    userRepository.findById.mockResolvedValue({
+      id: 'user-id',
+      email: 'user@example.com',
+      provider: Provider.GOOGLE,
+      passwordHash: null,
+      isActivate: false,
+    });
+    redisService.setWithExpiry.mockResolvedValue(undefined);
+
+    await expect(
+      service.exchangeOAuthCode('oauth-code'),
+    ).rejects.toBeInstanceOf(AuthAccountReactivationRequiredException);
+  });
+
+  it('reactivates an account from a one-time token and issues tokens', async () => {
+    const { service, userService, redisService, globalJwtService, jwtService } =
+      createService();
+    redisService.getAndDelete.mockResolvedValue(
+      JSON.stringify({ userId: 'user-id' }),
+    );
+    userService.reactivate.mockResolvedValue({
+      id: 'user-id',
+      email: 'user@example.com',
+      provider: Provider.LOCAL,
+      passwordHash: 'hashed',
+      isActivate: true,
+    });
+    redisService.keys.mockResolvedValue([]);
+    globalJwtService.signUserToken.mockReturnValue('access-token');
+    jwtService.sign.mockReturnValue('refresh-token');
+    redisService.setWithExpiry.mockResolvedValue(undefined);
+
+    const result = await service.reactivateAccount('reactivation-token');
+
+    expect(userService.reactivate).toHaveBeenCalledWith('user-id');
+    expect(result).toEqual({
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+    });
+  });
+
+  it('rejects invalid reactivation tokens', async () => {
+    const { service, redisService } = createService();
+    redisService.getAndDelete.mockResolvedValue(null);
+
+    await expect(
+      service.reactivateAccount('invalid-token'),
+    ).rejects.toBeInstanceOf(AuthInvalidReactivationTokenException);
   });
 });

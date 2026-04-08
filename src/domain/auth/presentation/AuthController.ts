@@ -30,6 +30,7 @@ import { SignupResponse } from './dto/response/SignupResponse';
 import { ResetPasswordRequest } from './dto/request/ResetPasswordRequest';
 import { ResetPasswordResponse } from './dto/response/ResetPasswordResponse';
 import { AuthEmailOtpPurpose } from './dto/request/AuthEmailOtpPurpose.enum';
+import { ReactivateAccountRequest } from './dto/request/ReactivateAccountRequest';
 import { GoogleAuthGuard } from '../guard/google-auth.guard';
 import { NaverAuthGuard } from '../guard/naver-auth.guard';
 import { KakaoAuthGuard } from '../guard/kakao-auth.guard';
@@ -137,6 +138,27 @@ export class AuthController {
       request.passwordConfirm,
     );
     return { reset };
+  }
+
+  @Post('reactivate')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '탈퇴 계정 재활성화' })
+  @ApiResponse({
+    status: 200,
+    description: '계정 재활성화 및 로그인 성공',
+    type: AuthTokensResponse,
+  })
+  @ApiResponse({ status: 400, description: '유효하지 않거나 만료된 토큰' })
+  async reactivate(
+    @Body() request: ReactivateAccountRequest,
+  ): Promise<AuthTokensResponse> {
+    const tokens = await this.authService.reactivateAccount(
+      request.reactivationToken,
+    );
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
   }
 
   @Post('refresh')

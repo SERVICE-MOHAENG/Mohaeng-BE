@@ -1,4 +1,5 @@
 import { UserService } from './UserService';
+import { EmailAlreadyExistsException } from '../exception/EmailAlreadyExistsException';
 
 describe('UserService', () => {
   const createService = (
@@ -57,7 +58,7 @@ describe('UserService', () => {
     expect(result.email).toBe('user@example.com');
   });
 
-  it('normalizes reactivated account email before saving', async () => {
+  it('rejects signup when a deactivated account already exists for the email', async () => {
     const existingUser = {
       id: 'user-id',
       name: '기존 사용자',
@@ -74,20 +75,14 @@ describe('UserService', () => {
       },
     );
 
-    const result = await service.signup({
-      name: '복구 사용자',
-      email: ' User@Example.com ',
-      password: 'P@ssw0rd!',
-      passwordConfirm: 'P@ssw0rd!',
-    });
-
-    expect(userRepository.save).toHaveBeenCalledWith(
-      expect.objectContaining({
-        email: 'user@example.com',
-        isActivate: true,
+    await expect(
+      service.signup({
+        name: '복구 사용자',
+        email: ' User@Example.com ',
+        password: 'P@ssw0rd!',
+        passwordConfirm: 'P@ssw0rd!',
       }),
-    );
-    expect(result.email).toBe('user@example.com');
+    ).rejects.toBeInstanceOf(EmailAlreadyExistsException);
   });
 
   it('normalizes email before lookup', async () => {

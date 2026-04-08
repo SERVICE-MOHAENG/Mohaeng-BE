@@ -20,6 +20,8 @@ import { AuthInvalidEmailOtpException } from '../exception/AuthInvalidEmailOtpEx
 import { AuthEmailOtpMaxAttemptsExceededException } from '../exception/AuthEmailOtpMaxAttemptsExceededException';
 import { AuthPasswordResetNotAvailableException } from '../exception/AuthPasswordResetNotAvailableException';
 import { AuthPasswordResetNotVerifiedException } from '../exception/AuthPasswordResetNotVerifiedException';
+import { AuthAccountReactivationRequiredException } from '../exception/AuthAccountReactivationRequiredException';
+import { AuthInvalidReactivationTokenException } from '../exception/AuthInvalidReactivationTokenException';
 import { LoginRequest } from '../presentation/dto/request/LoginRequest';
 import { SignupRequest } from '../../user/presentation/dto/request/SignupRequest';
 import { UserResponse } from '../../user/presentation/dto/response/UserResponse';
@@ -40,6 +42,7 @@ const OTP_RATE_LIMIT_WINDOW_SECONDS = 60 * 60;
 const OTP_RATE_LIMIT_MAX = 5;
 const OTP_MAX_VERIFY_ATTEMPTS = 5;
 const OTP_VERIFIED_FLAG_TTL_SECONDS = 10 * 60;
+const REACTIVATION_TOKEN_TTL_SECONDS = 10 * 60;
 const REFRESH_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60; // 7일
 const DEFAULT_REFRESH_TOKEN_EXPIRES_IN = '7d';
 
@@ -74,11 +77,6 @@ export class AuthService {
       throw new AuthInvalidCredentialsException();
     }
 
-    // 비활성 계정 차단
-    if (!user.isActivate) {
-      throw new UserNotActiveException();
-    }
-
     // 비밀번호 검증
     const isValid = await this.userService.verifyPassword(
       request.password,
@@ -86,6 +84,10 @@ export class AuthService {
     );
     if (!isValid) {
       throw new AuthInvalidCredentialsException();
+    }
+
+    if (!user.isActivate) {
+      throw await this.createAccountReactivationRequiredException(user);
     }
 
     return this.issueTokens(user);
@@ -107,8 +109,7 @@ export class AuthService {
 
     const existingUser = await this.userRepository.findByEmail(normalizedEmail);
     if (purpose === AuthEmailOtpPurpose.SIGNUP) {
-      // 이메일 중복 확인 (활성 계정은 OTP 발송 차단, 비활성 계정은 복구 흐름으로 허용)
-      if (existingUser && existingUser.isActivate) {
+      if (existingUser) {
         throw new EmailAlreadyExistsException();
       }
     } else {
@@ -248,6 +249,25 @@ export class AuthService {
     await this.revokeAllUserTokens(user.id);
 
     return true;
+  }
+
+  async reactivateAccount(reactivationToken: string): Promise<AuthTokens> {
+    const tokenKey = this.getReactivationTokenKey(reactivationToken);
+    const rawPayload = await this.redisService.getAndDelete(tokenKey);
+
+    if (!rawPayload) {
+      throw new AuthInvalidReactivationTokenException();
+    }
+
+    let payload: { userId: string };
+    try {
+      payload = JSON.parse(rawPayload) as { userId: string };
+    } catch {
+      throw new AuthInvalidReactivationTokenException();
+    }
+
+    const user = await this.userService.reactivate(payload.userId);
+    return this.issueTokens(user);
   }
 
   async refreshTokens(refreshToken: string): Promise<AuthTokens> {
@@ -458,6 +478,10 @@ export class AuthService {
     return `auth:password-reset:verified:${email}`;
   }
 
+  private getReactivationTokenKey(token: string): string {
+    return `auth:reactivation:${token}`;
+  }
+
   private generateOtp(): string {
     const value = randomInt(0, 1000000);
     return value.toString().padStart(6, '0');
@@ -506,11 +530,6 @@ export class AuthService {
     );
 
     if (user) {
-      // 비활성 사용자 체크
-      if (!user.isActivate) {
-        throw new UserNotActiveException();
-      }
-
       return user;
     }
 
@@ -521,11 +540,6 @@ export class AuthService {
       // 기존 사용자가 있지만 provider가 다른 경우
       if (user.provider !== provider) {
         throw new AuthEmailAlreadyRegisteredWithDifferentProviderException();
-      }
-
-      // 비활성 사용자 체크
-      if (!user.isActivate) {
-        throw new UserNotActiveException();
       }
 
       return user;
@@ -590,13 +604,28 @@ export class AuthService {
       throw new UserNotFoundException();
     }
 
-    // 비활성 사용자 체크
     if (!user.isActivate) {
-      throw new UserNotActiveException();
+      throw await this.createAccountReactivationRequiredException(user);
     }
 
     // 토큰 발급
     return this.issueTokens(user);
+  }
+
+  private async createAccountReactivationRequiredException(
+    user: User,
+  ): Promise<AuthAccountReactivationRequiredException> {
+    const reactivationToken = randomBytes(32).toString('hex');
+    await this.redisService.setWithExpiry(
+      this.getReactivationTokenKey(reactivationToken),
+      JSON.stringify({ userId: user.id }),
+      REACTIVATION_TOKEN_TTL_SECONDS,
+    );
+
+    return new AuthAccountReactivationRequiredException({
+      reactivationToken,
+      provider: user.provider,
+    });
   }
 
   /**
