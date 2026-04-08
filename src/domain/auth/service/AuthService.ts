@@ -18,6 +18,8 @@ import { AuthEmailOtpCooldownException } from '../exception/AuthEmailOtpCooldown
 import { AuthEmailOtpTooManyRequestsException } from '../exception/AuthEmailOtpTooManyRequestsException';
 import { AuthInvalidEmailOtpException } from '../exception/AuthInvalidEmailOtpException';
 import { AuthEmailOtpMaxAttemptsExceededException } from '../exception/AuthEmailOtpMaxAttemptsExceededException';
+import { AuthPasswordResetNotAvailableException } from '../exception/AuthPasswordResetNotAvailableException';
+import { AuthPasswordResetNotVerifiedException } from '../exception/AuthPasswordResetNotVerifiedException';
 import { LoginRequest } from '../presentation/dto/request/LoginRequest';
 import { SignupRequest } from '../../user/presentation/dto/request/SignupRequest';
 import { UserResponse } from '../../user/presentation/dto/response/UserResponse';
@@ -25,6 +27,7 @@ import { OAuthCodeRepository } from '../persistence/OAuthCodeRepository';
 import { GlobalJwtService } from '../../../global/jwt/GlobalJwtService';
 import { GlobalRedisService } from '../../../global/redis/GlobalRedisService';
 import { EmailOtpService } from './EmailOtpService';
+import { AuthEmailOtpPurpose } from '../presentation/dto/request/AuthEmailOtpPurpose.enum';
 
 type AuthTokens = {
   accessToken: string;
@@ -98,20 +101,31 @@ export class AuthService {
 
   async sendEmailOtp(
     email: string,
+    purpose: AuthEmailOtpPurpose = AuthEmailOtpPurpose.SIGNUP,
   ): Promise<{ sent: boolean; isActivate: boolean }> {
     const normalizedEmail = this.normalizeEmail(email);
 
-    // 이메일 중복 확인 (활성 계정은 OTP 발송 차단, 비활성 계정은 복구 흐름으로 허용)
     const existingUser = await this.userRepository.findByEmail(normalizedEmail);
-    if (existingUser && existingUser.isActivate) {
-      throw new EmailAlreadyExistsException();
+    if (purpose === AuthEmailOtpPurpose.SIGNUP) {
+      // 이메일 중복 확인 (활성 계정은 OTP 발송 차단, 비활성 계정은 복구 흐름으로 허용)
+      if (existingUser && existingUser.isActivate) {
+        throw new EmailAlreadyExistsException();
+      }
+    } else {
+      if (!existingUser) {
+        throw new UserNotFoundException();
+      }
+      this.ensurePasswordResetEligibleUser(existingUser);
     }
-    const isActivate = !(existingUser && !existingUser.isActivate);
+    const isActivate =
+      purpose === AuthEmailOtpPurpose.SIGNUP
+        ? !(existingUser && !existingUser.isActivate)
+        : true;
 
-    const otpKey = this.getOtpKey(normalizedEmail);
-    const cooldownKey = this.getOtpCooldownKey(normalizedEmail);
-    const rateLimitKey = this.getOtpRateLimitKey(normalizedEmail);
-    const attemptsKey = this.getOtpAttemptsKey(normalizedEmail);
+    const otpKey = this.getOtpKey(normalizedEmail, purpose);
+    const cooldownKey = this.getOtpCooldownKey(normalizedEmail, purpose);
+    const rateLimitKey = this.getOtpRateLimitKey(normalizedEmail, purpose);
+    const attemptsKey = this.getOtpAttemptsKey(normalizedEmail, purpose);
 
     // 쿨다운 중이면 재발송 차단
     const isCooldownActive = await this.redisService.exists(cooldownKey);
@@ -154,11 +168,23 @@ export class AuthService {
     return { sent: true, isActivate };
   }
 
-  async verifyEmailOtp(email: string, otp: string): Promise<boolean> {
+  async verifyEmailOtp(
+    email: string,
+    otp: string,
+    purpose: AuthEmailOtpPurpose = AuthEmailOtpPurpose.SIGNUP,
+  ): Promise<boolean> {
     const normalizedEmail = this.normalizeEmail(email);
-    const otpKey = this.getOtpKey(normalizedEmail);
-    const attemptsKey = this.getOtpAttemptsKey(normalizedEmail);
-    const verifiedKey = this.getOtpVerifiedKey(normalizedEmail);
+    if (purpose === AuthEmailOtpPurpose.PASSWORD_RESET) {
+      const existingUser =
+        await this.userRepository.findByEmail(normalizedEmail);
+      if (!existingUser) {
+        throw new UserNotFoundException();
+      }
+      this.ensurePasswordResetEligibleUser(existingUser);
+    }
+    const otpKey = this.getOtpKey(normalizedEmail, purpose);
+    const attemptsKey = this.getOtpAttemptsKey(normalizedEmail, purpose);
+    const verifiedKey = this.getOtpVerifiedKey(normalizedEmail, purpose);
 
     const storedOtp = await this.redisService.get(otpKey);
 
@@ -195,6 +221,31 @@ export class AuthService {
       '1',
       OTP_VERIFIED_FLAG_TTL_SECONDS,
     );
+
+    return true;
+  }
+
+  async resetPassword(
+    email: string,
+    password: string,
+    passwordConfirm: string,
+  ): Promise<boolean> {
+    const normalizedEmail = this.normalizeEmail(email);
+    const user = await this.userService.findByEmail(normalizedEmail);
+    this.ensurePasswordResetEligibleUser(user);
+
+    const verifiedKey = this.getOtpVerifiedKey(
+      normalizedEmail,
+      AuthEmailOtpPurpose.PASSWORD_RESET,
+    );
+    const isVerified = await this.redisService.get(verifiedKey);
+    if (!isVerified) {
+      throw new AuthPasswordResetNotVerifiedException();
+    }
+
+    await this.userService.updatePassword(user, password, passwordConfirm);
+    await this.redisService.delete(verifiedKey);
+    await this.revokeAllUserTokens(user.id);
 
     return true;
   }
@@ -355,24 +406,56 @@ export class AuthService {
     return email.trim().toLowerCase();
   }
 
-  private getOtpKey(email: string): string {
-    return `auth:email-otp:${email}`;
+  private getOtpKey(email: string, purpose: AuthEmailOtpPurpose): string {
+    if (purpose === AuthEmailOtpPurpose.SIGNUP) {
+      return `auth:email-otp:${email}`;
+    }
+
+    return `auth:password-reset:otp:${email}`;
   }
 
-  private getOtpCooldownKey(email: string): string {
-    return `auth:email-otp:cooldown:${email}`;
+  private getOtpCooldownKey(
+    email: string,
+    purpose: AuthEmailOtpPurpose,
+  ): string {
+    if (purpose === AuthEmailOtpPurpose.SIGNUP) {
+      return `auth:email-otp:cooldown:${email}`;
+    }
+
+    return `auth:password-reset:otp:cooldown:${email}`;
   }
 
-  private getOtpRateLimitKey(email: string): string {
-    return `auth:email-otp:limit:${email}`;
+  private getOtpRateLimitKey(
+    email: string,
+    purpose: AuthEmailOtpPurpose,
+  ): string {
+    if (purpose === AuthEmailOtpPurpose.SIGNUP) {
+      return `auth:email-otp:limit:${email}`;
+    }
+
+    return `auth:password-reset:otp:limit:${email}`;
   }
 
-  private getOtpAttemptsKey(email: string): string {
-    return `auth:email-otp:attempts:${email}`;
+  private getOtpAttemptsKey(
+    email: string,
+    purpose: AuthEmailOtpPurpose,
+  ): string {
+    if (purpose === AuthEmailOtpPurpose.SIGNUP) {
+      return `auth:email-otp:attempts:${email}`;
+    }
+
+    return `auth:password-reset:otp:attempts:${email}`;
   }
 
-  private getOtpVerifiedKey(email: string): string {
-    return `auth:email-verified:${email}`;
+  private getOtpVerifiedKey(
+    email: string,
+    purpose: AuthEmailOtpPurpose,
+  ): string {
+    if (purpose === AuthEmailOtpPurpose.SIGNUP) {
+      return `auth:email-verified:${email}`;
+    }
+
+    return `auth:password-reset:verified:${email}`;
   }
 
   private generateOtp(): string {
@@ -387,6 +470,16 @@ export class AuthService {
   private async revokeAllUserTokens(userId: string): Promise<void> {
     // 해당 사용자의 모든 토큰 삭제
     await this.redisService.deletePattern(`refresh:user:${userId}:*`);
+  }
+
+  private ensurePasswordResetEligibleUser(user: User): void {
+    if (!user.isActivate) {
+      throw new UserNotActiveException();
+    }
+
+    if (user.provider !== Provider.LOCAL || !user.passwordHash) {
+      throw new AuthPasswordResetNotAvailableException();
+    }
   }
 
   /**

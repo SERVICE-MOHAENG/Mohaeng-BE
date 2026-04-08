@@ -128,13 +128,30 @@ export class UserService {
     }
 
     if (request.password !== undefined) {
-      const hashedPassword = await this.hashPassword(request.password);
-      user.passwordHash = hashedPassword;
+      const updatedUser = await this.updatePassword(
+        user,
+        request.password,
+        request.passwordConfirm!,
+      );
+      return UserResponse.fromEntity(updatedUser);
     }
 
     // 저장 및 응답 반환
     const updatedUser = await this.userRepository.save(user);
     return UserResponse.fromEntity(updatedUser);
+  }
+
+  async updatePassword(
+    user: User,
+    password: string,
+    passwordConfirm: string,
+  ): Promise<User> {
+    if (password !== passwordConfirm) {
+      throw new PasswordMismatchException();
+    }
+
+    user.passwordHash = await this.hashPassword(password);
+    return this.userRepository.save(user);
   }
 
   private normalizeEmail(email: string): string {

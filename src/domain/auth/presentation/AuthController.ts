@@ -27,6 +27,9 @@ import { SignupRequest } from '../../user/presentation/dto/request/SignupRequest
 import { SendEmailOtpResponse } from './dto/response/SendEmailOtpResponse';
 import { VerifyEmailOtpResponse } from './dto/response/VerifyEmailOtpResponse';
 import { SignupResponse } from './dto/response/SignupResponse';
+import { ResetPasswordRequest } from './dto/request/ResetPasswordRequest';
+import { ResetPasswordResponse } from './dto/response/ResetPasswordResponse';
+import { AuthEmailOtpPurpose } from './dto/request/AuthEmailOtpPurpose.enum';
 import { GoogleAuthGuard } from '../guard/google-auth.guard';
 import { NaverAuthGuard } from '../guard/naver-auth.guard';
 import { KakaoAuthGuard } from '../guard/kakao-auth.guard';
@@ -89,7 +92,10 @@ export class AuthController {
   async sendEmailOtp(
     @Body() request: SendEmailOtpRequest,
   ): Promise<SendEmailOtpResponse> {
-    return await this.authService.sendEmailOtp(request.email);
+    return await this.authService.sendEmailOtp(
+      request.email,
+      request.purpose ?? AuthEmailOtpPurpose.SIGNUP,
+    );
   }
 
   @Post('email/otp/verify')
@@ -107,8 +113,30 @@ export class AuthController {
     const verified = await this.authService.verifyEmailOtp(
       request.email,
       request.otp,
+      request.purpose ?? AuthEmailOtpPurpose.SIGNUP,
     );
     return { verified };
+  }
+
+  @Post('password/reset')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '비밀번호 재설정' })
+  @ApiResponse({
+    status: 200,
+    description: '비밀번호 재설정 성공',
+    type: ResetPasswordResponse,
+  })
+  @ApiResponse({ status: 400, description: '잘못된 요청 또는 인증 미완료' })
+  @ApiResponse({ status: 404, description: '사용자를 찾을 수 없음' })
+  async resetPassword(
+    @Body() request: ResetPasswordRequest,
+  ): Promise<ResetPasswordResponse> {
+    const reset = await this.authService.resetPassword(
+      request.email,
+      request.password,
+      request.passwordConfirm,
+    );
+    return { reset };
   }
 
   @Post('refresh')
@@ -276,8 +304,9 @@ export class AuthController {
       return;
     }
 
-    const frontendRedirectUrl =
-      this.getFrontendRedirectUrl(frontendRedirectUrlKey);
+    const frontendRedirectUrl = this.getFrontendRedirectUrl(
+      frontendRedirectUrlKey,
+    );
 
     if (!user) {
       redirectOAuthFailure(response, frontendRedirectUrl, provider);

@@ -12,6 +12,8 @@ export enum AuthErrorCode {
   EMAIL_OTP_INVALID = 'TRIP_CORE_HE_AUTH_A011',
   EMAIL_OTP_MAX_ATTEMPTS_EXCEEDED = 'TRIP_CORE_HE_AUTH_A012',
   EMAIL_NOT_VERIFIED = 'TRIP_CORE_HE_AUTH_A013',
+  PASSWORD_RESET_NOT_AVAILABLE = 'TRIP_CORE_HE_AUTH_A014',
+  PASSWORD_RESET_NOT_VERIFIED = 'TRIP_CORE_HE_AUTH_A015',
 }
 
 export const AuthErrorMessage = {
@@ -35,4 +37,8 @@ export const AuthErrorMessage = {
   [AuthErrorCode.EMAIL_OTP_MAX_ATTEMPTS_EXCEEDED]:
     '인증번호 입력 횟수를 초과했습니다. 인증번호를 다시 요청해주세요',
   [AuthErrorCode.EMAIL_NOT_VERIFIED]: '이메일 인증이 완료되지 않았습니다',
+  [AuthErrorCode.PASSWORD_RESET_NOT_AVAILABLE]:
+    '로컬 가입 계정만 비밀번호 재설정이 가능합니다',
+  [AuthErrorCode.PASSWORD_RESET_NOT_VERIFIED]:
+    '비밀번호 재설정을 위한 이메일 인증이 완료되지 않았습니다',
 } as const;
