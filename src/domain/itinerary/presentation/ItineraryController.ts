@@ -36,6 +36,7 @@ import { ItineraryJobStatusResponse } from './dto/response/ItineraryJobStatusRes
 import { ItineraryResultResponse } from './dto/response/ItineraryResultResponse';
 import { ChatWithItineraryResponse } from './dto/response/ChatWithItineraryResponse';
 import { ItineraryModificationJobStatusResponse } from './dto/response/ItineraryModificationJobStatusResponse';
+import { ItineraryChatHistoryResponse } from './dto/response/ItineraryChatHistoryResponse';
 
 @ApiTags('itineraries')
 @Controller('v1/itineraries')
@@ -91,10 +92,7 @@ export class ItineraryController {
   @ApiParam({ name: 'jobId', description: '작업 ID' })
   @ApiResponse({ status: 200, type: ItineraryJobStatusResponse })
   @UserApiBearerAuth()
-  async getStatus(
-    @UserId() userId: string,
-    @UuidParam('jobId') jobId: string,
-  ) {
+  async getStatus(@UserId() userId: string, @UuidParam('jobId') jobId: string) {
     const result = await this.itineraryService.getJobStatus(userId, jobId);
     return { status: result };
   }
@@ -107,12 +105,27 @@ export class ItineraryController {
   @ApiParam({ name: 'jobId', description: '작업 ID' })
   @ApiResponse({ status: 200, type: ItineraryResultResponse })
   @UserApiBearerAuth()
-  async getResult(
-    @UserId() userId: string,
-    @UuidParam('jobId') jobId: string,
-  ) {
+  async getResult(@UserId() userId: string, @UuidParam('jobId') jobId: string) {
     const result = await this.itineraryService.getJobResult(userId, jobId);
     return { result };
+  }
+
+  /**
+   * 로드맵 수정 채팅 내역 조회
+   */
+  @Get(':id/chats')
+  @ApiOperation({ summary: '로드맵 수정 채팅 내역 조회' })
+  @ApiParam({ name: 'id', description: '로드맵 ID' })
+  @ApiResponse({ status: 200, type: ItineraryChatHistoryResponse })
+  @UserApiBearerAuth()
+  async getChatHistory(
+    @UserId() userId: string,
+    @UuidParam() itineraryId: string,
+  ) {
+    return this.itineraryModificationService.getChatHistory(
+      userId,
+      itineraryId,
+    );
   }
 
   /**
