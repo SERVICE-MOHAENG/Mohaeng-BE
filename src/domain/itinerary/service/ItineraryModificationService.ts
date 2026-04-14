@@ -6,7 +6,12 @@ import { Queue } from 'bullmq';
 import { ItineraryJobRepository } from '../persistence/ItineraryJobRepository';
 import { ItineraryJob } from '../entity/ItineraryJob.entity';
 import { TravelCourse } from '../../course/entity/TravelCourse.entity';
+import { CourseAiChat } from '../../course/entity/CourseAiChat.entity';
 import { ChatWithItineraryResponse } from '../presentation/dto/response/ChatWithItineraryResponse';
+import {
+  ItineraryChatHistoryItemResponse,
+  ItineraryChatHistoryResponse,
+} from '../presentation/dto/response/ItineraryChatHistoryResponse';
 import { ItineraryModificationJobStatusResponse } from '../presentation/dto/response/ItineraryModificationJobStatusResponse';
 import { ItineraryNotFoundException } from '../exception/ItineraryNotFoundException';
 import { UnauthorizedItineraryAccessException } from '../exception/UnauthorizedItineraryAccessException';
@@ -30,6 +35,8 @@ export class ItineraryModificationService {
     private readonly itineraryJobRepository: ItineraryJobRepository,
     @InjectRepository(TravelCourse)
     private readonly travelCourseRepository: Repository<TravelCourse>,
+    @InjectRepository(CourseAiChat)
+    private readonly chatRepository: Repository<CourseAiChat>,
     @InjectQueue('itinerary-modification')
     private readonly modificationQueue: Queue,
   ) {}
@@ -46,20 +53,7 @@ export class ItineraryModificationService {
     itineraryId: string,
     message: string,
   ): Promise<ChatWithItineraryResponse> {
-    // 1. TravelCourse 존재 확인
-    const course = await this.travelCourseRepository.findOne({
-      where: { id: itineraryId },
-      relations: ['user'],
-    });
-
-    if (!course) {
-      throw new ItineraryNotFoundException();
-    }
-
-    // 2. 권한 확인 (본인의 로드맵인지 확인)
-    if (course.user.id !== userId) {
-      throw new UnauthorizedItineraryAccessException();
-    }
+    const course = await this.findOwnedCourse(userId, itineraryId);
 
     // 3. 완료된 로드맵 수정 잠금
     if (course.isCompleted) {
@@ -125,6 +119,25 @@ export class ItineraryModificationService {
   }
 
   /**
+   * 로드맵 수정 채팅 내역 조회
+   */
+  async getChatHistory(
+    userId: string,
+    itineraryId: string,
+  ): Promise<ItineraryChatHistoryResponse> {
+    await this.findOwnedCourse(userId, itineraryId);
+
+    const chats = await this.chatRepository.find({
+      where: { travelCourse: { id: itineraryId } },
+      order: { createdAt: 'ASC' },
+    });
+
+    return ItineraryChatHistoryResponse.from(
+      chats.map((chat) => ItineraryChatHistoryItemResponse.from(chat)),
+    );
+  }
+
+  /**
    * 수정 작업 상태 조회
    */
   async getModificationJobStatus(
@@ -141,5 +154,25 @@ export class ItineraryModificationService {
     }
 
     return ItineraryModificationJobStatusResponse.from(job);
+  }
+
+  private async findOwnedCourse(
+    userId: string,
+    itineraryId: string,
+  ): Promise<TravelCourse> {
+    const course = await this.travelCourseRepository.findOne({
+      where: { id: itineraryId },
+      relations: ['user'],
+    });
+
+    if (!course) {
+      throw new ItineraryNotFoundException();
+    }
+
+    if (course.user.id !== userId) {
+      throw new UnauthorizedItineraryAccessException();
+    }
+
+    return course;
   }
 }
