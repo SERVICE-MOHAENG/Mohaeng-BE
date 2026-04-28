@@ -173,10 +173,10 @@ src/
 모행 백엔드의 기본 작업 흐름은 다음과 같습니다.
 
 1. GitHub Issue 생성
-2. Issue 제목을 `[BE] 작업 내용` 형식으로 작성
-3. `chore/{issue-number}-{short-description}` 형식으로 브랜치 생성
+2. Issue 제목을 `[BE] 작업 내용` 형식의 한국어 제목으로 작성
+3. `chore/{issue-number}-{한국어-작업-요약}` 형식으로 브랜치 생성
 4. 구현 및 검증
-5. Lore Commit Protocol 형식으로 커밋
+5. `feat (#260) : 로컬 회원 비밀번호 재설정 API 추가` 같은 한국어 제목 + Lore Commit Protocol 형식으로 커밋
 6. 브랜치 푸시 및 PR 생성
 7. 최종 브리핑 전달
 
