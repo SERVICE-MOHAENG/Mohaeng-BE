@@ -59,3 +59,7 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 .omc/sessions/
 .omc/state/
 .omc/project-memory.json
+
+# OMX runtime state
+.omx/
+
