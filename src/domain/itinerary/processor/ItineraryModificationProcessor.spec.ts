@@ -1,4 +1,12 @@
+import { HttpService } from '@nestjs/axios';
+import { ConfigService } from '@nestjs/config';
+import { Repository } from 'typeorm';
 import { ItineraryModificationProcessor } from './ItineraryModificationProcessor';
+import { ItineraryJobRepository } from '../persistence/ItineraryJobRepository';
+import { TravelCourse } from '../../course/entity/TravelCourse.entity';
+import { CourseAiChat } from '../../course/entity/CourseAiChat.entity';
+import { RoadmapSurvey } from '../../course/entity/RoadmapSurvey.entity';
+import { CourseSurvey } from '../../course/entity/CourseSurvey.entity';
 import { PacePreference } from '../../course/entity/PacePreference.enum';
 import { PlanningPreference } from '../../course/entity/PlanningPreference.enum';
 import { DestinationPreference } from '../../course/entity/DestinationPreference.enum';
@@ -7,14 +15,24 @@ import { PriorityPreference } from '../../course/entity/PriorityPreference.enum'
 import { TravelTheme } from '../../course/entity/TravelTheme.enum';
 import { Companion } from '../../course/entity/Companion.enum';
 
+type SurveyPreferences = {
+  companion_type: string[];
+  travel_themes: string[];
+  pace_preference: string;
+  planning_preference: string;
+  destination_preference: string;
+  activity_preference: string;
+  priority_preference: string;
+};
+
 describe('ItineraryModificationProcessor', () => {
   it('loads roadmap survey preferences without budget_range', async () => {
     const processor = new ItineraryModificationProcessor(
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
+      new ConfigService<Record<string, unknown>>({}),
+      new HttpService(),
+      {} as ItineraryJobRepository,
+      {} as Repository<TravelCourse>,
+      {} as Repository<CourseAiChat>,
       {
         findOne: jest.fn().mockResolvedValue({
           companions: [{ companion: Companion.FAMILY }],
@@ -25,17 +43,19 @@ describe('ItineraryModificationProcessor', () => {
           activityPreference: ActivityPreference.ACTIVE,
           priorityPreference: PriorityPreference.EFFICIENCY,
         }),
-      } as any,
+      } as unknown as Repository<RoadmapSurvey>,
       {
         findOne: jest.fn(),
-      } as any,
+      } as unknown as Repository<CourseSurvey>,
     );
 
     const loadSurveyPreferences = Reflect.get(
       processor,
       'loadSurveyPreferences',
-    ) as (travelCourseId: string) => Promise<unknown>;
-
+    ) as (
+      this: ItineraryModificationProcessor,
+      travelCourseId: string,
+    ) => Promise<SurveyPreferences | null>;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const preferences = await loadSurveyPreferences.call(
       processor,
@@ -55,41 +75,44 @@ describe('ItineraryModificationProcessor', () => {
   });
 
   it('falls back to course survey preferences without budget_range', async () => {
-    const courseSurveyRepository = {
-      findOne: jest.fn().mockResolvedValue({
-        companions: [{ companion: Companion.FRIENDS }],
-        themes: [{ theme: TravelTheme.SIGHTSEEING }],
-        pacePreference: PacePreference.RELAXED,
-        planningPreference: PlanningPreference.SPONTANEOUS,
-        destinationPreference: DestinationPreference.LOCAL_EXPERIENCE,
-        activityPreference: ActivityPreference.REST_FOCUSED,
-        priorityPreference: PriorityPreference.EMOTIONAL,
-      }),
-    };
+    const courseSurveyFindOne = jest.fn().mockResolvedValue({
+      companions: [{ companion: Companion.FRIENDS }],
+      themes: [{ theme: TravelTheme.SIGHTSEEING }],
+      pacePreference: PacePreference.RELAXED,
+      planningPreference: PlanningPreference.SPONTANEOUS,
+      destinationPreference: DestinationPreference.LOCAL_EXPERIENCE,
+      activityPreference: ActivityPreference.REST_FOCUSED,
+      priorityPreference: PriorityPreference.EMOTIONAL,
+    });
+
     const processor = new ItineraryModificationProcessor(
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
+      new ConfigService<Record<string, unknown>>({}),
+      new HttpService(),
+      {} as ItineraryJobRepository,
+      {} as Repository<TravelCourse>,
+      {} as Repository<CourseAiChat>,
       {
         findOne: jest.fn().mockResolvedValue(null),
-      } as any,
-      courseSurveyRepository as any,
+      } as unknown as Repository<RoadmapSurvey>,
+      {
+        findOne: courseSurveyFindOne,
+      } as unknown as Repository<CourseSurvey>,
     );
 
     const loadSurveyPreferences = Reflect.get(
       processor,
       'loadSurveyPreferences',
-    ) as (travelCourseId: string) => Promise<unknown>;
-
+    ) as (
+      this: ItineraryModificationProcessor,
+      travelCourseId: string,
+    ) => Promise<SurveyPreferences | null>;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const preferences = await loadSurveyPreferences.call(
       processor,
       'course-id',
     );
 
-    expect(courseSurveyRepository.findOne).toHaveBeenCalled();
+    expect(courseSurveyFindOne).toHaveBeenCalled();
     expect(preferences).toEqual({
       companion_type: [Companion.FRIENDS],
       travel_themes: [TravelTheme.SIGHTSEEING],
