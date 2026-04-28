@@ -6,6 +6,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Job } from 'bullmq';
 import { firstValueFrom } from 'rxjs';
+import { AxiosError } from 'axios';
 import { ItineraryJobRepository } from '../persistence/ItineraryJobRepository';
 import { CourseSurvey } from '../../course/entity/CourseSurvey.entity';
 
@@ -105,9 +106,10 @@ export class ItineraryProcessor extends WorkerHost {
       this.logger.log(
         `Python 서버 응답: status=${response.status}, jobId=${jobId}`,
       );
-    } catch (error) {
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
       this.logger.error(
-        `Python 서버 호출 실패: jobId=${jobId}, error=${error.message}, response=${JSON.stringify(error.response?.data)}`,
+        `Python 서버 호출 실패: jobId=${jobId}, error=${axiosError.message}, response=${JSON.stringify(axiosError.response?.data)}`,
       );
       // throw하여 BullMQ가 자동 재시도하도록 함
       throw error;
@@ -157,7 +159,6 @@ export class ItineraryProcessor extends WorkerHost {
       destination_preference: survey.destinationPreference,
       activity_preference: survey.activityPreference,
       priority_preference: survey.priorityPreference,
-      budget_range: survey.budget,
       notes: survey.userNote ?? '',
     };
   }

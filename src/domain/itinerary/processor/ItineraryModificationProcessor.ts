@@ -6,6 +6,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Job } from 'bullmq';
 import { firstValueFrom } from 'rxjs';
+import { AxiosError } from 'axios';
 import { ItineraryJobRepository } from '../persistence/ItineraryJobRepository';
 import { TravelCourse } from '../../course/entity/TravelCourse.entity';
 import { CourseAiChat } from '../../course/entity/CourseAiChat.entity';
@@ -133,25 +134,22 @@ export class ItineraryModificationProcessor extends WorkerHost {
     this.logger.log(`Python 서버 요청 payload: ${JSON.stringify(requestBody)}`);
     try {
       const response = await firstValueFrom(
-        this.httpService.post(
-          `${pythonBaseUrl}/api/v1/chat`,
-          requestBody,
-          {
-            headers: {
-              'x-service-secret': serviceSecret,
-              'Content-Type': 'application/json',
-            },
-            timeout: 10000, // 10초
+        this.httpService.post(`${pythonBaseUrl}/api/v1/chat`, requestBody, {
+          headers: {
+            'x-service-secret': serviceSecret,
+            'Content-Type': 'application/json',
           },
-        ),
+          timeout: 10000, // 10초
+        }),
       );
 
       this.logger.log(
         `Python 서버 응답: status=${response.status}, jobId=${jobId}`,
       );
-    } catch (error) {
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
       this.logger.error(
-        `Python 서버 호출 실패: jobId=${jobId}, error=${error.message}, response=${JSON.stringify(error.response?.data)}`,
+        `Python 서버 호출 실패: jobId=${jobId}, error=${axiosError.message}, response=${JSON.stringify(axiosError.response?.data)}`,
       );
       // throw하여 BullMQ가 자동 재시도하도록 함
       throw error;
@@ -163,9 +161,7 @@ export class ItineraryModificationProcessor extends WorkerHost {
    * - roadmap_survey_table 우선
    * - 없으면 course_survey_table fallback
    */
-  private async loadSurveyPreferences(
-    travelCourseId: string,
-  ): Promise<{
+  private async loadSurveyPreferences(travelCourseId: string): Promise<{
     companion_type: string[];
     travel_themes: string[];
     pace_preference: string;
@@ -173,7 +169,6 @@ export class ItineraryModificationProcessor extends WorkerHost {
     destination_preference: string;
     activity_preference: string;
     priority_preference: string;
-    budget_range: string;
   } | null> {
     const roadmapSurvey = await this.roadmapSurveyRepository.findOne({
       where: { travelCourseId },
@@ -195,7 +190,6 @@ export class ItineraryModificationProcessor extends WorkerHost {
         destination_preference: roadmapSurvey.destinationPreference,
         activity_preference: roadmapSurvey.activityPreference,
         priority_preference: roadmapSurvey.priorityPreference,
-        budget_range: roadmapSurvey.budget,
       };
     }
 
@@ -223,7 +217,6 @@ export class ItineraryModificationProcessor extends WorkerHost {
       destination_preference: courseSurvey.destinationPreference,
       activity_preference: courseSurvey.activityPreference,
       priority_preference: courseSurvey.priorityPreference,
-      budget_range: courseSurvey.budget,
     };
   }
 

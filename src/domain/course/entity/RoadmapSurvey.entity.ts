@@ -12,7 +12,6 @@ import { TravelCourse } from './TravelCourse.entity';
 import { RoadmapSurveyDestination } from './RoadmapSurveyDestination.entity';
 import { RoadmapSurveyCompanion } from './RoadmapSurveyCompanion.entity';
 import { RoadmapSurveyTheme } from './RoadmapSurveyTheme.entity';
-import { SurveyBudget } from './SurveyBudget.enum';
 import { PacePreference } from './PacePreference.enum';
 import { PlanningPreference } from './PlanningPreference.enum';
 import { DestinationPreference } from './DestinationPreference.enum';
@@ -54,15 +53,6 @@ export class RoadmapSurvey extends BaseEntity {
     comment: '인원수',
   })
   paxCount: number;
-
-  @Column({
-    type: 'enum',
-    enum: SurveyBudget,
-    name: 'budget',
-    nullable: false,
-    comment: '예산 범위',
-  })
-  budget: SurveyBudget;
 
   @Column({
     type: 'text',
@@ -143,7 +133,6 @@ export class RoadmapSurvey extends BaseEntity {
   static create(
     userId: string,
     paxCount: number,
-    budget: SurveyBudget,
     pacePreference: PacePreference,
     planningPreference: PlanningPreference,
     destinationPreference: DestinationPreference,
@@ -154,7 +143,6 @@ export class RoadmapSurvey extends BaseEntity {
     const survey = new RoadmapSurvey();
     survey.userId = userId;
     survey.paxCount = paxCount;
-    survey.budget = budget;
     survey.pacePreference = pacePreference;
     survey.planningPreference = planningPreference;
     survey.destinationPreference = destinationPreference;

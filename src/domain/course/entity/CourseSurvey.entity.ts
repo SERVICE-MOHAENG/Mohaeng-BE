@@ -11,7 +11,6 @@ import { TravelCourse } from './TravelCourse.entity';
 import { CourseSurveyDestination } from './CourseSurveyDestination.entity';
 import { CourseSurveyCompanion } from './CourseSurveyCompanion.entity';
 import { CourseSurveyTheme } from './CourseSurveyTheme.entity';
-import { SurveyBudget } from './SurveyBudget.enum';
 import { PacePreference } from './PacePreference.enum';
 import { PlanningPreference } from './PlanningPreference.enum';
 import { DestinationPreference } from './DestinationPreference.enum';
@@ -44,15 +43,6 @@ export class CourseSurvey {
 
   @Column({ type: 'int', name: 'pax_count', nullable: false })
   paxCount: number;
-
-  @Column({
-    type: 'enum',
-    enum: SurveyBudget,
-    name: 'budget',
-    nullable: false,
-    comment: '예산 범위',
-  })
-  budget: SurveyBudget;
 
   @Column({ type: 'text', name: 'user_note', nullable: true })
   userNote: string | null;
