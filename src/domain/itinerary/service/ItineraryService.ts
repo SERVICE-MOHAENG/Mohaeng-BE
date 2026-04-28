@@ -140,7 +140,6 @@ export class ItineraryService {
     survey.userId = userId;
     survey.travelCourseId = null;
     survey.paxCount = request.people_count;
-    survey.budget = request.budget_range;
     survey.userNote = request.notes ?? null;
     survey.travelStartDay = roadmapStart;
     survey.travelEndDay = roadmapEnd;
