@@ -13,7 +13,6 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
-import { SurveyBudget } from '../../../../course/entity/SurveyBudget.enum';
 import { PacePreference } from '../../../../course/entity/PacePreference.enum';
 import { PlanningPreference } from '../../../../course/entity/PlanningPreference.enum';
 import { DestinationPreference } from '../../../../course/entity/DestinationPreference.enum';
@@ -21,6 +20,9 @@ import { ActivityPreference } from '../../../../course/entity/ActivityPreference
 import { PriorityPreference } from '../../../../course/entity/PriorityPreference.enum';
 import { Companion } from '../../../../course/entity/Companion.enum';
 import { TravelTheme } from '../../../../course/entity/TravelTheme.enum';
+
+const asArray = <T>(value: T | T[]): T[] =>
+  Array.isArray(value) ? value : [value];
 
 class SurveyRegionRequest {
   @ApiProperty({ description: '지역명', example: 'SEOUL' })
@@ -65,7 +67,7 @@ export class CreateSurveyRequest {
     isArray: true,
     example: [Companion.FAMILY],
   })
-  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
+  @Transform(({ value }: { value: Companion | Companion[] }) => asArray(value))
   @IsArray()
   @ArrayNotEmpty()
   @IsEnum(Companion, { each: true })
@@ -77,7 +79,9 @@ export class CreateSurveyRequest {
     isArray: true,
     example: [TravelTheme.UNIQUE_TRIP],
   })
-  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
+  @Transform(({ value }: { value: TravelTheme | TravelTheme[] }) =>
+    asArray(value),
+  )
   @IsArray()
   @ArrayNotEmpty()
   @IsEnum(TravelTheme, { each: true })
@@ -122,14 +126,6 @@ export class CreateSurveyRequest {
   })
   @IsEnum(PriorityPreference)
   priority_preference: PriorityPreference;
-
-  @ApiProperty({
-    description: '예산 범위',
-    enum: SurveyBudget,
-    example: SurveyBudget.LOW,
-  })
-  @IsEnum(SurveyBudget)
-  budget_range: SurveyBudget;
 
   @ApiProperty({
     description: '추가 요청 사항',
