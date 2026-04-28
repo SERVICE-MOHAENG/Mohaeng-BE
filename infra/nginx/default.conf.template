@@ -1,5 +1,5 @@
 upstream api_upstream {
-    server app:8080;
+    server ${API_UPSTREAM_HOST}:8080;
 }
 
 upstream ai_upstream {
