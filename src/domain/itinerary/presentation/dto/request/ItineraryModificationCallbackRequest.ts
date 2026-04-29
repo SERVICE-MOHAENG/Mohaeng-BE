@@ -13,6 +13,7 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PlanningPreference } from '../../../../course/entity/PlanningPreference.enum';
+import { PlaceCategory } from '../../../../place/entity/PlaceCategory.enum';
 
 class CallbackErrorRequest {
   @ApiProperty({ description: '오류 코드', example: 'LLM_PROVIDER_ERROR' })
@@ -48,6 +49,13 @@ class CallbackPlaceRequest {
   @ApiProperty({ description: 'Google Maps URL' })
   @IsString()
   place_url: string;
+
+  @ApiProperty({
+    description: 'Mohaeng 장소 대분류 코드',
+    enum: PlaceCategory,
+  })
+  @IsEnum(PlaceCategory)
+  place_category: PlaceCategory;
 
   @ApiProperty({ description: '한 줄 설명' })
   @IsString()

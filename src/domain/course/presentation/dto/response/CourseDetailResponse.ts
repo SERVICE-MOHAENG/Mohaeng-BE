@@ -3,6 +3,7 @@ import { TravelCourse } from '../../../entity/TravelCourse.entity';
 import { CourseDay } from '../../../entity/CourseDay.entity';
 import { CoursePlace } from '../../../entity/CoursePlace.entity';
 import { ItineraryJob } from '../../../../itinerary/entity/ItineraryJob.entity';
+import { PlaceCategory } from '../../../../place/entity/PlaceCategory.enum';
 
 class CourseDetailPlaceResponse {
   @ApiProperty({ description: '장소 이름' })
@@ -22,6 +23,12 @@ class CourseDetailPlaceResponse {
 
   @ApiProperty({ description: 'Google Maps URL' })
   place_url: string;
+
+  @ApiProperty({
+    description: 'Mohaeng 장소 대분류 코드',
+    enum: PlaceCategory,
+  })
+  place_category: PlaceCategory;
 
   @ApiProperty({ description: '장소 설명' })
   description: string;
@@ -83,7 +90,10 @@ class CourseDetailDataResponse {
 }
 
 export class CourseDetailResponse {
-  @ApiProperty({ description: '로드맵 상세 데이터', type: CourseDetailDataResponse })
+  @ApiProperty({
+    description: '로드맵 상세 데이터',
+    type: CourseDetailDataResponse,
+  })
   data: CourseDetailDataResponse;
 
   static fromEntity(
@@ -120,9 +130,7 @@ export class CourseDetailResponse {
       }));
   }
 
-  private static mapPlaces(
-    places: CoursePlace[],
-  ): CourseDetailPlaceResponse[] {
+  private static mapPlaces(places: CoursePlace[]): CourseDetailPlaceResponse[] {
     return [...places]
       .sort((a, b) => a.visitOrder - b.visitOrder)
       .map((place) => ({
@@ -132,6 +140,7 @@ export class CourseDetailResponse {
         latitude: place.place?.latitude ?? 0,
         longitude: place.place?.longitude ?? 0,
         place_url: place.place?.placeUrl || '',
+        place_category: place.place?.placeCategory ?? PlaceCategory.OTHER,
         description: place.description || place.place?.description || '',
         visit_sequence: place.visitOrder,
         visit_time: place.visitTime,

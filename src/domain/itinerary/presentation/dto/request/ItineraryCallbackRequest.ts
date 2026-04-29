@@ -4,12 +4,14 @@ import {
   IsDateString,
   IsDefined,
   IsIn,
+  IsEnum,
   IsNumber,
   IsString,
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { PlaceCategory } from '../../../../place/entity/PlaceCategory.enum';
 
 class CallbackErrorRequest {
   @ApiProperty({ description: '오류 코드', example: 'LLM_PROVIDER_ERROR' })
@@ -45,6 +47,13 @@ class CallbackPlaceRequest {
   @ApiProperty({ description: 'Google Maps URL' })
   @IsString()
   place_url: string;
+
+  @ApiProperty({
+    description: 'Mohaeng 장소 대분류 코드',
+    enum: PlaceCategory,
+  })
+  @IsEnum(PlaceCategory)
+  place_category: PlaceCategory;
 
   @ApiProperty({ description: '한 줄 설명' })
   @IsString()
@@ -125,6 +134,10 @@ class CallbackSuccessDataRequest {
   next_action_suggestion: string[];
 }
 
+type CallbackCondition = {
+  status?: 'SUCCESS' | 'FAILED';
+};
+
 export class ItineraryCallbackRequest {
   @ApiProperty({ description: '콜백 상태', enum: ['SUCCESS', 'FAILED'] })
   @IsIn(['SUCCESS', 'FAILED'])
@@ -135,7 +148,7 @@ export class ItineraryCallbackRequest {
     required: true,
     type: CallbackSuccessDataRequest,
   })
-  @ValidateIf((o) => o.status === 'SUCCESS')
+  @ValidateIf((payload: CallbackCondition) => payload.status === 'SUCCESS')
   @IsDefined()
   @ValidateNested()
   @Type(() => CallbackSuccessDataRequest)
@@ -146,7 +159,7 @@ export class ItineraryCallbackRequest {
     required: true,
     type: CallbackErrorRequest,
   })
-  @ValidateIf((o) => o.status === 'FAILED')
+  @ValidateIf((payload: CallbackCondition) => payload.status === 'FAILED')
   @IsDefined()
   @ValidateNested()
   @Type(() => CallbackErrorRequest)

@@ -19,6 +19,7 @@ import { Region } from '../../country/entity/Region.entity';
 import { User } from '../../user/entity/User.entity';
 import { ItineraryJobNotFoundException } from '../exception/ItineraryJobNotFoundException';
 import { NoDestinationForDateException } from '../exception/NoDestinationForDateException';
+import { PlaceCategory } from '../../place/entity/PlaceCategory.enum';
 
 interface CallbackPlaceData {
   place_name: string;
@@ -27,6 +28,7 @@ interface CallbackPlaceData {
   latitude: number;
   longitude: number;
   place_url: string;
+  place_category: PlaceCategory;
   description: string;
   visit_sequence: number;
   visit_time: string;
@@ -224,6 +226,8 @@ export class ItineraryCallbackService {
             place.longitude = placeData.longitude;
             place.description = placeData.description ?? null;
             place.placeUrl = (placeData.place_url ?? '').slice(0, 500);
+            place.placeCategory =
+              placeData.place_category ?? PlaceCategory.OTHER;
             place.updatedAt = new Date();
           } else {
             place = Place.create(
@@ -235,6 +239,7 @@ export class ItineraryCallbackService {
               (placeData.place_url ?? '').slice(0, 500),
               region,
               placeData.description,
+              placeData.place_category ?? PlaceCategory.OTHER,
             );
           }
           await manager.save(Place, place);

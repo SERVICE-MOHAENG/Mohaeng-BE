@@ -1,5 +1,6 @@
 import { Entity, Column, ManyToOne, JoinColumn, PrimaryColumn } from 'typeorm';
 import { Region } from '../../country/entity/Region.entity';
+import { PlaceCategory } from './PlaceCategory.enum';
 
 /**
  * Place Entity
@@ -75,6 +76,15 @@ export class Place {
   })
   placeUrl: string;
 
+  @Column({
+    type: 'varchar',
+    length: 32,
+    name: 'place_category',
+    nullable: false,
+    default: PlaceCategory.OTHER,
+  })
+  placeCategory: PlaceCategory;
+
   @ManyToOne(() => Region, { nullable: false, onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'region_id' })
   region: Region;
@@ -91,6 +101,7 @@ export class Place {
     placeUrl: string,
     region: Region,
     description?: string,
+    placeCategory: PlaceCategory = PlaceCategory.OTHER,
   ): Place {
     const place = new Place();
     place.placeId = placeId;
@@ -99,6 +110,7 @@ export class Place {
     place.latitude = latitude;
     place.longitude = longitude;
     place.placeUrl = placeUrl;
+    place.placeCategory = placeCategory;
     place.region = region;
     place.description = description || null;
     place.updatedAt = new Date();

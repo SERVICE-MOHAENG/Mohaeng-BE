@@ -12,6 +12,7 @@ import { TravelCourse } from '../../course/entity/TravelCourse.entity';
 import { CourseAiChat } from '../../course/entity/CourseAiChat.entity';
 import { RoadmapSurvey } from '../../course/entity/RoadmapSurvey.entity';
 import { CourseSurvey } from '../../course/entity/CourseSurvey.entity';
+import { PlaceCategory } from '../../place/entity/PlaceCategory.enum';
 
 interface ModificationJobData {
   jobId: string;
@@ -251,6 +252,8 @@ export class ItineraryModificationProcessor extends WorkerHost {
             latitude: coursePlace.place.latitude,
             longitude: coursePlace.place.longitude,
             place_url: coursePlace.place.placeUrl,
+            place_category:
+              coursePlace.place.placeCategory ?? PlaceCategory.OTHER,
             description: coursePlace.description || '',
             visit_sequence: coursePlace.visitOrder,
             visit_time: coursePlace.visitTime || '09:00',

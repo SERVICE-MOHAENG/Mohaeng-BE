@@ -5,6 +5,7 @@ import { TravelCourse } from '../../../../course/entity/TravelCourse.entity';
 import { CourseDay } from '../../../../course/entity/CourseDay.entity';
 import { CoursePlace } from '../../../../course/entity/CoursePlace.entity';
 import { CourseRegion } from '../../../../course/entity/CourseRegion.entity';
+import { PlaceCategory } from '../../../../place/entity/PlaceCategory.enum';
 
 class ItineraryPlaceResultResponse {
   @ApiProperty({ description: '장소 이름' })
@@ -24,6 +25,12 @@ class ItineraryPlaceResultResponse {
 
   @ApiProperty({ description: 'Google Maps URL' })
   place_url: string;
+
+  @ApiProperty({
+    description: 'Mohaeng 장소 대분류 코드',
+    enum: PlaceCategory,
+  })
+  place_category: PlaceCategory;
 
   @ApiProperty({ description: '장소 설명' })
   description: string;
@@ -204,6 +211,7 @@ export class ItineraryResultResponse {
         latitude: place.place?.latitude ?? 0,
         longitude: place.place?.longitude ?? 0,
         place_url: place.place?.placeUrl || '',
+        place_category: place.place?.placeCategory ?? PlaceCategory.OTHER,
         description: place.description || place.place?.description || '',
         visit_sequence: place.visitOrder,
         visit_time: place.visitTime,
