@@ -3,6 +3,7 @@ import { validate } from 'class-validator';
 import { ItineraryModificationCallbackRequest } from './ItineraryModificationCallbackRequest';
 import { flattenValidationErrors } from '../../../../../global/validation/flattenValidationErrors';
 import { PlanningPreference } from '../../../../course/entity/PlanningPreference.enum';
+import { PlaceCategory } from '../../../../place/entity/PlaceCategory.enum';
 
 describe('ItineraryModificationCallbackRequest', () => {
   it('accepts ASK_CLARIFICATION without diff_keys', async () => {
@@ -46,6 +47,7 @@ describe('ItineraryModificationCallbackRequest', () => {
                 latitude: 37.5787,
                 longitude: 126.9809,
                 place_url: 'https://maps.google.com/?q=mmca',
+                place_category: PlaceCategory.CULTURE,
                 description: '도심에서 예술 전시를 즐길 수 있는 공간입니다.',
                 visit_sequence: 2,
                 visit_time: '11:00',

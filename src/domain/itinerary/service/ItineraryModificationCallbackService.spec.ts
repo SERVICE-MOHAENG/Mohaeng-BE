@@ -5,6 +5,7 @@ import { CourseDay } from '../../course/entity/CourseDay.entity';
 import { Place } from '../../place/entity/Place.entity';
 import { CourseAiChat } from '../../course/entity/CourseAiChat.entity';
 import { ItineraryJob, IntentStatus } from '../entity/ItineraryJob.entity';
+import { PlaceCategory } from '../../place/entity/PlaceCategory.enum';
 
 describe('ItineraryModificationCallbackService', () => {
   it('updates TravelCourse metadata without saving relation-loaded course entity', async () => {
@@ -22,32 +23,38 @@ describe('ItineraryModificationCallbackService', () => {
       longitude: 127.0,
       description: null,
       placeUrl: 'https://maps.google.com/?q=place',
+      placeCategory: PlaceCategory.OTHER,
       updatedAt: new Date(),
     } as Place;
 
     const manager = {
-      findOne: jest.fn(async (entity: unknown, options?: any) => {
-        if (entity === TravelCourse) {
-          return course;
-        }
-        if (entity === Place) {
-          return options?.where?.placeId === 'place-id-1' ? existingPlace : null;
-        }
-        return null;
-      }),
-      delete: jest.fn(async () => ({ affected: 1 })),
-      save: jest.fn(async (entity: unknown, value?: unknown) => {
+      findOne: jest.fn(
+        (entity: unknown, options?: { where?: { placeId?: string } }) => {
+          if (entity === TravelCourse) {
+            return course;
+          }
+          if (entity === Place) {
+            return options?.where?.placeId === 'place-id-1'
+              ? existingPlace
+              : null;
+          }
+          return null;
+        },
+      ),
+      delete: jest.fn(() => ({ affected: 1 })),
+      save: jest.fn((entity: unknown, value?: unknown) => {
         if (entity === CourseDay && value) {
           return { ...(value as object), id: 'new-day-id' };
         }
         return value ?? entity;
       }),
-      update: jest.fn(async () => ({ affected: 1 })),
+      update: jest.fn(() => ({ affected: 1 })),
     };
 
     const dataSource = {
-      transaction: jest.fn(async (callback: (manager: any) => Promise<void>) =>
-        callback(manager),
+      transaction: jest.fn(
+        (callback: (transactionManager: typeof manager) => Promise<void>) =>
+          callback(manager),
       ),
     } as unknown as DataSource;
 
@@ -59,13 +66,23 @@ describe('ItineraryModificationCallbackService', () => {
       {} as any,
     );
 
+    const markSuccessWithIntent = jest.fn();
     const job = {
       id: 'job-id',
       travelCourseId: 'course-id',
-      markSuccessWithIntent: jest.fn(),
+      markSuccessWithIntent,
     } as unknown as ItineraryJob;
 
-    await (service as any).updateTravelCourse(
+    const updateTravelCourse = Reflect.get(service, 'updateTravelCourse') as (
+      job: ItineraryJob,
+      userMessage: string,
+      modifiedData: object,
+      aiMessage: string,
+      diffKeys?: string[],
+    ) => Promise<void>;
+
+    await updateTravelCourse.call(
+      service,
       job,
       '일정 바꿔줘',
       {
@@ -89,6 +106,7 @@ describe('ItineraryModificationCallbackService', () => {
                 latitude: 37.5,
                 longitude: 127.0,
                 place_url: 'https://maps.google.com/?q=place',
+                place_category: PlaceCategory.CULTURE,
                 description: '설명',
                 visit_sequence: 1,
                 visit_time: '09:00',
@@ -112,12 +130,14 @@ describe('ItineraryModificationCallbackService', () => {
         peopleCount: 2,
       }),
     );
+    expect(existingPlace.placeCategory).toBe(PlaceCategory.CULTURE);
     expect(manager.save).not.toHaveBeenCalledWith(TravelCourse, course);
-    expect((job.markSuccessWithIntent as jest.Mock)).toHaveBeenCalledWith(
+    expect(markSuccessWithIntent).toHaveBeenCalledWith(
       IntentStatus.SUCCESS,
       '변경 완료',
       ['day1_place1'],
     );
-    expect(manager.save).toHaveBeenCalledWith(CourseAiChat, expect.any(Object));
+    const save = manager.save as jest.Mock;
+    expect(save).toHaveBeenCalledWith(CourseAiChat, expect.any(Object));
   });
 });

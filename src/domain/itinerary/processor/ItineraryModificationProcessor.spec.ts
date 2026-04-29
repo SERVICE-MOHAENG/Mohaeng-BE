@@ -14,6 +14,7 @@ import { ActivityPreference } from '../../course/entity/ActivityPreference.enum'
 import { PriorityPreference } from '../../course/entity/PriorityPreference.enum';
 import { TravelTheme } from '../../course/entity/TravelTheme.enum';
 import { Companion } from '../../course/entity/Companion.enum';
+import { PlaceCategory } from '../../place/entity/PlaceCategory.enum';
 
 type SurveyPreferences = {
   companion_type: string[];
@@ -123,5 +124,66 @@ describe('ItineraryModificationProcessor', () => {
       priority_preference: PriorityPreference.EMOTIONAL,
     });
     expect(preferences).not.toHaveProperty('budget_range');
+  });
+
+  it('builds current itinerary json with place_category for Python chat requests', () => {
+    const processor = new ItineraryModificationProcessor(
+      new ConfigService<Record<string, unknown>>({}),
+      new HttpService(),
+      {} as ItineraryJobRepository,
+      {} as Repository<TravelCourse>,
+      {} as Repository<CourseAiChat>,
+      {} as unknown as Repository<RoadmapSurvey>,
+      {} as unknown as Repository<CourseSurvey>,
+    );
+
+    const buildCurrentItineraryJson = (
+      processor as unknown as {
+        buildCurrentItineraryJson: (course: TravelCourse) => {
+          itinerary: Array<{
+            places: Array<{
+              place_category: PlaceCategory;
+            }>;
+          }>;
+        };
+      }
+    ).buildCurrentItineraryJson.bind(processor);
+
+    const result = buildCurrentItineraryJson({
+      travelStartDay: new Date('2026-03-01'),
+      travelFinishDay: new Date('2026-03-01'),
+      days: 1,
+      nights: 0,
+      peopleCount: 2,
+      hashTags: [],
+      title: '서울 당일치기',
+      description: '요약',
+      courseDays: [
+        {
+          dayNumber: 1,
+          date: new Date('2026-03-01'),
+          coursePlaces: [
+            {
+              visitOrder: 1,
+              visitTime: '09:00',
+              description: '설명',
+              place: {
+                name: '국립현대미술관 서울관',
+                placeId: 'place-id-1',
+                address: '서울 종로구 삼청로 30',
+                latitude: 37.5787,
+                longitude: 126.9809,
+                placeUrl: 'https://maps.google.com/?q=mmca',
+                placeCategory: PlaceCategory.CULTURE,
+              },
+            },
+          ],
+        },
+      ],
+    } as unknown as TravelCourse);
+
+    expect(result.itinerary[0].places[0].place_category).toBe(
+      PlaceCategory.CULTURE,
+    );
   });
 });
