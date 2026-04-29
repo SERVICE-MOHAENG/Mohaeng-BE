@@ -13,8 +13,11 @@ import { CourseHashTag } from '../../course/entity/CourseHashTag.entity';
 import { CourseAiChat } from '../../course/entity/CourseAiChat.entity';
 import { ChatRole } from '../../course/entity/ChatRole.enum';
 import { PlanningPreference } from '../../course/entity/PlanningPreference.enum';
+import { CourseRegion } from '../../course/entity/CourseRegion.entity';
 import { Place } from '../../place/entity/Place.entity';
 import { ItineraryJobNotFoundException } from '../exception/ItineraryJobNotFoundException';
+import { PlaceCategory } from '../../place/entity/PlaceCategory.enum';
+import { Region } from '../../country/entity/Region.entity';
 
 interface CallbackPlaceData {
   place_name: string;
@@ -23,6 +26,7 @@ interface CallbackPlaceData {
   latitude: number;
   longitude: number;
   place_url: string;
+  place_category: PlaceCategory;
   description: string;
   visit_sequence: number;
   visit_time: string;
@@ -282,6 +286,8 @@ export class ItineraryModificationCallbackService {
             place.longitude = placeData.longitude;
             place.description = placeData.description ?? null;
             place.placeUrl = (placeData.place_url ?? '').slice(0, 500);
+            place.placeCategory =
+              placeData.place_category ?? PlaceCategory.OTHER;
             place.updatedAt = new Date();
           } else {
             // 새 Place 생성 - 날짜에 맞는 region 찾기
@@ -298,6 +304,7 @@ export class ItineraryModificationCallbackService {
               (placeData.place_url ?? '').slice(0, 500),
               region,
               placeData.description,
+              placeData.place_category ?? PlaceCategory.OTHER,
             );
           }
           await manager.save(Place, place);
@@ -411,7 +418,10 @@ export class ItineraryModificationCallbackService {
   /**
    * 날짜에 해당하는 Region 찾기
    */
-  private resolveRegionForDate(courseRegions: any[], dailyDate: string): any {
+  private resolveRegionForDate(
+    courseRegions: CourseRegion[],
+    dailyDate: string,
+  ): Region {
     if (courseRegions.length === 0) {
       throw new Error(`No regions found for course`);
     }
