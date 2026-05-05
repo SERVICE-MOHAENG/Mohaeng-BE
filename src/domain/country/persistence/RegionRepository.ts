@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Region } from '../entity/Region.entity';
+import { RegionCode } from '../entity/RegionCode.enum';
 
 /**
  * Region Repository
@@ -24,6 +25,12 @@ export class RegionRepository {
 
   async findByName(name: string): Promise<Region | null> {
     return this.repository.findOne({ where: { name } });
+  }
+
+  async findByCode(regionCode: string): Promise<Region | null> {
+    return this.repository.findOne({
+      where: { regionCode: regionCode as RegionCode },
+    });
   }
 
   async findByCountryId(countryId: string): Promise<Region[]> {

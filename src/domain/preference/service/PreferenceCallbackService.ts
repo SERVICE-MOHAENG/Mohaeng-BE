@@ -47,7 +47,9 @@ export class PreferenceCallbackService {
     // 추천 결과 저장 (최대 5개) - Region DB 조회 후 FK 연결
     const recommendations = await Promise.all(
       payload.recommended_destinations.slice(0, 5).map(async (dest) => {
-        const region = await this.regionRepository.findByName(dest.region_name);
+        const region =
+          (await this.regionRepository.findByCode(dest.region_name)) ??
+          (await this.regionRepository.findByName(dest.region_name));
         return PreferenceRecommendation.create(
           jobId,
           dest.region_name.slice(0, 100),
