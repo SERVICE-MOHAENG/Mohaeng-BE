@@ -29,6 +29,7 @@ describe('PreferenceCallbackService', () => {
       ...recommendationRepository,
     };
     const mergedRegionRepository = {
+      findByCode: jest.fn(),
       findByName: jest.fn(),
       ...regionRepository,
     };
@@ -43,6 +44,10 @@ describe('PreferenceCallbackService', () => {
       service,
       preferenceJobRepository: mergedPreferenceJobRepository,
       recommendationRepository: mergedRecommendationRepository,
+      regionRepository: mergedRegionRepository as {
+        findByCode: jest.Mock;
+        findByName: jest.Mock;
+      },
     };
   };
 
@@ -117,5 +122,46 @@ describe('PreferenceCallbackService', () => {
       order: { createdAt: 'ASC' },
     });
     expect(result).toBe(recommendations);
+  });
+
+  it('maps AI region enum codes to DB regions before saving recommendations', async () => {
+    const savedJob = {
+      id: 'job-id',
+      markSuccess: jest.fn(),
+    };
+    const {
+      service,
+      preferenceJobRepository,
+      recommendationRepository,
+      regionRepository,
+    } = createService({
+      preferenceJobRepository: {
+        findById: jest.fn().mockResolvedValue(savedJob),
+        save: jest.fn(),
+      },
+      recommendationRepository: {
+        save: jest.fn(),
+      },
+      regionRepository: {
+        findByCode: jest.fn().mockResolvedValue({ id: 'region-id' }),
+        findByName: jest.fn(),
+      },
+    });
+
+    await service.handleSuccess('job-id', {
+      recommended_destinations: [{ region_name: 'MALDIVES' }],
+    });
+
+    expect(regionRepository.findByCode).toHaveBeenCalledWith('MALDIVES');
+    expect(regionRepository.findByName).not.toHaveBeenCalled();
+    expect(recommendationRepository.save).toHaveBeenCalledWith([
+      expect.objectContaining({
+        jobId: 'job-id',
+        regionName: 'MALDIVES',
+        regionId: 'region-id',
+      }),
+    ]);
+    expect(savedJob.markSuccess).toHaveBeenCalled();
+    expect(preferenceJobRepository.save).toHaveBeenCalledWith(savedJob);
   });
 });
