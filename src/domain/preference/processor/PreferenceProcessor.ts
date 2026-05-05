@@ -77,10 +77,7 @@ export class PreferenceProcessor extends WorkerHost {
     const payload = this.buildPythonPayload(jobId, preference);
     const pythonBaseUrl = this.configService.get<string>('PYTHON_LLM_BASE_URL');
     const serviceSecret = this.configService.get<string>('SERVICE_SECRET');
-    const callbackBaseUrl =
-      this.configService.get<string>('CALLBACK_BASE_URL') ||
-      `http://localhost:${this.configService.get<string>('PORT') || '8080'}`;
-    const callbackUrl = `${callbackBaseUrl}/api/v1/preferences/jobs/${jobId}/result`;
+    const callbackUrl = this.buildCallbackUrl();
 
     // 4. Python LLM 서버 호출 (POST /api/v1/recommend)
     try {
@@ -103,9 +100,10 @@ export class PreferenceProcessor extends WorkerHost {
       this.logger.log(
         `Python 서버 응답: status=${response.status}, jobId=${jobId}`,
       );
-    } catch (error) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       this.logger.error(
-        `Python 서버 호출 실패: jobId=${jobId}, error=${error.message}`,
+        `Python 서버 호출 실패: jobId=${jobId}, error=${message}`,
       );
       throw error; // BullMQ 자동 재시도
     }
@@ -132,5 +130,26 @@ export class PreferenceProcessor extends WorkerHost {
       main_interests:
         preference.mainInterests?.map((i) => i.mainInterest) ?? [],
     };
+  }
+
+  /**
+   * AI 서버가 `/preferences/jobs/{job_id}/result`를 뒤에 붙일 수 있도록
+   * Nest 콜백 베이스 URL을 `/api/v1`까지만 전달한다.
+   */
+  private buildCallbackUrl(): string {
+    const configuredBaseUrl =
+      this.configService.get<string>('CALLBACK_BASE_URL') ||
+      `http://localhost:${this.configService.get<string>('PORT') || '8080'}`;
+    const normalizedBaseUrl = configuredBaseUrl.replace(/\/+$/, '');
+
+    if (normalizedBaseUrl.endsWith('/api/v1')) {
+      return normalizedBaseUrl;
+    }
+
+    if (normalizedBaseUrl.endsWith('/api')) {
+      return `${normalizedBaseUrl}/v1`;
+    }
+
+    return `${normalizedBaseUrl}/api/v1`;
   }
 }
