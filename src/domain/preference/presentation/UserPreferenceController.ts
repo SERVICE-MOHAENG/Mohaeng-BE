@@ -19,6 +19,7 @@ import { PreferenceCallbackService } from '../service/PreferenceCallbackService'
 import { RegionLikeService } from '../../country/service/RegionLikeService';
 import { CreateUserPreferenceRequest } from './dto/request/CreateUserPreferenceRequest';
 import { PreferenceCallbackRequest } from './dto/request/PreferenceCallbackRequest';
+import { CreatePreferenceResponse } from './dto/response/CreatePreferenceResponse';
 import { UserPreferenceResponse } from './dto/response/UserPreferenceResponse';
 import { PreferenceRecommendationResponse } from './dto/response/PreferenceRecommendationResponse';
 
@@ -51,14 +52,14 @@ export class UserPreferenceController {
   @ApiOperation({
     summary: '선호도 등록/수정 후 여행지 추천 작업 시작 (비동기)',
   })
-  @ApiResponse({ status: 202, description: '{ jobId, status: "PENDING" }' })
+  @ApiResponse({ status: 202, type: CreatePreferenceResponse })
   @ApiResponse({ status: 400, description: '잘못된 요청' })
   @ApiResponse({ status: 401, description: '인증 실패' })
   async createOrUpdate(
     @UserId() userId: string,
     @Body() request: CreateUserPreferenceRequest,
-  ): Promise<{ jobId: string; status: string }> {
-    return this.userPreferenceService.createOrUpdateAndEnqueue({
+  ): Promise<{ preference: CreatePreferenceResponse }> {
+    const result = await this.userPreferenceService.createOrUpdateAndEnqueue({
       userId,
       weather: request.weather,
       travelRange: request.travel_range,
@@ -67,6 +68,8 @@ export class UserPreferenceController {
       mainInterests: request.main_interests,
       budget: request.budget_level,
     });
+
+    return { preference: result };
   }
 
   /**

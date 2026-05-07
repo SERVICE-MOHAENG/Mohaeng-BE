@@ -4,7 +4,10 @@ import { Queue } from 'bullmq';
 import { DataSource } from 'typeorm';
 import { UserPreferenceRepository } from '../persistence/UserPreferenceRepository';
 import { PreferenceJobRepository } from '../persistence/PreferenceJobRepository';
-import { PreferenceJob } from '../entity/PreferenceJob.entity';
+import {
+  PreferenceJob,
+  PreferenceJobStatus,
+} from '../entity/PreferenceJob.entity';
 import { UserPreference } from '../entity/UserPreference.entity';
 import { UserPreferenceWeather } from '../entity/UserPreferenceWeather.entity';
 import { UserPreferenceTravelRange } from '../entity/UserPreferenceTravelRange.entity';
@@ -105,7 +108,7 @@ export class UserPreferenceService {
 
   async createOrUpdateAndEnqueue(
     dto: CreateUserPreferenceDto,
-  ): Promise<{ jobId: string; status: string }> {
+  ): Promise<{ jobId: string; status: PreferenceJobStatus }> {
     const preference = await this.createOrUpdate(dto);
     const job = PreferenceJob.create(dto.userId, preference.id);
     const savedJob = await this.preferenceJobRepository.save(job);
